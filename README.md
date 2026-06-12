@@ -14,8 +14,8 @@ Esta aplicación permite a instructores y administradores del SENA registrar, mo
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | React.js |
-| Backend | Node.js + Express |
+| Frontend | html, css |
+| Backend | javaScript |
 | Base de datos | PostgreSQL |
 | Control de versiones | Git + GitHub |
 | Despliegue | Local (localhost) |
@@ -24,84 +24,19 @@ Esta aplicación permite a instructores y administradores del SENA registrar, mo
 
 ## Requisitos previos
 
-Antes de ejecutar el proyecto, asegurate de tener instalado lo siguiente:
+Antes de ejecutar el proyecto en python, asegurate de tener instalado lo siguiente:
 
-- **Node.js** v18 o superior → https://nodejs.org
-- **npm** v9 o superior (viene incluido con Node.js)
-- **PostgreSQL** v14 o superior → https://www.postgresql.org/download
-- **Git** → https://git-scm.com
+- **python** v3.1 o superior 
+- **Visual studio code** Ejecutador de codigo
 
 ---
 
-## Cómo ejecutar el proyecto
+## Cómo ejecutar el proyecto de python
 
-### 1. Clonar el repositorio
+### 1. Descargar los archivos main.py del repositorio
+### 2. abrir desde visual studio code con un equipo que cuente con python instalado y en el visual studio code la extencion de python 
+### 3. Ejecutar el codigo y poner en funcionamiento el sistema 
 
-```bash
-git clone https://github.com/<usuario>/seguimiento-proyectos-sena.git
-cd seguimiento-proyectos-sena
-```
-
-### 2. Configurar la base de datos
-
-1. Abre pgAdmin o la terminal de PostgreSQL.
-2. Crea una base de datos nueva:
-
-```sql
-CREATE DATABASE sena_proyectos;
-```
-
-3. Ejecuta el script de creación de tablas ubicado en `/database/script_bd.sql`:
-
-```bash
-psql -U postgres -d sena_proyectos -f database/script_bd.sql
-```
-
-### 3. Configurar las variables de entorno
-
-Dentro de la carpeta `/backend`, crea un archivo `.env` con el siguiente contenido (ajusta los valores según tu configuración local):
-
-```
-PORT=3001
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=tu_contraseña
-DB_NAME=sena_proyectos
-```
-
-### 4. Instalar dependencias
-
-**Backend:**
-```bash
-cd backend
-npm install
-```
-
-**Frontend:**
-```bash
-cd ../frontend
-npm install
-```
-
-### 5. Iniciar el proyecto
-
-**Backend (en una terminal):**
-```bash
-cd backend
-npm run dev
-```
-
-**Frontend (en otra terminal):**
-```bash
-cd frontend
-npm start
-```
-
-La aplicación estará disponible en: **http://localhost:3000**  
-La API estará corriendo en: **http://localhost:3001**
-
----
 
 ## Cómo visualizar los prototipos HTML
 
@@ -127,16 +62,13 @@ seguimiento-proyectos-sena/
 ├── frontend/               # Aplicación React
 │   ├── src/
 │   │   ├── components/     # Componentes reutilizables
-│   │   ├── pages/          # Vistas principales
-│   │   └── App.js
+│   │   ├── pages/          # Vistas principales      
+│   │   └── index.html
 │   └── package.json
 │
-├── backend/                # API REST con Express
+├── backend/            # Archivos python           
 │   ├── src/
-│   │   ├── routes/         # Rutas de la API
-│   │   ├── controllers/    # Lógica de negocio
-│   │   └── db.js           # Conexión a PostgreSQL
-│   └── package.json
+|       └── app.js / main.py 
 │
 ├── database/
 │   ├── script_bd.sql       # Script de creación de tablas
@@ -162,10 +94,11 @@ seguimiento-proyectos-sena/
 
 ## Roles del sistema
 
-El sistema contempla dos roles principales:
+El sistema contempla tres roles principales:
 
 - **Instructor**: puede registrar proyectos, asignar aprendices, registrar avances y dar retroalimentación.
 - **Administrador**: gestiona usuarios, fichas de formación y tiene acceso completo al sistema.
+- **Aprendiz**: puede subir proyectos, puede ver calendario de actividades y ser evaluado por el instructor.
 
 ---
 
@@ -188,7 +121,7 @@ Toda la documentación técnica y de análisis está en la carpeta `/documentaci
 | Integrante | Rol / Responsabilidad |
 |-----------|----------------------|
 | Leyner | Repositorio GitHub y documentación |
-| Hernán | Modelo gráfico e interfaz (Figma) |
+| Hernán | Modelo gráfico e interfaz (Figma, canva) |
 | Nicolás | Prototipo / avance de la página web |
 | Omar | Base de datos |
 
