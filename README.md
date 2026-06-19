@@ -6,7 +6,7 @@ Sistema web para el seguimiento y gestión de proyectos de formación del SENA, 
 
 ## Descripción general
 
-Esta aplicación permite a instructores y administradores del SENA registrar, monitorear y evaluar el avance de los proyectos de formación de los aprendices. Centraliza la información de proyectos, aprendices, entregas y retroalimentaciones en una sola plataforma web de uso local.
+Esta pagina web permite a instructores y administradores del SENA registrar, monitorear y evaluar el avance de los proyectos de formación de los aprendices. Centraliza la información de proyectos, aprendices, entregas y retroalimentaciones en una sola plataforma web de uso local.
 
 ---
 
