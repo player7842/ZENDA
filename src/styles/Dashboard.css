@@ -1,0 +1,89 @@
+/*
+   Estilos del panel principal
+*/
+
+.dashboard {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.dashboard-header p {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 2px 0 0;
+}
+
+.btn-logout {
+  padding: 7px 14px;
+  background: var(--color-error);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-logout:hover {
+  opacity: 0.85;
+}
+
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-admin {
+  padding: 7px 14px;
+  background: rgba(26, 107, 10, 0.15);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+  color: var(--color-primary);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-admin:hover {
+  background: rgba(26, 107, 10, 0.25);
+}
+
+/* Tarjeta sólida sin bordes */
+.dashboard-content {
+  background: var(--color-card);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.dashboard-content h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--color-text);
+}
+
+.dashboard-content p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}

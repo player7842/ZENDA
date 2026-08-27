@@ -1,0 +1,161 @@
+/* Estilos del panel de administración */
+
+.admin {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  background: var(--color-card);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.admin-header p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-link {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.75rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.admin-content h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.admin-count {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  margin: 0 0 20px;
+}
+
+/* Tabla */
+.admin-table-wrap {
+  overflow-x: auto;
+  background: var(--color-card);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 12px 14px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(26, 107, 10, 0.06);
+}
+
+.btn-delete {
+  background: none;
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: var(--color-error);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+/* Error del servidor */
+.server-error {
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--color-error);
+  font-size: 0.75rem;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+/* Light mode */
+body.light .admin-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light .admin-table th {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light .admin-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light .btn-logout {
+  border-color: rgba(0, 0, 0, 0.2);
+}
