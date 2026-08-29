@@ -5,11 +5,11 @@
   Flujo del formulario:*/
 
 //1. Usuario llena campos
-//2. Enter en correo → pasa foco a contraseña
-//3. Enter en contraseña → envía formulario
-//4. Si hay errores de validación → borde rojo + mensaje
-//5. Si el backend rechaza → muestra el mensaje de error
-//6. Si todo está bien → guarda token → redirige a /dashboard
+//2. Enter en correo => pasa foco a contraseña
+//3. Enter en contraseña => envía formulario
+//4. Si hay errores de validación => borde rojo + mensaje
+//5. Si el backend rechaza => muestra el mensaje de error
+//6. Si todo está bien => guarda token → redirige a /dashboard
 
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -61,7 +61,8 @@ function Login() {
       setToken(data.token);
       localStorage.setItem("zenda-user", JSON.stringify(data.user));
 
-      navigate("/dashboard");
+      // Si es admin va directo al panel (que es el dashboard) si no a la landing 
+      navigate(data.user.rol === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       // El backend nos dijo NO
       setServerError(err.message);
@@ -164,7 +165,7 @@ function Login() {
                 autoComplete="current-password"
               />
 
-              {/* Botón ojito — muestra/oculta la contraseña */}
+              {/* Botón ojito  muestra/oculta la contraseña */}
               <button
                 type="button"
                 className="toggle-password"

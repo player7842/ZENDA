@@ -1,15 +1,19 @@
 /*
-  Muestra el dashboard con el usuario real del backend y un botón de logout.
-  Lee el usuario guardado en localStorage (zenda-user) al hacer login.
+  Landing SIMPLE para usuarios sin rol admin (aprendiz/instructor).
+  Los admins ya no pasan por aquí: su dashboard es el panel de administración.
+  Aquí solo saludamos y damos la opción de cerrar sesión.
 */
 
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { clearToken } from "../api";
+import { useTheme } from "../context/ThemeContext";
 import "../styles/Dashboard.css";
 
 function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("zenda-user") || null);
+  const { theme } = useTheme();
+  const logo = theme === "dark" ? "/logos/logo-dark.png" : "/logos/logo-light.png";
 
   const handleLogout = () => {
     clearToken();
@@ -20,12 +24,11 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <div>
-          <h1>ZENDA</h1>
+        <div className="dashboard-brand">
+          <img src={logo} alt="ZENDA" className="dashboard-logo" />
           <p>Bienvenido, {user ? `${user.nombre} ${user.apellido}` : user?.email}</p>
         </div>
         <div className="dashboard-header-actions">
-          <Link to="/admin" className="btn-admin">Panel Admin</Link>
           <button className="btn-logout" onClick={handleLogout}>
             Cerrar sesión
           </button>
@@ -33,8 +36,11 @@ function Dashboard() {
       </header>
 
       <main className="dashboard-content">
-        <h2>Panel Principal</h2>
-        <p>Has iniciado sesión correctamente. Este es tu panel de control.</p>
+        <h2>Panel de aprendiz</h2>
+        <p>
+          Tu cuenta no tiene permisos de administración. Si crees que esto es un error,
+          contacta a un administrador para que cambie tu rol.
+        </p>
       </main>
     </div>
   );

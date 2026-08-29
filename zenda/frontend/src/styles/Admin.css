@@ -1,4 +1,7 @@
-/* Estilos del panel de administración */
+/* ============================================
+   Panel de administración de ZENDA
+   Layout: header arriba (logo + tema), sidebar IZQUIERDO, contenido a la derecha
+   ============================================ */
 
 .admin {
   min-height: 100vh;
@@ -7,44 +10,46 @@
   font-family: var(--font-family);
 }
 
+/* ---------- Header ---------- */
 .admin-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
+  padding: 14px 28px;
   background: var(--color-card);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.admin-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-logo {
+  height: 38px;
+  width: auto;
+}
+
 .admin-header h1 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
 }
 
 .admin-header p {
   margin: 2px 0 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
 }
 
 .admin-header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
-.admin-link {
-  color: var(--color-primary);
-  font-size: 0.75rem;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.admin-link:hover {
-  text-decoration: underline;
-}
-
+/* ---------- Botón cerrar sesión ---------- */
 .btn-logout {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -61,14 +66,120 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+body.light .btn-logout {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Cuerpo: sidebar + contenido ---------- */
+.admin-body {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 64px);
+}
+
+/* Sidebar IZQUIERDO */
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-card);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 20px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 64px);
+}
+
+body.light .admin-sidebar {
+  border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-nav-btn {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-nav-btn:hover {
+  background: rgba(26, 107, 10, 0.08);
+  color: var(--color-texto);
+}
+
+.admin-nav-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(26, 107, 10, 0.35);
+}
+
+body.light .admin-nav-btn:hover {
+  color: #1f2937;
+}
+
+body.light .admin-nav-btn.active {
+  background: #1a6b0a;
+  color: #fff;
+}
+
+/* Pie del sidebar: usuario + cerrar sesión */
+.admin-sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 14px;
+}
+
+body.light .admin-sidebar-footer {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.admin-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.admin-user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.admin-user-email {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+/* ---------- Contenido ---------- */
 .admin-content {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 28px 24px;
+  flex: 1;
+  padding: 28px 32px;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .admin-content h2 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
   margin: 0 0 4px;
 }
@@ -76,10 +187,147 @@
 .admin-count {
   color: var(--color-text-muted);
   font-size: 0.75rem;
-  margin: 0 0 20px;
+  margin: 0 0 8px;
 }
 
-/* Tabla */
+.admin-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0 0 18px;
+}
+
+/* ---------- Panel split (listado + detalle) ---------- */
+.panel-split {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.panel-list {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+body.light .panel-list {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.panel-list-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+  padding: 0 4px;
+}
+
+.panel-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-texto);
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.panel-list-item:hover {
+  background: rgba(26, 107, 10, 0.08);
+}
+
+.panel-list-item.active {
+  background: rgba(26, 107, 10, 0.15);
+  border-color: rgba(26, 107, 10, 0.35);
+}
+
+.panel-list-count {
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.panel-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-detail-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel-empty {
+  background: var(--color-card);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 32px;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+body.light .panel-empty {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Acciones en la tabla ---------- */
+.acciones-cell {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-accion {
+  background: none;
+  border: 1px solid rgba(26, 107, 10, 0.35);
+  color: var(--color-primary);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-family: var(--font-family);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-accion:hover {
+  background: rgba(26, 107, 10, 0.1);
+}
+
+.btn-accion-danger {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: var(--color-error);
+}
+
+.btn-accion-danger:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+/* ---------- Tabla ---------- */
 .admin-table-wrap {
   overflow-x: auto;
   background: var(--color-card);
@@ -115,23 +363,205 @@
   background: rgba(26, 107, 10, 0.06);
 }
 
-.btn-delete {
-  background: none;
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  color: var(--color-error);
-  border-radius: 6px;
-  padding: 5px 12px;
+body.light .admin-table th {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light .admin-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- Insignias ---------- */
+.badge-rol {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.badge-admin {
+  background: rgba(26, 107, 10, 0.2);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.4);
+}
+
+.badge-aprendiz {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.badge-instructor {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.ficha-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
   font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+}
+
+.badge-coordinador {
+  background: rgba(147, 51, 234, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(147, 51, 234, 0.4);
+}
+
+body.light .ficha-badge {
+  color: #1a6b0a;
+}
+
+/* ---------- Botón principal de acciones ---------- */
+.btn-rol {
+  background: var(--color-primary);
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
   font-family: var(--font-family);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.btn-delete:hover {
-  background: rgba(220, 38, 38, 0.12);
+.btn-rol:hover {
+  filter: brightness(1.1);
 }
 
-/* Error del servidor */
+.btn-rol:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Modales ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-card {
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+body.light .modal-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.modal-sub {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0 0 18px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 6px;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.modal-input,
+.modal-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(26, 107, 10, 0.25);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: var(--font-family);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  margin-bottom: 14px;
+  box-sizing: border-box;
+}
+
+.modal-input:focus,
+.modal-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 107, 10, 0.12);
+}
+
+body.light .modal-input,
+body.light .modal-select {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-cancelar {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.light .btn-cancelar {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #4b5563;
+}
+
+.btn-cancelar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Mensajes ---------- */
 .server-error {
   background: rgba(220, 38, 38, 0.12);
   border: 1px solid rgba(220, 38, 38, 0.3);
@@ -143,19 +573,240 @@
   text-align: center;
 }
 
-/* Light mode */
-body.light .admin-header {
-  border-bottom-color: rgba(0, 0, 0, 0.08);
+.server-exito {
+  background: rgba(26, 107, 10, 0.15);
+  border: 1px solid rgba(26, 107, 10, 0.35);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  text-align: center;
 }
 
-body.light .admin-table th {
-  border-bottom-color: rgba(0, 0, 0, 0.1);
+.list-vacia {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  padding: 14px 0;
+  text-align: left;
 }
 
-body.light .admin-table td {
-  border-bottom-color: rgba(0, 0, 0, 0.06);
+/* ---------- Mini menú por rol (panel Usuarios) ---------- */
+.roles-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
 }
 
-body.light .btn-logout {
-  border-color: rgba(0, 0, 0, 0.2);
+.roles-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.roles-tab:hover {
+  border-color: rgba(26, 107, 10, 0.4);
+  color: var(--color-texto);
+}
+
+.roles-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+body.light .roles-tab {
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #4b5563;
+}
+
+body.light .roles-tab.active {
+  background: #1a6b0a;
+  border-color: #1a6b0a;
+  color: #fff;
+}
+
+.roles-tab-count {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+}
+
+body.light .roles-tab-count {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Chips de fichas ---------- */
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-ficha-quitable {
+  padding-right: 6px;
+}
+
+.chip-quitar {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+
+.chip-quitar:hover {
+  opacity: 1;
+}
+
+/* ---------- Editor de fichas del instructor ---------- */
+.instructor-fichas {
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body.light .instructor-fichas {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.instructor-fichas h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.add-ficha {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.add-ficha-input {
+  flex: 1;
+  max-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid rgba(26, 107, 10, 0.25);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: var(--font-family);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.add-ficha-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+body.light .add-ficha-input {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.instructor-fichas-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* Cabecera del listado con botón +
+ */
+.panel-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-rol-mini {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .admin-body {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  body.light .admin-sidebar {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-nav-btn {
+    width: auto;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .admin-sidebar-footer {
+    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-split {
+    flex-direction: column;
+  }
+
+  .panel-list {
+    width: 100%;
+  }
+
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
 }

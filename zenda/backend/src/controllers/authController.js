@@ -19,16 +19,16 @@ export const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Insertar el nuevo usuario en la base de datos 
+    // Insertar el nuevo usuario en la base de datos (por defecto queda como aprendiz)
     const result = await pool.query(
-      `INSERT INTO usuarios (nombre, apellido, email, ficha, tipo_documento, numero_documento, password)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, nombre, apellido, email`,
+      `INSERT INTO usuarios (nombre, apellido, email, ficha, tipo_documento, numero_documento, password, rol)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'aprendiz') RETURNING id, nombre, apellido, email, rol`,
       [nombre, apellido, email, ficha, tipo_documento, numero_documento, hashedPassword]
     );
 
     // Generar un token JWT  porque necesitamos saber quién putas ingresa
     const token = jwt.sign(
-      { id: result.rows[0].id, email: result.rows[0].email },
+      { id: result.rows[0].id, email: result.rows[0].email, rol: result.rows[0].rol },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -65,7 +65,7 @@ export const login = async (req, res) => {
 
     // Generar token JWT 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, rol: user.rol },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );

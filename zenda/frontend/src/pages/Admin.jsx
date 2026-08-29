@@ -1,24 +1,42 @@
 /*
-  Panel del administrador.
-  Lista todos los usuarios registrados, muestra sus datos y permite eliminarlos
-  Usa el token JWT guardado en localStorage para autenticarse contra el backend
-
-  Nota: por ahora cualquier usuario logueado puede entrar aquí
-  Más adelante se puede proteger con un campo "rol" en la base de datos
+  Panel de administración = EL dashboard del app (ya no hay otro panel).
+  Layout:
+    - Header arriba: logo + toggle de tema (estático, esquina superior derecha)
+    - Sidebar IZQUIERDO: navegación de paneles + botón de cerrar sesión abajo
+    - Contenido a la derecha: el panel activo
+  Paneles:
+    1. Fichas        → listado de fichas, selecciona → CRUD de estudiantes
+    2. Instructores  → listado de instructores, selecciona → fichas vinculadas (modificable)
+    3. Usuarios      → mini menú por rol y edición completa de usuarios
+  Toda acción delicada pide la contraseña del admin. Seguridad ante todo, hp.
 */
 
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { getUsers, deleteUser, clearToken } from "../api";
+import { useNavigate } from "react-router-dom";
+import { getUsers, clearToken, getStoredUser, isAdmin } from "../api";
+import { useTheme } from "../context/ThemeContext";
+import ThemeToggle from "../components/ThemeToggle";
+import Fichas from "./admin/Fichas";
+import Instructores from "./admin/Instructores";
+import Usuarios from "./admin/Usuarios";
 import "../styles/Admin.css";
+
+const PESTANAS = [
+  { id: "fichas", label: "Fichas" },
+  { id: "instructores", label: "Instructores" },
+  { id: "usuarios", label: "Usuarios" },
+];
 
 function Admin() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pestana, setPestana] = useState("fichas");
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const admin = getStoredUser();
 
-  // Al montar el componente trae los usuarios del backend
+  // Trae TODOS los usuarios del backend (lo usan todos los paneles)
   const fetchUsers = async () => {
     setLoading(true);
     setError("");
@@ -26,7 +44,6 @@ function Admin() {
       const data = await getUsers();
       setUsers(data);
     } catch (err) {
-      // Si el token es inválido va a mandar al login
       setError(err.message);
       if (err.message.includes("Token")) {
         clearToken();
@@ -38,21 +55,13 @@ function Admin() {
   };
 
   useEffect(() => {
-    fetchUsers();
-
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar este usuario?")) return;
-
-    try {
-      await deleteUser(id);
-      // Recarga la lista sin el eliminado
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch (err) {
-      setError(err.message);
+    // Solo los admins entran aquí; el resto vuele al dashboard simple
+    if (!isAdmin()) {
+      navigate("/dashboard");
+      return;
     }
-  };
+    fetchUsers();
+  }, []);
 
   const handleLogout = () => {
     clearToken();
@@ -60,70 +69,69 @@ function Admin() {
     navigate("/login");
   };
 
+  // Logo según el tema (clarito u oscuro)
+  const logo = theme === "dark" ? "/logos/logo-dark.png" : "/logos/logo-light.png";
+
   return (
     <div className="admin">
+      {/* Header: logo a la izquierda, toggle de tema a la derecha (estático) */}
       <header className="admin-header">
-        <div>
-          <h1>ZENDA Admin</h1>
-          <p>Gestión de usuarios</p>
+        <div className="admin-header-brand">
+          <img src={logo} alt="ZENDA" className="admin-logo" />
+          <div>
+            <h1>ZENDA</h1>
+            <p>Panel de administración</p>
+          </div>
         </div>
         <div className="admin-header-actions">
-          <Link to="/dashboard" className="admin-link">Volver al panel</Link>
-          <button className="btn-logout" onClick={handleLogout}>Cerrar sesión</button>
+          <ThemeToggle />
         </div>
       </header>
 
-      <main className="admin-content">
-        <h2>Usuarios registrados</h2>
-        <p className="admin-count">{users.length} usuario(s)</p>
+      <div className="admin-body">
+        {/* Sidebar IZQUIERDO */}
+        <aside className="admin-sidebar">
+          <nav className="admin-nav">
+            {PESTANAS.map((p) => (
+              <button
+                key={p.id}
+                className={`admin-nav-btn ${pestana === p.id ? "active" : ""}`}
+                onClick={() => setPestana(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </nav>
 
-        {error && <div className="server-error">{error}</div>}
-
-        {loading ? (
-          <p>Cargando usuarios...</p>
-        ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Correo</th>
-                  <th>Ficha</th>
-                  <th>Documento</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan="6">No hay usuarios registrados todavía.</td>
-                  </tr>
-                ) : (
-                  users.map((u) => (
-                    <tr key={u.id}>
-                      <td>{u.id}</td>
-                      <td>{u.nombre} {u.apellido}</td>
-                      <td>{u.email}</td>
-                      <td>{u.ficha}</td>
-                      <td>{u.tipo_documento} {u.numero_documento}</td>
-                      <td>
-                        <button
-                          className="btn-delete"
-                          onClick={() => handleDelete(u.id)}
-                          title="Eliminar usuario"
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          {/* Sección inferior del sidebar: quién es y botón de salir */}
+          <div className="admin-sidebar-footer">
+            <div className="admin-user">
+              <span className="admin-user-name">
+                {admin ? `${admin.nombre} ${admin.apellido}` : "Admin"}
+              </span>
+              <span className="admin-user-email">{admin?.email}</span>
+            </div>
+            <button className="btn-logout" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
           </div>
-        )}
-      </main>
+        </aside>
+
+        {/* Contenido del panel activo */}
+        <main className="admin-content">
+          {error && <div className="server-error">{error}</div>}
+
+          {loading ? (
+            <p>Cargando usuarios...</p>
+          ) : (
+            <>
+              {pestana === "fichas" && <Fichas users={users} onDataChanged={fetchUsers} />}
+              {pestana === "instructores" && <Instructores users={users} onDataChanged={fetchUsers} />}
+              {pestana === "usuarios" && <Usuarios users={users} onDataChanged={fetchUsers} />}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
