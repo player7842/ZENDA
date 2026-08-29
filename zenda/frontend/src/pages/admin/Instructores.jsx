@@ -18,8 +18,8 @@ function Instructores({ users, onDataChanged }) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
-  const instructores = users.filter((u) => u.rol === "instructor");
-  const seleccionado = instructores.find((u) => u.id === selectedId) || null;
+  const instructores = users.filter((u) => u.rol === "INSTRUCTOR");
+  const seleccionado = instructores.find((u) => u.usuario_id === selectedId) || null;
 
   // Copia local de las fichas del instructor seleccionado (antes de guardar)
   const [fichasEdit, setFichasEdit] = useState([]);
@@ -32,7 +32,7 @@ function Instructores({ users, onDataChanged }) {
   };
 
   const seleccionar = (user) => {
-    setSelectedId(user.id);
+    setSelectedId(user.usuario_id);
     setFichasEdit(user.fichas || []);
     setNuevaFicha("");
   };
@@ -42,7 +42,7 @@ function Instructores({ users, onDataChanged }) {
     setCargando(true);
     setError("");
     try {
-      await createUser({ ...form, rol: "instructor", fichas: [] });
+      await createUser({ ...form, rol: "INSTRUCTOR", fichas: [] });
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -53,7 +53,7 @@ function Instructores({ users, onDataChanged }) {
     try {
       const { userPassword, ...datos } = form;
       // Se conservan los vínculos actuales de fichas
-      await updateUser(modal.user.id, { ...datos, fichas: modal.user.fichas || [] });
+      await updateUser(modal.user.usuario_id, { ...datos, fichas: modal.user.fichas || [] });
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -62,8 +62,8 @@ function Instructores({ users, onDataChanged }) {
     setCargando(true);
     setError("");
     try {
-      await deleteUser(modal.user.id, password);
-      if (selectedId === modal.user.id) setSelectedId(null);
+      await deleteUser(modal.user.usuario_id, password);
+      if (selectedId === modal.user.usuario_id) setSelectedId(null);
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -104,8 +104,8 @@ function Instructores({ users, onDataChanged }) {
           ) : (
             instructores.map((u) => (
               <button
-                key={u.id}
-                className={`panel-list-item ${selectedId === u.id ? "active" : ""}`}
+                key={u.usuario_id}
+                className={`panel-list-item ${selectedId === u.usuario_id ? "active" : ""}`}
                 onClick={() => seleccionar(u)}
               >
                 <span className="panel-list-num">{u.nombre} {u.apellido}</span>
@@ -124,7 +124,7 @@ function Instructores({ users, onDataChanged }) {
               <div className="panel-detail-header">
                 <div>
                   <h3>{seleccionado.nombre} {seleccionado.apellido}</h3>
-                  <p className="admin-count">{seleccionado.email}</p>
+                  <p className="admin-count">{seleccionado.correo}</p>
                 </div>
                 <div className="acciones-cell">
                   <button className="btn-accion" onClick={() => setModal({ tipo: "editar", user: seleccionado })}>Editar</button>
@@ -177,7 +177,7 @@ function Instructores({ users, onDataChanged }) {
       {modal?.tipo === "crear" && (
         <UserFormModal
           titulo="Agregar instructor"
-          rolFijo="instructor"
+          rolFijo="INSTRUCTOR"
           cargando={cargando}
           onConfirmar={crear}
           onCerrar={() => setModal(null)}
@@ -187,7 +187,7 @@ function Instructores({ users, onDataChanged }) {
         <UserFormModal
           titulo={`Editar a ${modal.user.nombre} ${modal.user.apellido}`}
           initial={modal.user}
-          rolFijo="instructor"
+          rolFijo="INSTRUCTOR"
           cargando={cargando}
           onConfirmar={editar}
           onCerrar={() => setModal(null)}

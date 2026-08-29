@@ -416,6 +416,12 @@ body.light .admin-table td {
   border: 1px solid rgba(147, 51, 234, 0.4);
 }
 
+.badge-administrador {
+  background: rgba(26, 107, 10, 0.2);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.4);
+}
+
 body.light .ficha-badge {
   color: #1a6b0a;
 }

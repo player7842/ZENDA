@@ -13,12 +13,12 @@ import { useState } from "react";
 import { createUser, updateUser, deleteUser } from "../../api";
 import { UserFormModal, ConfirmPasswordModal } from "../../components/admin/Modals";
 
-// Las pestañas del mini menú: etiqueta visible => rol en la BD
+// Las pestañas del mini menú: etiqueta visible => rol en la BD (ENUM mayúsculas)
 const GRUPOS = [
-  { id: "estudiantes", etiqueta: "Estudiantes", rol: "aprendiz" },
-  { id: "instructores", etiqueta: "Instructores", rol: "instructor" },
-  { id: "coordinadores", etiqueta: "Coordinadores", rol: "coordinador" },
-  { id: "administradores", etiqueta: "Administradores", rol: "admin" },
+  { id: "estudiantes", etiqueta: "Estudiantes", rol: "APRENDIZ" },
+  { id: "instructores", etiqueta: "Instructores", rol: "INSTRUCTOR" },
+  { id: "coordinadores", etiqueta: "Coordinadores", rol: "COORDINADOR" },
+  { id: "administradores", etiqueta: "Administradores", rol: "ADMINISTRADOR" },
 ];
 
 function Usuarios({ users, onDataChanged }) {
@@ -55,7 +55,7 @@ function Usuarios({ users, onDataChanged }) {
     try {
       const { userPassword, ...datos } = form; // userPassword no aplica al editar
       // Si editamos un instructor, mandamos sus fichas para no perder los vínculos
-      await updateUser(modal.user.id, { ...datos, fichas: modal.user.fichas || [] });
+      await updateUser(modal.user.usuario_id, { ...datos, fichas: modal.user.fichas || [] });
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -64,7 +64,7 @@ function Usuarios({ users, onDataChanged }) {
     setCargando(true);
     setError("");
     try {
-      await deleteUser(modal.user.id, password);
+      await deleteUser(modal.user.usuario_id, password);
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -108,19 +108,19 @@ function Usuarios({ users, onDataChanged }) {
                 <th>Nombre</th>
                 <th>Correo</th>
                 <th>Ficha</th>
-                {grupoActivo.rol === "instructor" && <th>Fichas vinculadas</th>}
+                {grupoActivo.rol === "INSTRUCTOR" && <th>Fichas vinculadas</th>}
                 <th>Rol</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {usuariosDeGrupo.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.id}</td>
+                <tr key={u.usuario_id}>
+                  <td>{u.usuario_id}</td>
                   <td>{u.nombre} {u.apellido}</td>
-                  <td>{u.email}</td>
+                  <td>{u.correo}</td>
                   <td>{u.ficha || "—"}</td>
-                  {grupoActivo.rol === "instructor" && (
+                  {grupoActivo.rol === "INSTRUCTOR" && (
                     <td>
                       {(u.fichas && u.fichas.length) ? (
                         <div className="chips-wrap">
@@ -129,7 +129,7 @@ function Usuarios({ users, onDataChanged }) {
                       ) : "—"}
                     </td>
                   )}
-                  <td><span className={`badge-rol badge-${u.rol}`}>{u.rol}</span></td>
+                  <td><span className={`badge-rol badge-${u.rol.toLowerCase()}`}>{u.rol}</span></td>
                   <td className="acciones-cell">
                     <button className="btn-accion" onClick={() => setModal({ tipo: "editar", user: u })}>Editar usuario</button>
                     <button className="btn-accion btn-accion-danger" onClick={() => setModal({ tipo: "eliminar", user: u })}>Eliminar</button>

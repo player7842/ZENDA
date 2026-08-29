@@ -1,58 +1,96 @@
 /*
-  Panel Fichas a la izquierda un listado de TODAS las fichas; al hacer clic
-  en una, a la derecha se muestran los estudiantes de esa ficha.
-  Desde ahí se puede VER, AGREGAR, EDITAR y ELIMINAR estudiantes.
-  Toda acción delicada pide la contraseña del admin (confirmación).
+  Panel Fichas
+   A la IZQUIERDA el listado de TODAS las fichas (con su programa y cuántos
+   aprendices tienen); al hacer clic en una, a la DERECHA se ven sus estudiantes.
+   Desde aquí se puede:
+     - Crear, editar y eliminar fichas (formulario con programa/numero/jornada)
+     - Agregar estudiantes a la ficha (crea el aprendiz y lo vincula por grupos)
+     - Editar y eliminar estudiantes
+   Toda acción delicada pide la contraseña del admin (confirmación).
+   MR_ZENDA: las fichas vienen desde /api/fichas y los usuarios de /api/users.
 */
 
 import { useState } from "react";
-import { createUser, updateUser, deleteUser } from "../../api";
-import { UserFormModal, ConfirmPasswordModal } from "../../components/admin/Modals";
+import {
+  createUser, updateUser, deleteUser,
+  createFicha, updateFicha, deleteFicha, addAprendizAFicha,
+} from "../../api";
+import { UserFormModal, FichaFormModal, ConfirmPasswordModal } from "../../components/admin/Modals";
 
-function Fichas({ users, onDataChanged }) {
+function Fichas({ users, fichas, programas, onDataChanged }) {
   const [selectedFicha, setSelectedFicha] = useState(null);
-  // modal: null | { tipo:'crear' } | { tipo:'editar', user } | { tipo:'eliminar', user }
+  // modal: null | { tipo:'crear-estudiante' } | { tipo:'editar-estudiante', user }
+  //      | { tipo:'eliminar-estudiante', user } | { tipo:'crear-ficha' }
+  //      | { tipo:'editar-ficha', ficha } | { tipo:'eliminar-ficha', ficha }
   const [modal, setModal] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
-  // Todas las fichas únicas ordenadas
-  const fichas = [...new Set(users.map((u) => u.ficha).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  // Estudiantes de la ficha seleccionada (usuarios = snapshot de /api/users)
+  const estudiantes = selectedFicha
+    ? users.filter((u) => u.rol === "APRENDIZ" && u.ficha === selectedFicha.numero_ficha)
+    : [];
 
-  // Estudiantes de la ficha seleccionada
-  const estudiantes = selectedFicha ? users.filter((u) => u.ficha === selectedFicha) : [];
-
-  // Al éxito de cualquier operación avisamos al Admin para recargar la lista
   const ok = (msg) => {
     setError("");
     setModal(null);
     onDataChanged && onDataChanged();
   };
 
-  const crear = async (form) => {
+  // Agregar estudiante: primero se crea el aprendiz y luego se vincula a la ficha
+  const crearEstudiante = async (form) => {
     setCargando(true);
     setError("");
     try {
-      await createUser({ ...form, ficha: selectedFicha });
+      const creado = await createUser({ ...form, rol: "APRENDIZ" });
+      await addAprendizAFicha(selectedFicha.ficha_id, creado.user.usuario_id, form.password);
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
 
-  const editar = async (form) => {
+  const editarEstudiante = async (form) => {
     setCargando(true);
     setError("");
     try {
       const { userPassword, ...datos } = form; // userPassword no aplica al editar
-      await updateUser(modal.user.id, datos);
+      await updateUser(modal.user.usuario_id, { ...datos, rol: "APRENDIZ" });
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
 
-  const eliminar = async (password) => {
+  const eliminarEstudiante = async (password) => {
     setCargando(true);
     setError("");
     try {
-      await deleteUser(modal.user.id, password);
+      await deleteUser(modal.user.usuario_id, password);
+      ok();
+    } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
+  };
+
+  const crearFicha = async (form) => {
+    setCargando(true);
+    setError("");
+    try {
+      await createFicha(form);
+      ok();
+    } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
+  };
+
+  const editarFicha = async (form) => {
+    setCargando(true);
+    setError("");
+    try {
+      await updateFicha(modal.ficha.ficha_id, form);
+      ok();
+    } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
+  };
+
+  const eliminarFicha = async (password) => {
+    setCargando(true);
+    setError("");
+    try {
+      await deleteFicha(modal.ficha.ficha_id, password);
+      if (selectedFicha && selectedFicha.ficha_id === modal.ficha.ficha_id) setSelectedFicha(null);
       ok();
     } catch (e) { setError(e.message); setModal(null); } finally { setCargando(false); }
   };
@@ -60,28 +98,28 @@ function Fichas({ users, onDataChanged }) {
   return (
     <div>
       <h2>Fichas</h2>
-      <p className="admin-hint">Selecciona una ficha del listado para ver y gestionar a sus estudiantes (agregar, editar, eliminar).</p>
+      <p className="admin-hint">Selecciona una ficha para ver y gestionar a sus estudiantes. También puedes crear, editar o eliminar fichas.</p>
 
       <div className="panel-split">
         {/* Listado de fichas */}
         <div className="panel-list">
-          <h3 className="panel-list-title">Todas las fichas</h3>
+          <div className="panel-list-head">
+            <h3 className="panel-list-title">Todas las fichas</h3>
+            <button className="btn-rol btn-rol-mini" onClick={() => setModal({ tipo: "crear-ficha" })} title="Nueva ficha">+</button>
+          </div>
           {fichas.length === 0 ? (
             <p className="list-vacia">No hay fichas registradas.</p>
           ) : (
-            fichas.map((f) => {
-              const cantidad = users.filter((u) => u.ficha === f).length;
-              return (
-                <button
-                  key={f}
-                  className={`panel-list-item ${selectedFicha === f ? "active" : ""}`}
-                  onClick={() => setSelectedFicha(f)}
-                >
-                  <span className="panel-list-num">Ficha {f}</span>
-                  <span className="panel-list-count">{cantidad}</span>
-                </button>
-              );
-            })
+            fichas.map((f) => (
+              <button
+                key={f.ficha_id}
+                className={`panel-list-item ${selectedFicha?.ficha_id === f.ficha_id ? "active" : ""}`}
+                onClick={() => setSelectedFicha(f)}
+              >
+                <span className="panel-list-num">Ficha {f.numero_ficha}</span>
+                <span className="panel-list-count">{f.cantidad_aprendices}</span>
+              </button>
+            ))
           )}
         </div>
 
@@ -93,16 +131,24 @@ function Fichas({ users, onDataChanged }) {
             <>
               <div className="panel-detail-header">
                 <div>
-                  <h3>Estudiantes de la Ficha {selectedFicha}</h3>
-                  <p className="admin-count">{estudiantes.length} usuario(s) en esta ficha</p>
+                  <h3>Ficha {selectedFicha.numero_ficha}</h3>
+                  <p className="admin-count">
+                    {selectedFicha.nombre_programa} · {selectedFicha.jornada}
+                    {" · "}{selectedFicha.fecha_inicio} → {selectedFicha.fecha_fin}
+                    {" · "}{estudiantes.length} estudiante(s)
+                  </p>
                 </div>
-                <button className="btn-rol" onClick={() => setModal({ tipo: "crear" })}>
-                  + Agregar estudiante
-                </button>
+                <div className="acciones-cell">
+                  <button className="btn-rol" onClick={() => setModal({ tipo: "crear-estudiante" })}>
+                    + Agregar estudiante
+                  </button>
+                  <button className="btn-accion" onClick={() => setModal({ tipo: "editar-ficha", ficha: selectedFicha })}>Editar ficha</button>
+                  <button className="btn-accion btn-accion-danger" onClick={() => setModal({ tipo: "eliminar-ficha", ficha: selectedFicha })}>Eliminar ficha</button>
+                </div>
               </div>
 
               {estudiantes.length === 0 ? (
-                <div className="panel-empty">Esta ficha no tiene usuarios. Agrega el primero.</div>
+                <div className="panel-empty">Esta ficha no tiene estudiantes. Agrega el primero.</div>
               ) : (
                 <div className="ficha-table-wrap">
                   <table className="admin-table">
@@ -118,15 +164,15 @@ function Fichas({ users, onDataChanged }) {
                     </thead>
                     <tbody>
                       {estudiantes.map((u) => (
-                        <tr key={u.id}>
-                          <td>{u.id}</td>
+                        <tr key={u.usuario_id}>
+                          <td>{u.usuario_id}</td>
                           <td>{u.nombre} {u.apellido}</td>
-                          <td>{u.email}</td>
+                          <td>{u.correo}</td>
                           <td>{u.tipo_documento} {u.numero_documento}</td>
-                          <td><span className={`badge-rol badge-${u.rol}`}>{u.rol}</span></td>
+                          <td><span className={`badge-rol badge-${u.rol.toLowerCase()}`}>{u.rol}</span></td>
                           <td className="acciones-cell">
-                            <button className="btn-accion" onClick={() => setModal({ tipo: "editar", user: u })}>Editar</button>
-                            <button className="btn-accion btn-accion-danger" onClick={() => setModal({ tipo: "eliminar", user: u })}>Eliminar</button>
+                            <button className="btn-accion" onClick={() => setModal({ tipo: "editar-estudiante", user: u })}>Editar</button>
+                            <button className="btn-accion btn-accion-danger" onClick={() => setModal({ tipo: "eliminar-estudiante", user: u })}>Eliminar</button>
                           </td>
                         </tr>
                       ))}
@@ -141,33 +187,64 @@ function Fichas({ users, onDataChanged }) {
 
       {error && <div className="server-error" style={{ marginTop: "16px" }}>{error}</div>}
 
-      {/* Modales de crear / editar / eliminar */}
-      {modal?.tipo === "crear" && (
+      {/* Modales de estudiantes */}
+      {modal?.tipo === "crear-estudiante" && (
         <UserFormModal
-          titulo={`Agregar estudiante a la Ficha ${selectedFicha}`}
-          fichaFija={selectedFicha}
+          titulo={`Agregar estudiante a la Ficha ${selectedFicha.numero_ficha}`}
+          rolFijo="APRENDIZ"
           cargando={cargando}
-          onConfirmar={crear}
+          onConfirmar={crearEstudiante}
           onCerrar={() => setModal(null)}
         />
       )}
-      {modal?.tipo === "editar" && (
+      {modal?.tipo === "editar-estudiante" && (
         <UserFormModal
           titulo={`Editar a ${modal.user.nombre} ${modal.user.apellido}`}
           initial={modal.user}
-          fichaFija={selectedFicha}
+          rolFijo="APRENDIZ"
           cargando={cargando}
-          onConfirmar={editar}
+          onConfirmar={editarEstudiante}
           onCerrar={() => setModal(null)}
         />
       )}
-      {modal?.tipo === "eliminar" && (
+      {modal?.tipo === "eliminar-estudiante" && (
         <ConfirmPasswordModal
           titulo="Eliminar usuario"
           mensaje={`¿Seguro que quieres eliminar a ${modal.user.nombre} ${modal.user.apellido}? Esta acción no se puede deshacer.`}
           textoBoton="Sí, eliminar"
           cargando={cargando}
-          onConfirmar={eliminar}
+          onConfirmar={eliminarEstudiante}
+          onCerrar={() => setModal(null)}
+        />
+      )}
+
+      {/* Modales de fichas */}
+      {modal?.tipo === "crear-ficha" && (
+        <FichaFormModal
+          titulo="Nueva ficha"
+          programas={programas}
+          cargando={cargando}
+          onConfirmar={crearFicha}
+          onCerrar={() => setModal(null)}
+        />
+      )}
+      {modal?.tipo === "editar-ficha" && (
+        <FichaFormModal
+          titulo={`Editar la Ficha ${modal.ficha.numero_ficha}`}
+          initial={modal.ficha}
+          programas={programas}
+          cargando={cargando}
+          onConfirmar={editarFicha}
+          onCerrar={() => setModal(null)}
+        />
+      )}
+      {modal?.tipo === "eliminar-ficha" && (
+        <ConfirmPasswordModal
+          titulo="Eliminar ficha"
+          mensaje={`¿Seguro que quieres eliminar la Ficha ${modal.ficha.numero_ficha}? Se desvinculan sus estudiantes e instructores. Esta acción no se puede deshacer.`}
+          textoBoton="Sí, eliminar"
+          cargando={cargando}
+          onConfirmar={eliminarFicha}
           onCerrar={() => setModal(null)}
         />
       )}

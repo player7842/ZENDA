@@ -62,7 +62,7 @@ function Login() {
       localStorage.setItem("zenda-user", JSON.stringify(data.user));
 
       // Si es admin va directo al panel (que es el dashboard) si no a la landing 
-      navigate(data.user.rol === "admin" ? "/admin" : "/dashboard");
+      navigate(data.user.rol === "ADMINISTRADOR" ? "/admin" : "/dashboard");
     } catch (err) {
       // El backend nos dijo NO
       setServerError(err.message);

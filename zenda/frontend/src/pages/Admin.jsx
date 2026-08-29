@@ -5,7 +5,7 @@
     - Sidebar IZQUIERDO: navegación de paneles + botón de cerrar sesión abajo
     - Contenido a la derecha: el panel activo
   Paneles:
-    1. Fichas        → listado de fichas, selecciona → CRUD de estudiantes
+    1. Fichas        → listado de fichas (programas + conteos), selecciona → CRUD de estudiantes
     2. Instructores  → listado de instructores, selecciona → fichas vinculadas (modificable)
     3. Usuarios      → mini menú por rol y edición completa de usuarios
   Toda acción delicada pide la contraseña del admin. Seguridad ante todo, hp.
@@ -13,7 +13,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUsers, clearToken, getStoredUser, isAdmin } from "../api";
+import { getUsers, getFichas, getProgramas, clearToken, getStoredUser, isAdmin } from "../api";
 import { useTheme } from "../context/ThemeContext";
 import ThemeToggle from "../components/ThemeToggle";
 import Fichas from "./admin/Fichas";
@@ -29,6 +29,8 @@ const PESTANAS = [
 
 function Admin() {
   const [users, setUsers] = useState([]);
+  const [fichas, setFichas] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pestana, setPestana] = useState("fichas");
@@ -36,13 +38,17 @@ function Admin() {
   const { theme } = useTheme();
   const admin = getStoredUser();
 
-  // Trae TODOS los usuarios del backend (lo usan todos los paneles)
-  const fetchUsers = async () => {
+  // Trae TODO lo que usan los paneles: usuarios, fichas y programas
+  const fetchTodo = async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await getUsers();
-      setUsers(data);
+      const [usersData, fichasData, programasData] = await Promise.all([
+        getUsers(), getFichas(), getProgramas(),
+      ]);
+      setUsers(usersData);
+      setFichas(fichasData);
+      setProgramas(programasData);
     } catch (err) {
       setError(err.message);
       if (err.message.includes("Token")) {
@@ -60,7 +66,7 @@ function Admin() {
       navigate("/dashboard");
       return;
     }
-    fetchUsers();
+    fetchTodo();
   }, []);
 
   const handleLogout = () => {
@@ -109,7 +115,7 @@ function Admin() {
               <span className="admin-user-name">
                 {admin ? `${admin.nombre} ${admin.apellido}` : "Admin"}
               </span>
-              <span className="admin-user-email">{admin?.email}</span>
+              <span className="admin-user-email">{admin?.correo}</span>
             </div>
             <button className="btn-logout" onClick={handleLogout}>
               Cerrar sesión
@@ -122,12 +128,12 @@ function Admin() {
           {error && <div className="server-error">{error}</div>}
 
           {loading ? (
-            <p>Cargando usuarios...</p>
+            <p>Cargando datos...</p>
           ) : (
             <>
-              {pestana === "fichas" && <Fichas users={users} onDataChanged={fetchUsers} />}
-              {pestana === "instructores" && <Instructores users={users} onDataChanged={fetchUsers} />}
-              {pestana === "usuarios" && <Usuarios users={users} onDataChanged={fetchUsers} />}
+              {pestana === "fichas" && <Fichas users={users} fichas={fichas} programas={programas} onDataChanged={fetchTodo} />}
+              {pestana === "instructores" && <Instructores users={users} onDataChanged={fetchTodo} />}
+              {pestana === "usuarios" && <Usuarios users={users} onDataChanged={fetchTodo} />}
             </>
           )}
         </main>

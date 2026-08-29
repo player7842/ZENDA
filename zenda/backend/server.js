@@ -9,6 +9,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './src/routes/auth.js';
 import userRoutes from './src/routes/users.js';
+import fichasRoutes from './src/routes/fichas.js';
 import { testConnection } from './src/config/db.js';
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(express.json());
 // Rutas el alma de esta porquería
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/fichas', fichasRoutes);
 
 // Endpoint de salud 
 app.get('/api/health', (req, res) => {

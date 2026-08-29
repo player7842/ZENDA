@@ -26,7 +26,7 @@ function Dashboard() {
       <header className="dashboard-header">
         <div className="dashboard-brand">
           <img src={logo} alt="ZENDA" className="dashboard-logo" />
-          <p>Bienvenido, {user ? `${user.nombre} ${user.apellido}` : user?.email}</p>
+          <p>Bienvenido, {user ? `${user.nombre} ${user.apellido}` : user?.correo}</p>
         </div>
         <div className="dashboard-header-actions">
           <button className="btn-logout" onClick={handleLogout}>

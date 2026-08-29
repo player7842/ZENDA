@@ -8,6 +8,9 @@
   Cómo cambiar para producción:
   - Local: VITE_API_URL=http://localhost:4000
   - Vercel/Netlify: pones tu URL de backend desplegado (ej. https://zenda-api.railway.app)
+
+  NOTA MR_ZENDA: en la BD el correo se llama `correo`, el id `usuario_id`
+  y el rol es ENUM en MAYÚSCULAS (ADMINISTRADOR, no "admin").
 */
 
 const API_URL =
@@ -26,14 +29,14 @@ export const getStoredUser = () => {
     return null;
   }
 };
-export const isAdmin = () => getStoredUser()?.rol === "admin";
+export const isAdmin = () => getStoredUser()?.rol === "ADMINISTRADOR";
 
 // Login - devuelve { user, token } o lanza un error con el mensaje del backend
-export async function login(email, password) {
+export async function login(correo, password) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ correo, password }),
   });
 
   const data = await res.json();
@@ -144,4 +147,111 @@ export async function updateUserRol(id, rol, password) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Error al cambiar el rol");
   return data;
+}
+
+// ------------------------------------------------------------------
+// FICHAS (esquema oficial MR_ZENDA)
+// ------------------------------------------------------------------
+
+// Listar todas las fichas con su programa y conteos (solo admin)
+export async function getFichas() {
+  const res = await fetch(`${API_URL}/api/fichas`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Error al obtener fichas");
+  return data;
+}
+
+// Listar los programas disponibles para el formulario de fichas (solo admin)
+export async function getProgramas() {
+  const res = await fetch(`${API_URL}/api/fichas/programas`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Error al obtener programas");
+  return data;
+}
+
+// Crear una ficha (solo admin) - password de confirmación
+export async function createFicha(data) {
+  const res = await fetch(`${API_URL}/api/fichas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Error al crear la ficha");
+  return json;
+}
+
+// Editar una ficha (solo admin) - password de confirmación
+export async function updateFicha(id, data) {
+  const res = await fetch(`${API_URL}/api/fichas/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Error al actualizar la ficha");
+  return json;
+}
+
+// Eliminar una ficha (solo admin) - password de confirmación
+export async function deleteFicha(id, password) {
+  const res = await fetch(`${API_URL}/api/fichas/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Error al eliminar la ficha");
+  return json;
+}
+
+// Vincular un aprendiz a una ficha (solo admin) - password de confirmación
+export async function addAprendizAFicha(fichaId, usuarioId, password) {
+  const res = await fetch(`${API_URL}/api/fichas/${fichaId}/aprendiz`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ usuario_id: usuarioId, password }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Error al vincular aprendiz");
+  return json;
+}
+
+// Desvincular un aprendiz de una ficha (solo admin) - password de confirmación
+export async function removeAprendizDeFicha(fichaId, usuarioId, password) {
+  const res = await fetch(`${API_URL}/api/fichas/${fichaId}/aprendiz/${usuarioId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  const json = await res.json();
+  if (!res.ok)
+    throw new Error(json.message || "Error al desvincular aprendiz");
+  return json;
 }

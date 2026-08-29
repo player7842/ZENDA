@@ -1,9 +1,13 @@
 /*
- Formulario de registro de nuevos usuarios CONECTADO AL BACKEND
+  Formulario de registro de nuevos usuarios CONECTADO AL BACKEND
 
   Envía POST /api/auth/register con los datos del usuario
   Si el backend acepta, devuelve token + user y nos manda al login
   Si el backend rechaza (ej. correo duplicado), muestra el error
+
+  MR_ZENDA: el backend espera `correo` (no email) y un aprendiz se vincula
+  a su ficha desde el panel admin (la relación va por grupos lo nuevo) así que
+  aquí ya no hay selector de ficha.
 
   Diferencia con Login: aquí usamos un solo objeto (formData) en vez de 
   estados separados, porque hay muchos campos. Si usáramos estados sueltos,
@@ -21,7 +25,6 @@ function Register() {
     nombre: "",
     apellido: "",
     email: "",
-    ficha: "",
     tipoDocumento: "",
     numeroDocumento: "",
     password: "",
@@ -37,27 +40,11 @@ function Register() {
   const refs = {
     apellido: useRef(null),
     email: useRef(null),
-    ficha: useRef(null),
     tipoDocumento: useRef(null),
     numeroDocumento: useRef(null),
     password: useRef(null),
     confirmPassword: useRef(null),
   };
-
-  const fichas = [
-    { value: "", label: "Seleccione una ficha" },
-    {
-      value: "2587210",
-      label: "2587210 - Tecnólogo en Análisis y Desarrollo de Software",
-    },
-    {
-      value: "2587211",
-      label: "2587211 - Tecnólogo en Redes y Telecomunicaciones",
-    },
-    { value: "2587212", label: "2587212 - Tecnólogo en Gestión de Redes" },
-    { value: "2587213", label: "2587213 - Técnico en Sistemas" },
-    { value: "2587214", label: "2587214 - Técnico en Redes" },
-  ];
 
   const tiposDocumento = [
     { value: "", label: "Seleccione tipo" },
@@ -91,7 +78,6 @@ function Register() {
     if (!formData.apellido.trim())
       newErrors.apellido = "El apellido es requerido";
     if (!formData.email) newErrors.email = "El correo es requerido";
-    if (!formData.ficha) newErrors.ficha = "Seleccione una ficha";
     if (!formData.tipoDocumento) newErrors.tipoDocumento = "Seleccione un tipo";
     if (!formData.numeroDocumento)
       newErrors.numeroDocumento = "El número es requerido";
@@ -124,8 +110,7 @@ function Register() {
       await register({
         nombre: formData.nombre,
         apellido: formData.apellido,
-        email: formData.email,
-        ficha: formData.ficha,
+        correo: formData.email,
         tipo_documento: formData.tipoDocumento,
         numero_documento: formData.numeroDocumento,
         password: formData.password,
@@ -216,33 +201,12 @@ function Register() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                onKeyDown={handleKeyDown(refs.ficha)}
+                onKeyDown={handleKeyDown(refs.tipoDocumento)}
                 placeholder="usuario@dominio.edu.co"
               />
             </div>
             {errors.email && (
               <span className="field-error">{errors.email}</span>
-            )}
-          </div>
-
-          {/* Ficha */}
-          <div className={`form-field ${errors.ficha ? "has-error" : ""}`}>
-            <label>Ficha</label>
-            <select
-              ref={refs.ficha}
-              name="ficha"
-              value={formData.ficha}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown(refs.tipoDocumento)}
-            >
-              {fichas.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-            {errors.ficha && (
-              <span className="field-error">{errors.ficha}</span>
             )}
           </div>
 
