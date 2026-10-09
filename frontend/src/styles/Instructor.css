@@ -1,0 +1,66 @@
+/* ============================================
+   Estilos propios del panel de instructor de ZENDA
+   Layout general (header, sidebar, panel-split, tabla) se reutiliza
+   de Admin.css; aquí solo va lo que es exclusivo de esta vista.
+   ============================================ */
+
+/* ---------- Título de la sub-sección de evidencias ---------- */
+.instructor-evidencias-title {
+  margin-top: 24px;
+}
+
+/* ---------- Insignias de estado de evidencia ---------- */
+.badge-evidencia {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.badge-evidencia.pendiente {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-evidencia.entregado {
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+}
+
+body.light .badge-evidencia.entregado {
+  color: #1a6b0a;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .instructor-evidencias-title {
+    margin-top: 18px;
+  }
+}
+
+
+/* ---------- Insignias de estado de fase ---------- */
+.badge-fase {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+}
+
+.badge-fase.aprobada {
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+}
+
+.badge-fase.desaprobada {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--color-error);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
