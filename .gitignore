@@ -1,0 +1,33 @@
+# =====================================================================
+# ZENDA — Archivos que NO deben subirse al repositorio
+# =====================================================================
+
+# Dependencias
+node_modules/
+
+# Variables de entorno (contienen contraseñas y claves)
+.env
+.env.*
+!.env.example
+
+# Resultado de compilación
+dist/
+build/
+
+# Registros y temporales
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.cache/
+coverage/
+
+# Datos locales de Docker y archivos subidos en desarrollo
+pgdata/
+uploads/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
