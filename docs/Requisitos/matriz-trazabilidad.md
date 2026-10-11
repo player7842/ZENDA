@@ -12,8 +12,8 @@
 
 | Estado | Cantidad |
 | --- | --- |
-| Implementado | 16 |
-| Parcial | 17 |
+| Implementado | 15 |
+| Parcial | 18 |
 | Planificado | 9 |
 | **Total** | **42** |
 
@@ -54,7 +54,7 @@
 | [HU-023](HUs/HU-023_evaluacion_de_evidencias.md) | [RF-023](RFs/RF-023_evaluacion_de_evidencias.md) | Evaluación | Instructor | Alta | Parcial | RN-016, RN-017, RN-018 |
 | [HU-024](HUs/HU-024_aprobacion_de_carpetas_en_bloque.md) | [RF-024](RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) | Evaluación | Instructor | Media | Planificado | RN-016, RN-017, RN-018, RN-019 |
 | [HU-025](HUs/HU-025_estado_y_porcentaje_de_avance.md) | [RF-025](RFs/RF-025_estado_y_porcentaje_de_avance.md) | Evaluación | Aprendiz | Alta | Parcial | RN-018, RN-019, RN-020 |
-| [HU-026](HUs/HU-026_observaciones_del_instructor.md) | [RF-026](RFs/RF-026_observaciones_del_instructor.md) | Evaluación | Instructor | Alta | Implementado | RN-016, RN-023 |
+| [HU-026](HUs/HU-026_observaciones_del_instructor.md) | [RF-026](RFs/RF-026_observaciones_del_instructor.md) | Evaluación | Instructor | Alta | Parcial | RN-016, RN-023 |
 | [HU-027](HUs/HU-027_consulta_de_observaciones.md) | [RF-027](RFs/RF-027_consulta_de_observaciones.md) | Evaluación | Aprendiz | Alta | Implementado | RN-023 |
 | [HU-028](HUs/HU-028_creacion_y_asignacion_de_tareas.md) | [RF-028](RFs/RF-028_creacion_y_asignacion_de_tareas.md) | Tareas | Líder de grupo | Alta | Parcial | RN-008, RN-021 |
 | [HU-029](HUs/HU-029_avance_de_mis_tareas.md) | [RF-029](RFs/RF-029_avance_de_mis_tareas.md) | Tareas | Aprendiz | Alta | Implementado | RN-022 |
