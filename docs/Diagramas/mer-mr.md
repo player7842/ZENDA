@@ -30,8 +30,44 @@
 | **Audiencia** | Instructor, coordinador, equipo | Quien escribe el SQL |
 
 ---
+---
 
-## 2. Modelo entidad-relación (MER)
+## 2. Diagrama entidad-relación (MER)
+
+```mermaid
+erDiagram
+    programas ||--o{ fichas : tiene
+    fichas ||--o{ grupos : agrupa
+    fichas ||--o{ instructor_ficha : "es atendida por"
+    usuarios ||--o{ instructor_ficha : atiende
+    usuarios |o--o{ grupos : lidera
+    grupos ||--o{ integrantes_grupo : incluye
+    usuarios ||--o{ integrantes_grupo : participa
+    grupos ||--o| proyectos : desarrolla
+    proyectos ||--|{ fases : "5 fases"
+    proyectos ||--o{ tareas : organiza
+    usuarios ||--o{ tareas : "es responsable"
+    fases ||--o{ carpetas : contiene
+    carpetas ||--o{ evidencias : contiene
+    usuarios ||--o{ evidencias : sube
+    evidencias ||--|{ evidencia_versiones : versiona
+    evidencias ||--o{ evaluaciones : recibe
+    usuarios ||--o{ evaluaciones : realiza
+    proyectos ||--o{ observaciones : recibe
+    evidencias |o--o{ observaciones : "se refiere"
+    usuarios ||--o{ observaciones : escribe
+    fichas ||--o| listas_chequeo : define
+    listas_chequeo ||--o{ lista_chequeo_items : contiene
+    lista_chequeo_items ||--o{ lista_chequeo_evaluaciones : se_evalua
+    grupos ||--o{ lista_chequeo_evaluaciones : es_evaluado
+    usuarios ||--o{ sesiones_refresh : abre
+    usuarios ||--o{ tokens_verificacion_correo : recibe
+    usuarios |o--o{ auditoria : genera
+```
+
+---
+
+## 2.1 Modelo Relacional (MR)
 
 Solo el dominio del negocio: se omiten las tablas técnicas (`sesiones_refresh`, `tokens_verificacion_correo`, `auditoria`).
 
