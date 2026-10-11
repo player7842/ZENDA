@@ -16,7 +16,7 @@
 | **Título** | Observaciones del instructor |
 | **Módulo** | Evaluación |
 | **Prioridad** | Alta |
-| **Estado** | Implementado |
+| **Estado** | Parcial |
 | **Rol** | Instructor |
 | **RF asociado** | RF-026 |
 | **Reglas de negocio** | RN-016, RN-023 |
@@ -50,3 +50,9 @@
 - **Dado que** abro un proyecto de mi ficha,
 - **cuando** reviso sus observaciones,
 - **entonces** veo el historial con fecha y título.
+
+---
+
+## Cambios frente a la versión v11
+
+- Hoy el endpoint solo recibe `titulo` y `descripcion`: la asociación a una evidencia (`evidencia_id`) es un cambio pendiente.
