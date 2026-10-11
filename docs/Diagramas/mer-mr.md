@@ -30,7 +30,6 @@
 | **Audiencia** | Instructor, coordinador, equipo | Quien escribe el SQL |
 
 ---
----
 
 ## 2. Diagrama entidad-relación (MER)
 
@@ -65,7 +64,6 @@ erDiagram
     usuarios |o--o{ auditoria : genera
 ```
 
----
 
 ## 2.1 Modelo Relacional (MR)
 
@@ -163,6 +161,7 @@ erDiagram
         bool obligatorio
     }
 ```
+---
 
 | Relación | Cardinalidad | Cómo se lee |
 |---|:---:|---|
