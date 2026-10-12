@@ -20,7 +20,22 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware que nos permite parsear JSON y manejar CORS
-app.use(cors());
+// CORS: en producción solo se permiten los dominios de FRONTEND_URL (separados por coma)
+const origenesPermitidos = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Sin origin = Thunder Client, Postman o el monitor de salud; sin FRONTEND_URL = desarrollo
+    if (!origin || origenesPermitidos.length === 0 || origenesPermitidos.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origen no permitido por CORS'));
+  },
+}));
+
 app.use(express.json());
 
 // Rutas el alma de esta porquería
