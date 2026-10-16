@@ -371,10 +371,10 @@ git push -u origin feat/nombre-de-la-funcionalidad
 
 | Integrante | Rol en el proyecto | GitHub |
 |---|---|---|
-| Hernán Eduardo Robledo Montaña| Lider de equipo| [@player7842](https://github.com/player7842) |
+| Hernán Eduardo Robledo Montaña| Lider de equipo|-|
 | Leyner David Buitrago Thomas | Documentacion | [@player7842](https://github.com/player7842) |
-| Nicolas Aparicio Camacho | Desarrollo | [@player7842](https://github.com/player7842) |
-| Omar David Gonzalez Cardozo| Desarrollo | [@player7842](https://github.com/player7842) |
+| Nicolas Aparicio Camacho | Desarrollo | - |
+| Omar David Gonzalez Cardozo| Desarrollo | - |
 
 <!-- Agrega aquí a los demás integrantes del equipo en el mismo formato. -->
 
