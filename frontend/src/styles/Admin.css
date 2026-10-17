@@ -1,0 +1,1670 @@
+/* ============================================
+   Panel de administración de ZENDA
+   Layout: header arriba (logo + tema), sidebar IZQUIERDO, contenido a la derecha
+   ============================================ */
+
+.admin {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+}
+
+/* ---------- Header ---------- */
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--color-card);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-logo {
+  height: 38px;
+  width: auto;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.admin-header p {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Botón cerrar sesión ---------- */
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.75rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.light .btn-logout {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Cuerpo: sidebar + contenido ---------- */
+.admin-body {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - 64px);
+}
+
+/* Sidebar IZQUIERDO */
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-card);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 20px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 64px);
+}
+
+body.light .admin-sidebar {
+  border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-nav-btn {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-nav-btn:hover {
+  background: rgba(26, 107, 10, 0.08);
+  color: var(--color-texto);
+}
+
+.admin-nav-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(26, 107, 10, 0.35);
+}
+
+body.light .admin-nav-btn:hover {
+  color: #1f2937;
+}
+
+body.light .admin-nav-btn.active {
+  background: #1a6b0a;
+  color: #fff;
+}
+
+/* Pie del sidebar: usuario + cerrar sesión */
+.admin-sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 14px;
+}
+
+body.light .admin-sidebar-footer {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.admin-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.admin-user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.admin-user-email {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+/* ---------- Contenido ---------- */
+.admin-content {
+  flex: 1;
+  padding: 28px 32px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.admin-content h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.admin-count {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  margin: 0 0 8px;
+}
+
+.admin-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0 0 18px;
+}
+
+/* ---------- Panel split (listado + detalle) ---------- */
+.panel-split {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.panel-list {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+body.light .panel-list {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.panel-list-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+  padding: 0 4px;
+}
+
+.panel-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-texto);
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.panel-list-item:hover {
+  background: rgba(26, 107, 10, 0.08);
+}
+
+.panel-list-item.active {
+  background: rgba(26, 107, 10, 0.15);
+  border-color: rgba(26, 107, 10, 0.35);
+}
+
+.panel-list-count {
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.panel-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.panel-detail-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel-empty {
+  background: var(--color-card);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 32px;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+body.light .panel-empty {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Acciones en la tabla ---------- */
+.acciones-cell {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-accion {
+  background: none;
+  border: 1px solid rgba(26, 107, 10, 0.35);
+  color: var(--color-primary);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-family: var(--font-family);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-accion:hover {
+  background: rgba(26, 107, 10, 0.1);
+}
+
+.btn-accion-danger {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: var(--color-error);
+}
+
+.btn-accion-danger:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+/* ---------- Tabla ---------- */
+.admin-table-wrap {
+  overflow-x: auto;
+  background: var(--color-card);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 12px 14px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(26, 107, 10, 0.06);
+}
+
+body.light .admin-table th {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light .admin-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- Insignias ---------- */
+.badge-rol {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.badge-admin {
+  background: rgba(26, 107, 10, 0.2);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.4);
+}
+
+.badge-aprendiz {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.badge-instructor {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.ficha-badge {
+  display: inline-flex !important;
+  padding: 4px 10px !important;
+  border-radius: 999px;
+  align-items: center !important;
+  line-height: 1 !important;
+  font-weight: 600 !important;
+  justify-content: center !important;
+  font-size: 0.76rem !important;
+  white-space: nowrap !important;
+  gap: 4px;
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+}
+
+.badge-coordinador {
+  background: rgba(147, 51, 234, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(147, 51, 234, 0.4);
+}
+
+.badge-administrador {
+  background: rgba(26, 107, 10, 0.2);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.4);
+}
+
+body.light .ficha-badge {
+  color: #1a6b0a;
+}
+
+/* ---------- Botón principal de acciones ---------- */
+.btn-rol {
+  background: var(--color-primary);
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-rol:hover {
+  filter: brightness(1.1);
+}
+
+.btn-rol:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Modales ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal-card {
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+body.light .modal-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.modal-sub {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0 0 18px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 6px;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.modal-input,
+.modal-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(26, 107, 10, 0.25);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: var(--font-family);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  margin-bottom: 14px;
+  box-sizing: border-box;
+}
+
+.modal-input:focus,
+.modal-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 107, 10, 0.12);
+}
+
+body.light .modal-input,
+body.light .modal-select {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-cancelar {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.light .btn-cancelar {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #4b5563;
+}
+
+.btn-cancelar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Mensajes ---------- */
+.server-error {
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--color-error);
+  font-size: 0.75rem;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+.server-exito {
+  background: rgba(26, 107, 10, 0.15);
+  border: 1px solid rgba(26, 107, 10, 0.35);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+.list-vacia {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  padding: 14px 0;
+  text-align: left;
+}
+
+/* ---------- Mini menú por rol (panel Usuarios) ---------- */
+.roles-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.roles-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.roles-tab:hover {
+  border-color: rgba(26, 107, 10, 0.4);
+  color: var(--color-texto);
+}
+
+.roles-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+body.light .roles-tab {
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #4b5563;
+}
+
+body.light .roles-tab.active {
+  background: #1a6b0a;
+  border-color: #1a6b0a;
+  color: #fff;
+}
+
+.roles-tab-count {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+}
+
+body.light .roles-tab-count {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Chips de fichas ---------- */
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(26, 107, 10, 0.15);
+  color: var(--color-primary);
+  border: 1px solid rgba(26, 107, 10, 0.3);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-ficha-quitable {
+  padding-right: 6px;
+}
+
+.chip-quitar {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+
+.chip-quitar:hover {
+  opacity: 1;
+}
+
+/* ---------- Editor de fichas del instructor ---------- */
+.instructor-fichas {
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body.light .instructor-fichas {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.instructor-fichas h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.add-ficha {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.add-ficha-input {
+  flex: 1;
+  max-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid rgba(26, 107, 10, 0.25);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: var(--font-family);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.add-ficha-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+body.light .add-ficha-input {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.instructor-fichas-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* Cabecera del listado con botón +
+ */
+.panel-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-rol-mini {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .admin-body {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  body.light .admin-sidebar {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .admin-nav-btn {
+    width: auto;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .admin-sidebar-footer {
+    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-split {
+    flex-direction: column;
+  }
+
+  .panel-list {
+    width: 100%;
+  }
+
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* cards dashboard coord */
+/* ============ Sistema de espaciado y secciones ============ */
+.dash-section {
+  margin-bottom: 32px;
+}
+
+.dash-section-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.dash-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.dash-card {
+  background: var(--surface, rgba(128, 128, 128, 0.06));
+  border-radius: 14px;
+  padding: 20px;
+}
+
+/* ============ StatCard ============ */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--surface, rgba(128, 128, 128, 0.06));
+}
+
+.stat-card-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.stat-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-card-label {
+  font-size: 13px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.stat-card-azul {
+  border-left: 4px solid #0984e3;
+}
+
+.stat-card-verde {
+  border-left: 4px solid #00b894;
+}
+
+.stat-card-morado {
+  border-left: 4px solid #6C5CE7;
+}
+
+.stat-card-rojo {
+  border-left: 4px solid #e74c3c;
+}
+
+.stat-card-neutro {
+  border-left: 4px solid rgba(128, 128, 128, 0.4);
+}
+
+/* ============ ProgressBar ============ */
+.progress-widget {
+  width: 100%;
+}
+
+.progress-widget-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+.progress-widget-track {
+  background: rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progress-widget-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+
+.progress-widget-morado {
+  background: #6C5CE7;
+}
+
+.progress-widget-verde {
+  background: #00b894;
+}
+
+.progress-widget-azul {
+  background: #0984e3;
+}
+
+.progress-widget-rojo {
+  background: #e74c3c;
+}
+
+/* ============ Separación de bloques dentro de un mismo panel ============ */
+.bloque-separado {
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--surface, rgba(128, 128, 128, 0.05));
+  margin-bottom: 18px;
+}
+
+.bloque-separado+.bloque-separado {
+  margin-top: 4px;
+}
+
+/* flatantes */
+/* Dashboard cards (usadas en coordinador/Dashboard.jsx) */
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+
+.dashboard-card-item {
+  background: var(--color-card);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body.light .dashboard-card-item {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-card-num {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.dashboard-card-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Título de subsección (usado en Proyectos/Seguimiento/instructor) */
+.instructor-evidencias-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* tareas */
+.badge-fase.en-proceso {
+  background: rgba(9, 132, 227, 0.15);
+  color: #0984e3;
+}
+
+.badge-fase.finalizada {
+  background: rgba(253, 203, 110, 0.2);
+  color: #b8860b;
+}
+
+/* ============================================
+   UI/UX Refinements: Skeleton Loaders & Alerts
+============================================ */
+
+/* Animación de pulso para Skeletons */
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.skeleton-box {
+  background: var(--surface, rgba(128, 128, 128, 0.12));
+  border-radius: 8px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Skeleton específico para StatCards */
+.stat-card-skeleton {
+  min-height: 82px;
+}
+
+/* Enhancements para Mensajes y Errores */
+.server-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: var(--color-error);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 0 0 18px;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.05);
+}
+
+.list-vacia-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.list-vacia-container svg {
+  opacity: 0.5;
+}
+
+/* ============================================
+   UI/UX Refinements: MiProyecto Component
+============================================ */
+
+.proyecto-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface, rgba(128, 128, 128, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+body.light .proyecto-header-badge {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.tech-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.tech-chip {
+  background: rgba(9, 132, 227, 0.12);
+  color: #0984e3;
+  border: 1px solid rgba(9, 132, 227, 0.3);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Badges para Roles Scrum */
+.badge-scrum {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.badge-scrum-sm {
+  background: rgba(108, 92, 231, 0.15);
+  color: #6C5CE7;
+  border: 1px solid rgba(108, 92, 231, 0.35);
+}
+
+.badge-scrum-po {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-scrum-dev {
+  background: rgba(0, 184, 148, 0.15);
+  color: #00b894;
+  border: 1px solid rgba(0, 184, 148, 0.35);
+}
+
+.admin-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-nav-btn svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.admin-nav-btn.active svg {
+  opacity: 1;
+}
+
+/* ============================================
+   UI/UX Refinements: Fases Component
+============================================ */
+
+.fases-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  background: var(--surface, rgba(128, 128, 128, 0.04));
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+body.light .fases-empty-state {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.evidencia-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.evidencia-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.badge-fase-revision {
+  background: rgba(9, 132, 227, 0.15);
+  color: #0984e3;
+  border: 1px solid rgba(9, 132, 227, 0.35);
+}
+
+.badge-evidencia.reprobado {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--color-error);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+/* ============================================
+   UI/UX Refinements: Observaciones Component
+============================================ */
+
+.observacion-card {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.observacion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.observacion-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+body.light .observacion-meta {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.observacion-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ============================================
+   UI/UX Refinements: Kanban Board & View Toggle
+============================================ */
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.kanban-column {
+  background: var(--surface, rgba(128, 128, 128, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 400px;
+}
+
+body.light .kanban-column {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+body.light .kanban-column-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.kanban-count-badge {
+  background: rgba(128, 128, 128, 0.2);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+}
+
+.kanban-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.light .kanban-card {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.kanban-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.kanban-card-desc {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kanban-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(128, 128, 128, 0.12);
+  font-size: 0.75rem;
+}
+
+.view-toggle-wrap {
+  display: inline-flex;
+  background: var(--surface, rgba(128, 128, 128, 0.1));
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.light .view-toggle-wrap {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-toggle-btn.active {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+/* ============================================
+   UI/UX Refinements: Re-entregas & Versioning
+============================================ */
+
+.badge-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(128, 128, 128, 0.12);
+  color: var(--color-text-muted);
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-version.reentrega {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.fase-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: var(--color-error);
+}
+
+/* ============================================
+   UI/UX Refinements: Gantt / Timeline Simplificado
+============================================ */
+
+.gantt-container {
+  background: var(--surface, rgba(128, 128, 128, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+
+body.light .gantt-container {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.gantt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gantt-track {
+  position: relative;
+  height: 12px;
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 16px 0 12px;
+}
+
+.gantt-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #00b894);
+  border-radius: 999px;
+  transition: width 0.6s ease-in-out;
+}
+
+.gantt-progress-bar.delayed {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.gantt-dates-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.gantt-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ============================================
+   UI/UX Refinements: PDF Export & Print Styles
+============================================ */
+
+/* Estilos de pantalla para el banner de exportación */
+.export-pdf-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface, rgba(128, 128, 128, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+}
+
+body.light .export-pdf-banner {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Reglas de impresión exclusivas para PDF */
+@media print {
+
+  /* Ocultar navegación y elementos no imprimibles */
+  .admin-header,
+  .admin-sidebar,
+  .export-pdf-banner,
+  .view-toggle-wrap,
+  .btn-rol,
+  .btn-accion,
+  .btn-cancelar,
+  button {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  .admin {
+    display: block !important;
+  }
+
+  .admin-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .bloque-separado,
+  .dash-card,
+  .gantt-container {
+    border: 1px solid #cccccc !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 16px !important;
+  }
+
+  .tech-chip {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    background: none !important;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    border-bottom: 1px solid #dddddd !important;
+    color: #000000 !important;
+  }
+}
+
+/* ============================================
+   UI/UX Refinements: Perfect Centering & Layout
+============================================ */
+
+/* Buscador alineado con Flexbox relativo */
+.search-box-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.search-box-wrap input {
+  width: 100%;
+  height: 38px;
+  padding-left: 36px !important;
+  font-size: 0.82rem !important;
+  margin: 0 !important;
+}
+
+.search-box-icon {
+  position: absolute;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Header Contextual de Ficha e Instructores */
+.topbar-ficha-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface, rgba(128, 128, 128, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+body.light .topbar-ficha-container {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.topbar-ficha-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-ficha-select {
+  min-width: 220px;
+  height: 38px;
+  padding: 0 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+/* ============================================
+   UI/UX Refinements: Ficha Dates Badge
+============================================ */
+
+.ficha-dates-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface, rgba(128, 128, 128, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+body.light .ficha-dates-badge {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ficha-dates-badge strong {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* ============================================
+   UI/UX Refinements: Asistente de Carga Masiva
+============================================ */
+
+.dropzone-container {
+  border: 2px dashed rgba(9, 132, 227, 0.4);
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  background: rgba(9, 132, 227, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone-container:hover {
+  border-color: var(--color-primary);
+  background: rgba(9, 132, 227, 0.08);
+}
+
+.import-preview-table-wrap {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  margin-top: 12px;
+}
