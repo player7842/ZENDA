@@ -1,0 +1,28 @@
+# =====================================================================
+# ZENDA — Mapa de identidades de Git
+# =====================================================================
+# Formato: Nombre correcto <correo correcto> Nombre en el commit <correo en el commit>
+# Se aplica a `git shortlog`, `git log` y a la vista de contribuciones.
+# No cambia la historia: solo unifica cómo se muestran los autores.
+#
+# Cada integrante debe configurar en su máquina el correo que aparece
+# a la derecha de la primera columna:
+#   git config --global user.name "Nombre Apellido"
+#   git config --global user.email "correo@ejemplo.com"
+#
+# Verificar con:
+#   git shortlog -sne --all
+#   git log --format="%an <%ae>" | sort -u
+# =====================================================================
+
+# --- Identidades ya presentes en la historia -------------------------
+Hernán Eduardo Robledo Montaña <rbldhernan@gmail.com> Hernan Robledo <rbldhernan@gmail.com>
+Nicolás Aparicio Camacho <nicoapariciocamacho@gmail.com> nicolas-22-ux <nicoapariciocamacho@gmail.com>
+
+# --- Pendientes de completar por el equipo ---------------------------
+# Descomentar y completar cuando cada integrante confirme su correo de Git.
+# El nombre y el correo de la izquierda son los que quedarán en el historial;
+# a la derecha va la identidad que hoy aparece en los commits.
+#
+# Leyner David Buitrago Thomas <CORREO_DE_LEYNER> Leyner <CORREO_DE_LEYNER>
+# Omar David González Cardozo <CORREO_DE_OMAR> Omar <CORREO_DE_OMAR>
