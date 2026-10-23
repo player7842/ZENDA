@@ -1,0 +1,16 @@
+# Normaliza los finales de línea del repositorio (H-15, D-07).
+# Los archivos de texto se guardan con LF; Git convierte a CRLF solo en
+# el checkout de Windows si el usuario lo configura, sin ensuciar el índice.
+* text=auto eol=lf
+
+# Binarios: no se les aplica conversión de fin de línea.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary

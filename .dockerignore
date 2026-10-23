@@ -1,0 +1,10 @@
+# Archivos que no deben viajar al contexto de Docker (raíz del repo).
+.git
+.github
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+frontend/dist
+Database/backups
+*.log
