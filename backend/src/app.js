@@ -8,6 +8,8 @@
 import env from './config/env.js';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/admin/auth.js';
 import userRoutes from './routes/admin/users.js';
 import fichasRoutes from './routes/admin/fichas.js';
@@ -17,17 +19,46 @@ import coordinadorRoutes from './routes/coordinador/coordinador.js';
 
 const app = express();
 
+// Confiar en el proxy inverso (Render, Vercel, Docker Compose)
+app.set('trust proxy', 1);
+
+// Cabeceras de seguridad HTTP con Helmet
+app.use(helmet());
+
+// Limitador de tasa general para la API
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 300, // límite de 300 peticiones por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiadas solicitudes desde esta IP, por favor intenta más tarde.' },
+});
+app.use('/api/', generalLimiter);
+
+// Limitador más estricto para autenticación y recuperación de contraseñas
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // máximo 20 intentos cada 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiados intentos de autenticación, por favor intenta más tarde.' },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
+
 // CORS: solo se aceptan los orígenes declarados en FRONTEND_URL.
-// Sin FRONTEND_URL se permite el desarrollo local (sin cabecera para
-// orígenes ajenos, que es lo que exige H-04).
-app.use(cors({
-  origin: (origin, callback) => {
-    // Sin origin: Postman, Thunder Client o el health check de Render.
-    if (!origin) return callback(null, true);
-    if (env.frontendUrls.includes(origin)) return callback(null, true);
-    return callback(null, false);
-  },
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Sin origin: Postman, Thunder Client o health checks de infraestructura
+      if (!origin) return callback(null, true);
+      if (env.frontendUrls.includes(origin)) return callback(null, true);
+      return callback(null, false);
+    },
+  })
+);
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -38,10 +69,12 @@ app.use('/api/instructor', instructorRoutes);
 app.use('/api/aprendiz/proyectos', aprendizProyectoRoutes);
 app.use('/api/coordinador', coordinadorRoutes);
 
-// Endpoint de salud (lo usa Render y el healthcheck de Docker Compose)
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Servicio disponible' });
-});
+// Endpoints de salud (usados por Render, Docker Compose y monitores de uptime)
+const healthHandler = (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Servicio disponible' });
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Manejador de errores: evita filtrar trazas internas al cliente.
 app.use((err, req, res, _next) => {
