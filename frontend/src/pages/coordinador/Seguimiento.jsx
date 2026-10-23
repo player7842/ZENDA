@@ -128,14 +128,14 @@ function Seguimiento({ proyectoId }) {
                                 <tr key={idx}>
                                     <td style={{ fontWeight: 600 }}>
                                         <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                            {i.rol_scrum?.toLowerCase().includes("scrum") && <Crown size={14} style={{ color: "#f59e0b" }} />}
+                                            {i.es_lider && <Crown size={14} style={{ color: "#f59e0b" }} />}
                                             <span>{i.nombre} {i.apellido}</span>
                                         </div>
                                     </td>
                                     <td style={{ opacity: 0.85 }}>{i.correo}</td>
                                     <td>
                                         <span className="ficha-badge" style={{ fontSize: "0.75rem" }}>
-                                            {i.rol_scrum || "Integrante"}
+                                            {i.es_lider ? "Líder" : "Integrante"}
                                         </span>
                                     </td>
                                 </tr>

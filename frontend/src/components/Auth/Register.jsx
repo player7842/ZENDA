@@ -12,7 +12,6 @@ import {
   CreditCard, 
   Hash, 
   BookOpen, 
-  UserCheck, 
   Lock, 
   Eye, 
   EyeOff, 
@@ -33,7 +32,6 @@ function Register() {
     password: "",
     confirmPassword: "",
     numeroFicha: "",
-    subRol: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +53,6 @@ function Register() {
     tipoDocumento: useRef(null),
     numeroDocumento: useRef(null),
     numeroFicha: useRef(null),
-    subRol: useRef(null),
     password: useRef(null),
     confirmPassword: useRef(null),
   };
@@ -63,13 +60,6 @@ function Register() {
   useEffect(() => {
     getFichasPublicas().then(setFichas).catch(() => setFichas([]));
   }, []);
-
-  const subRolesDisponibles = [
-    { value: "", label: "Seleccione su rol Scrum" },
-    { value: "Scrum Master", label: "Scrum Master" },
-    { value: "Product Owner", label: "Product Owner" },
-    { value: "Developer", label: "Developer" },
-  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -115,7 +105,6 @@ function Register() {
     }
 
     if (!formData.numeroFicha) newErrors.numeroFicha = "Seleccione su ficha";
-    if (!formData.subRol) newErrors.subRol = "Seleccione su rol Scrum";
 
     if (!formData.password) {
       newErrors.password = "La contraseña es requerida";
@@ -152,7 +141,6 @@ function Register() {
         numero_documento: formData.numeroDocumento,
         password: formData.password,
         numero_ficha: formData.numeroFicha,
-        sub_rol: formData.subRol,
       });
 
       alert("Registro exitoso. Por favor inicia sesión.");
@@ -287,7 +275,7 @@ function Register() {
                 name="numeroFicha" 
                 value={formData.numeroFicha}
                 onChange={handleChange} 
-                onKeyDown={handleKeyDown(refs.subRol)}
+                onKeyDown={handleKeyDown(refs.password)}
                 style={{ width: "100%", paddingLeft: 38, height: 42, borderRadius: 8, cursor: "pointer" }}
               >
                 <option value="">Seleccione su ficha</option>
@@ -299,27 +287,6 @@ function Register() {
               </select>
             </div>
             {errors.numeroFicha && <span className="field-error" style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: 4, display: "block" }}>{errors.numeroFicha}</span>}
-          </div>
-
-          {/* Rol Scrum */}
-          <div className={`form-field ${errors.subRol ? "has-error" : ""}`} style={{ marginTop: 14 }}>
-            <label style={{ fontSize: "0.82rem", fontWeight: 600, marginBottom: 6, display: "block" }}>Rol Scrum</label>
-            <div className="input-wrapper" style={{ position: "relative" }}>
-              <UserCheck className="input-icon" size={18} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.6 }} />
-              <select
-                ref={refs.subRol} 
-                name="subRol" 
-                value={formData.subRol}
-                onChange={handleChange} 
-                onKeyDown={handleKeyDown(refs.password)}
-                style={{ width: "100%", paddingLeft: 38, height: 42, borderRadius: 8, cursor: "pointer" }}
-              >
-                {subRolesDisponibles.map((sr) => (
-                  <option key={sr.value} value={sr.value}>{sr.label}</option>
-                ))}
-              </select>
-            </div>
-            {errors.subRol && <span className="field-error" style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: 4, display: "block" }}>{errors.subRol}</span>}
           </div>
 
           {/* Contraseña con visualizador */}

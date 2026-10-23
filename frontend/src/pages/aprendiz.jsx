@@ -1,7 +1,8 @@
 /*
   Panel de Aprendiz de ZENDA.
-  UI/UX Refinado: Formulario centrado para Scrum Master, validación de inputs,
-  restricciones de longitud para documentos de identidad e iconografía lucide-react.
+  UI/UX Refinado: el aprendiz sin proyecto puede crear uno (queda como líder)
+  o unirse con código a uno existente, respetando el cupo. Cualquier
+  integrante trabaja luego en las carpetas y evidencias del grupo.
 */
 
 import { useState, useEffect } from "react";
@@ -48,6 +49,7 @@ const FORM_INICIAL = {
   tecnologias: "",
   fecha_inicio: "",
   fecha_fin_estimada: "",
+  cupo_maximo: 6,
 };
 
 function Aprendiz() {
@@ -59,6 +61,7 @@ function Aprendiz() {
 
   const [form, setForm] = useState(FORM_INICIAL);
   const [codigo, setCodigo] = useState("");
+  const [modoSinProyecto, setModoSinProyecto] = useState("crear");
 
   const [fichasDisponibles, setFichasDisponibles] = useState([]);
   const [fichaActual, setFichaActual] = useState(null);
@@ -114,7 +117,7 @@ function Aprendiz() {
     setError("");
     setExito("");
     try {
-      await unirseProyectoAprendiz(codigo, aprendiz?.sub_rol_intencion || "Developer");
+      await unirseProyectoAprendiz(codigo.trim().toUpperCase());
       setCodigo("");
       await fetchMiProyecto();
     } catch (err) {
@@ -213,7 +216,7 @@ function Aprendiz() {
             pestana === "resumen" ? <Resumen fases={datos.fases} /> :
             pestana === "proyecto" ? <MiProyecto datos={datos} /> :
             pestana === "equipo" ? <Equipo integrantes={datos.integrantes} grupo={datos.grupo} /> :
-            pestana === "fases" ? <Fases fases={datos.fases} esLider={esLider} /> :
+            pestana === "fases" ? <Fases fases={datos.fases} /> :
             pestana === "tareas" ? <Tareas esLider={esLider} integrantes={datos.integrantes} usuarioId={aprendiz?.usuario_id} /> :
             <Observaciones />
           ) : (
@@ -239,18 +242,36 @@ function Aprendiz() {
 
               {/* CONTENEDOR CENTRADO Y COMPACTO DE FORMULARIO */}
               <div style={{ maxWidth: 580, margin: "0 auto" }}>
-                {aprendiz?.sub_rol_intencion === "Scrum Master" ? (
-                  <div className="bloque-separado" style={{ padding: 24 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                      <PlusCircle size={22} style={{ color: "var(--color-primary)" }} />
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Crear Grupo de Proyecto</h3>
-                        <span className="admin-count" style={{ fontSize: "0.78rem" }}>
-                          Asumirás el rol de Scrum Master (Líder de célula)
-                        </span>
-                      </div>
+                <div className="bloque-separado" style={{ padding: 18, marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <PlusCircle size={22} style={{ color: "var(--color-primary)" }} />
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Sin proyecto en esta ficha</h3>
+                      <span className="admin-count" style={{ fontSize: "0.78rem" }}>
+                        Puedes crear un grupo (quedarás como líder) o unirte con un código.
+                      </span>
                     </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+                    <button
+                      type="button"
+                      className={modoSinProyecto === "crear" ? "btn-rol" : "btn-secondary"}
+                      onClick={() => setModoSinProyecto("crear")}
+                      style={{ flex: 1, height: 38 }}
+                    >
+                      <PlusCircle size={16} style={{ marginRight: 8 }} /> Crear proyecto
+                    </button>
+                    <button
+                      type="button"
+                      className={modoSinProyecto === "unirse" ? "btn-rol" : "btn-secondary"}
+                      onClick={() => setModoSinProyecto("unirse")}
+                      style={{ flex: 1, height: 38 }}
+                    >
+                      <UserPlus size={16} style={{ marginRight: 8 }} /> Unirme con código
+                    </button>
+                  </div>
 
+                  {modoSinProyecto === "crear" ? (
                     <form onSubmit={handleCrear}>
                       <label className="modal-label">Nombre del Grupo</label>
                       <input className="modal-input" required value={form.nombre_grupo}
@@ -285,7 +306,7 @@ function Aprendiz() {
                       <input className="modal-input" maxLength={300} value={form.tecnologias}
                         onChange={(e) => setForm({ ...form, tecnologias: e.target.value })} placeholder="Ej: React, Node.js, PostgreSQL" style={{ marginBottom: 12 }} />
 
-                      <div className="modal-grid" style={{ marginBottom: 16 }}>
+                      <div className="modal-grid" style={{ marginBottom: 12 }}>
                         <div>
                           <label className="modal-label">Fecha de Inicio</label>
                           <input className="modal-input" type="date" required value={form.fecha_inicio}
@@ -298,44 +319,48 @@ function Aprendiz() {
                         </div>
                       </div>
 
+                      <label className="modal-label">Cupo máximo de integrantes (1 - 50)</label>
+                      <input
+                        className="modal-input"
+                        type="number"
+                        min={1}
+                        max={50}
+                        required
+                        value={form.cupo_maximo}
+                        onChange={(e) => setForm({ ...form, cupo_maximo: Number(e.target.value) })}
+                        style={{ marginBottom: 14 }}
+                      />
+
+                      <div className="ficha-dates-badge" style={{ display: "block", textAlign: "center", marginBottom: 14, padding: "8px 12px" }}>
+                        Serás el <strong>líder</strong> del grupo al crearlo.
+                      </div>
+
                       <button className="btn-rol" type="submit" style={{ width: "100%", height: 40 }}>
-                        Crear e Iniciar Proyecto
+                        Crear e iniciar proyecto
                       </button>
                     </form>
-                  </div>
-                ) : (
-                  <div className="bloque-separado" style={{ padding: 24 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                      <UserPlus size={22} style={{ color: "var(--color-primary)" }} />
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Unirme a un Grupo Existente</h3>
-                        <span className="admin-count" style={{ fontSize: "0.78rem" }}>
-                          Solicita el código al Scrum Master de tu célula
-                        </span>
-                      </div>
-                    </div>
-
+                  ) : (
                     <form onSubmit={handleUnirse}>
-                      <label className="modal-label">Código de Invitación</label>
-                      <input 
-                        className="modal-input" 
-                        required 
+                      <label className="modal-label">Código de invitación</label>
+                      <input
+                        className="modal-input"
+                        required
                         value={codigo}
-                        onChange={(e) => setCodigo(e.target.value)} 
-                        placeholder="PRY-XXXXXX" 
+                        onChange={(e) => setCodigo(e.target.value)}
+                        placeholder="PRY-XXXXXX-XX"
                         style={{ marginBottom: 14, textTransform: "uppercase" }}
                       />
 
-                      <div className="ficha-dates-badge" style={{ display: "block", textAlign: "center", marginBottom: 16, padding: "8px 12px" }}>
-                        Rol asignado: <strong>{aprendiz?.sub_rol_intencion || "Developer"}</strong>
+                      <div className="ficha-dates-badge" style={{ display: "block", textAlign: "center", marginBottom: 14, padding: "8px 12px" }}>
+                        Se verifica el cupo disponible al unirte.
                       </div>
 
                       <button className="btn-rol" type="submit" style={{ width: "100%", height: 40 }}>
-                        Unirme al Proyecto
+                        Unirme al proyecto
                       </button>
                     </form>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </>
           )}

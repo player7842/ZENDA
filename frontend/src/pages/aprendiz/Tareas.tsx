@@ -321,7 +321,7 @@ function Tareas({ esLider = false, integrantes = [], usuarioId = null }) {
                                     <option value="">Seleccionar integrante...</option>
                                     {(integrantes || []).map((i) => (
                                         <option key={i.usuario_id} value={i.usuario_id}>
-                                            {i.nombre} {i.apellido} ({i.rol_scrum || "Developer"})
+                                            {i.nombre} {i.apellido}
                                         </option>
                                     ))}
                                 </select>

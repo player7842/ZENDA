@@ -359,6 +359,22 @@ export async function evaluarEvidencia(evidenciaId, resultado) {
   return json;
 }
 
+// Aprobar en bloque todas las evidencias de una carpeta (instructor)
+export async function aprobarCarpetaInstructor(carpetaId) {
+  const res = await fetch(`${API_URL}/api/instructor/carpetas/${carpetaId}/aprobar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  const json = await res.json();
+  if (!res.ok)
+    throw new Error(json.message || "Error al aprobar la carpeta");
+  return json;
+}
+
 // Evidencias reales de los proyectos de una ficha
 export async function getEvidenciasFicha(fichaId) {
   const res = await fetch(`${API_URL}/api/instructor/fichas/${fichaId}/evidencias`, {
@@ -410,7 +426,7 @@ export async function crearObservacion(proyectoId, titulo, descripcion) {
   return json;
 }
 
-// Crear grupo de proyecto (el aprendiz queda como Scrum Master/líder)
+// Crear grupo de proyecto (el aprendiz queda como líder del grupo)
 export async function crearProyectoAprendiz(data) {
   const res = await fetch(`${API_URL}/api/aprendiz/proyectos`, {
     method: "POST",
@@ -427,15 +443,15 @@ export async function crearProyectoAprendiz(data) {
   return json;
 }
 
-// Unirse a un grupo existente con su código de invitación
-export async function unirseProyectoAprendiz(codigo_grupo, rol_scrum) {
+// Unirse a un grupo existente con su código de invitación (sin rol Scrum)
+export async function unirseProyectoAprendiz(codigo_grupo) {
   const res = await fetch(`${API_URL}/api/aprendiz/proyectos/unirse`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
     },
-    body: JSON.stringify({ codigo_grupo, rol_scrum }),
+    body: JSON.stringify({ codigo_grupo }),
   });
 
   const json = await res.json();
@@ -461,7 +477,7 @@ export async function getMiProyectoAprendiz() {
   return json;
 }
 
-// Crear una carpeta dentro de una fase (solo el líder del grupo)
+// Crear una carpeta dentro de una fase (cualquier integrante del grupo)
 export async function crearCarpetaAprendiz(faseId, nombreCarpeta) {
   const res = await fetch(`${API_URL}/api/aprendiz/proyectos/fases/${faseId}/carpetas`, {
     method: "POST",
@@ -477,7 +493,7 @@ export async function crearCarpetaAprendiz(faseId, nombreCarpeta) {
   return json;
 }
 
-// Subir una evidencia (link) dentro de una carpeta (solo el líder del grupo)
+// Subir una evidencia (link) dentro de una carpeta (cualquier integrante)
 export async function subirEvidenciaAprendiz(carpetaId, data) {
   const res = await fetch(`${API_URL}/api/aprendiz/proyectos/carpetas/${carpetaId}/evidencias`, {
     method: "POST",

@@ -23,9 +23,10 @@ import {
 } from "lucide-react";
 import { getCarpetasDeFaseAprendiz, crearCarpetaAprendiz, subirEvidenciaAprendiz } from "../../api";
 
-function Fases({ fases, esLider }) {
+function Fases({ fases }) {
   const [faseSeleccionada, setFaseSeleccionada] = useState(null);
   const [carpetas, setCarpetas] = useState([]);
+  const [infoFase, setInfoFase] = useState(null);
   const [cargandoCarpetas, setCargandoCarpetas] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
@@ -46,9 +47,12 @@ function Fases({ fases, esLider }) {
     setCargandoCarpetas(true);
     try {
       const data = await getCarpetasDeFaseAprendiz(fase.fase_id);
-      setCarpetas(data || []);
+      setInfoFase(data);
+      setCarpetas(data?.carpetas || []);
     } catch (err) {
       setError(err?.message || "Error al cargar carpetas");
+      setInfoFase(null);
+      setCarpetas([]);
     } finally {
       setCargandoCarpetas(false);
     }
@@ -57,7 +61,8 @@ function Fases({ fases, esLider }) {
   const refrescarCarpetas = async () => {
     if (!faseSeleccionada) return;
     const data = await getCarpetasDeFaseAprendiz(faseSeleccionada.fase_id);
-    setCarpetas(data || []);
+    setInfoFase(data);
+    setCarpetas(data?.carpetas || []);
   };
 
   const handleCrearCarpeta = async (e) => {
@@ -179,41 +184,39 @@ function Fases({ fases, esLider }) {
               <div className="panel-detail-header">
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <h3 style={{ margin: 0 }}>{faseSeleccionada.nombre_fase}</h3>
-                  {renderBadgeFase(faseSeleccionada.estado_fase)}
+                  {renderBadgeFase(infoFase?.estado_fase || faseSeleccionada.estado_fase)}
                 </div>
               </div>
 
               {/* Banner contextual de Re-entrega si la fase fue desaprobada */}
-              {faseSeleccionada.estado_fase === "Desaprobada" && (
+              {(infoFase?.estado_fase || faseSeleccionada.estado_fase) === "Desaprobada" && (
                 <div className="fase-alert-banner">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <AlertTriangle size={20} style={{ flexShrink: 0 }} />
                     <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                      Esta fase contiene correcciones pendientes. El líder debe subir la versión ajustada de las evidencias rechazadas.
+                      Hay evidencias desaprobadas. Cualquier integrante puede subir una re-entrega en la carpeta correspondiente.
                     </span>
                   </div>
                 </div>
               )}
 
               {/* Formulario Crear Carpeta */}
-              {esLider && (
-                <div className="bloque-separado">
-                  <p className="dash-section-title" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <FolderPlus size={16} /> Crear nueva carpeta
-                  </p>
-                  <form onSubmit={handleCrearCarpeta} className="add-ficha">
-                    <input
-                      className="add-ficha-input"
-                      placeholder="Ej. Entregables Fase Analisis"
-                      value={nombreCarpeta}
-                      onChange={(e) => setNombreCarpeta(e.target.value)}
-                    />
-                    <button className="btn-rol" type="submit" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <Plus size={14} /> Crear carpeta
-                    </button>
-                  </form>
-                </div>
-              )}
+              <div className="bloque-separado">
+                <p className="dash-section-title" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <FolderPlus size={16} /> Crear nueva carpeta
+                </p>
+                <form onSubmit={handleCrearCarpeta} className="add-ficha">
+                  <input
+                    className="add-ficha-input"
+                    placeholder="Ej. Entregables Fase Analisis"
+                    value={nombreCarpeta}
+                    onChange={(e) => setNombreCarpeta(e.target.value)}
+                  />
+                  <button className="btn-rol" type="submit" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Plus size={14} /> Crear carpeta
+                  </button>
+                </form>
+              </div>
 
               {carpetas.length === 0 && (
                 <div className="fases-empty-state">
@@ -293,70 +296,68 @@ function Fases({ fases, esLider }) {
                     </div>
 
                     {/* Subir Evidencia o Re-entrega */}
-                    {esLider && (
-                      carpetaEvidencia === c.carpeta_id ? (
-                        <form onSubmit={handleSubirEvidencia} className="bloque-separado" style={{ marginTop: 14, background: "var(--surface, rgba(128,128,128,0.08))" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                            <p className="dash-section-title" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                              <UploadCloud size={16} /> 
-                              {tieneReprobadas ? `Subir re-entrega (v${c.evidencias.length + 1})` : `Subir nueva evidencia`}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => setCarpetaEvidencia(null)}
-                              style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer" }}
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-
-                          <label className="modal-label">Nombre de la evidencia</label>
-                          <input
-                            className="modal-input"
-                            placeholder="Ej. Documento de Arquitectura v2.0"
-                            value={formEvidencia.nombre_evidencia}
-                            onChange={(e) => setFormEvidencia({ ...formEvidencia, nombre_evidencia: e.target.value })}
-                          />
-
-                          <label className="modal-label">Tipo de archivo/recurso</label>
-                          <select
-                            className="modal-select"
-                            value={formEvidencia.tipo_evidencia}
-                            onChange={(e) => setFormEvidencia({ ...formEvidencia, tipo_evidencia: e.target.value })}
+                    {carpetaEvidencia === c.carpeta_id ? (
+                      <form onSubmit={handleSubirEvidencia} className="bloque-separado" style={{ marginTop: 14, background: "var(--surface, rgba(128,128,128,0.08))" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                          <p className="dash-section-title" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                            <UploadCloud size={16} />
+                            {tieneReprobadas ? `Subir re-entrega (v${c.evidencias.length + 1})` : `Subir nueva evidencia`}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setCarpetaEvidencia(null)}
+                            style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer" }}
                           >
-                            <option value="Documento">Documento (PDF, Word, etc.)</option>
-                            <option value="Imagen">Imagen / Diagrama</option>
-                            <option value="Video">Video sustentación</option>
-                            <option value="Enlace">Enlace / Repositorio</option>
-                          </select>
+                            <X size={16} />
+                          </button>
+                        </div>
 
-                          <label className="modal-label">Link del recurso (Google Drive, GitHub, etc.)</label>
-                          <input
-                            className="modal-input"
-                            placeholder="https://..."
-                            value={formEvidencia.ubicacion}
-                            onChange={(e) => setFormEvidencia({ ...formEvidencia, ubicacion: e.target.value })}
-                          />
+                        <label className="modal-label">Nombre de la evidencia</label>
+                        <input
+                          className="modal-input"
+                          placeholder="Ej. Documento de Arquitectura v2.0"
+                          value={formEvidencia.nombre_evidencia}
+                          onChange={(e) => setFormEvidencia({ ...formEvidencia, nombre_evidencia: e.target.value })}
+                        />
 
-                          <div className="modal-actions">
-                            <button type="button" className="btn-cancelar" onClick={() => setCarpetaEvidencia(null)}>
-                              Cancelar
-                            </button>
-                            <button type="submit" className="btn-rol" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <UploadCloud size={14} /> Subir versión
-                            </button>
-                          </div>
-                        </form>
-                      ) : (
-                        <button
-                          className="btn-accion"
-                          style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6 }}
-                          onClick={() => setCarpetaEvidencia(c.carpeta_id)}
+                        <label className="modal-label">Tipo de archivo/recurso</label>
+                        <select
+                          className="modal-select"
+                          value={formEvidencia.tipo_evidencia}
+                          onChange={(e) => setFormEvidencia({ ...formEvidencia, tipo_evidencia: e.target.value })}
                         >
-                          {tieneReprobadas ? <RefreshCw size={14} /> : <Plus size={14} />}
-                          {tieneReprobadas ? `Subir re-entrega (v${c.evidencias.length + 1})` : "Subir evidencia"}
-                        </button>
-                      )
+                          <option value="Documento">Documento (PDF, Word, etc.)</option>
+                          <option value="Imagen">Imagen / Diagrama</option>
+                          <option value="Video">Video sustentación</option>
+                          <option value="Enlace">Enlace / Repositorio</option>
+                        </select>
+
+                        <label className="modal-label">Link del recurso (Google Drive, GitHub, etc.)</label>
+                        <input
+                          className="modal-input"
+                          placeholder="https://..."
+                          value={formEvidencia.ubicacion}
+                          onChange={(e) => setFormEvidencia({ ...formEvidencia, ubicacion: e.target.value })}
+                        />
+
+                        <div className="modal-actions">
+                          <button type="button" className="btn-cancelar" onClick={() => setCarpetaEvidencia(null)}>
+                            Cancelar
+                          </button>
+                          <button type="submit" className="btn-rol" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <UploadCloud size={14} /> Subir versión
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        className="btn-accion"
+                        style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6 }}
+                        onClick={() => setCarpetaEvidencia(c.carpeta_id)}
+                      >
+                        {tieneReprobadas ? <RefreshCw size={14} /> : <Plus size={14} />}
+                        {tieneReprobadas ? `Subir re-entrega (v${c.evidencias.length + 1})` : "Subir evidencia"}
+                      </button>
                     )}
                   </div>
                 );

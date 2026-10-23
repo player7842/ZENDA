@@ -168,12 +168,12 @@ function Grupos() {
                                                         <span>{g.lider_nombre} {g.lider_apellido}</span>
                                                     </div>
                                                 ) : (
-                                                    <span style={{ opacity: 0.5 }}>Sin Scrum Master</span>
+                                                    <span style={{ opacity: 0.5 }}>Sin líder</span>
                                                 )}
                                             </td>
                                             <td>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 600, fontSize: "0.84rem" }}>
-                                                    <Users size={13} style={{ color: "var(--color-primary)" }} /> {g.cantidad_integrantes || 1} integrante(s)
+                                                    <Users size={13} style={{ color: "var(--color-primary)" }} /> {g.cantidad_integrantes || 1} integrante(s) {g.cupo_maximo ? `(cupo ${g.cupo_maximo})` : ""}
                                                 </span>
                                             </td>
                                             <td>

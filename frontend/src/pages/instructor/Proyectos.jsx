@@ -33,6 +33,7 @@ import {
   getReadmeProyecto,
   getCarpetasDeFase,
   evaluarEvidencia,
+  aprobarCarpetaInstructor,
   getObservacionesProyecto,
   crearObservacion,
   getEvidenciasFicha
@@ -45,6 +46,7 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
   const [readme, setReadme] = useState(null);
   const [faseSeleccionada, setFaseSeleccionada] = useState(null);
   const [carpetas, setCarpetas] = useState([]);
+  const [infoFase, setInfoFase] = useState(null);
   const [observaciones, setObservaciones] = useState([]);
   const [tituloObs, setTituloObs] = useState("");
   const [descripcionObs, setDescripcionObs] = useState("");
@@ -111,9 +113,12 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
     setError("");
     try {
       const data = await getCarpetasDeFase(fase.fase_id);
-      setCarpetas(data || []);
+      setInfoFase(data);
+      setCarpetas(data?.carpetas || []);
     } catch (err) {
       setError(err?.message || "Error al cargar la lista de chequeo");
+      setInfoFase(null);
+      setCarpetas([]);
     }
   };
 
@@ -130,10 +135,32 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
         }));
         setFaseSeleccionada((prev) => ({ ...prev, estado_fase: data.estado_fase }));
         const carpetasActualizadas = await getCarpetasDeFase(faseSeleccionada.fase_id);
-        setCarpetas(carpetasActualizadas || []);
+        setInfoFase(carpetasActualizadas);
+        setCarpetas(carpetasActualizadas?.carpetas || []);
       }
     } catch (err) {
       setError(err?.message || "Error al evaluar la evidencia");
+    }
+  };
+
+  const aprobarCarpeta = async (carpetaId) => {
+    try {
+      const data = await aprobarCarpetaInstructor(carpetaId);
+      if (readme && faseSeleccionada) {
+        setReadme((prev) => ({
+          ...prev,
+          fases: prev.fases.map((f) =>
+            f.fase_id === faseSeleccionada.fase_id ? { ...f, estado_fase: data.estado_fase } : f
+          ),
+        }));
+        setFaseSeleccionada((prev) => ({ ...prev, estado_fase: data.estado_fase }));
+        const carpetasActualizadas = await getCarpetasDeFase(faseSeleccionada.fase_id);
+        setInfoFase(carpetasActualizadas);
+        setCarpetas(carpetasActualizadas?.carpetas || []);
+      }
+      setError("");
+    } catch (err) {
+      setError(err?.message || "Error al aprobar la carpeta");
     }
   };
 
@@ -476,7 +503,7 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                           <td style={{ opacity: 0.85 }}>{i.correo}</td>
                           <td>
                             <span className="proyecto-header-badge" style={{ fontSize: "0.72rem" }}>
-                              {i.rol_scrum || "Developer"}
+                              {i.es_lider ? "Líder" : "Integrante"}
                             </span>
                           </td>
                         </tr>
@@ -534,6 +561,11 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                 <div className="bloque-separado" style={{ marginBottom: 20, background: "var(--surface, rgba(128,128,128,0.06))" }}>
                   <p className="dash-section-title" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                     <CheckCircle2 size={16} /> Lista de chequeo — {faseSeleccionada.nombre_fase}
+                    {infoFase?.progreso && (
+                      <span className="admin-count" style={{ marginLeft: "auto" }}>
+                        {infoFase.progreso.aprobadas}/{infoFase.progreso.total} evidencias aprobadas ({infoFase.progreso.porcentaje}%)
+                      </span>
+                    )}
                   </p>
 
                   {carpetas.length === 0 ? (
@@ -541,12 +573,21 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                   ) : (
                     carpetas.map((c) => (
                       <div key={c.carpeta_id} style={{ marginBottom: 16 }}>
-                        <h4 style={{ margin: "0 0 10px", fontSize: "0.9rem" }}>{c.nombre_carpeta}</h4>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                          <h4 style={{ margin: 0, fontSize: "0.9rem" }}>{c.nombre_carpeta}</h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <span className="proyecto-header-badge" style={{ fontSize: "0.72rem" }}>{c.estado_carpeta}</span>
+                            <button className="btn-rol" style={{ padding: "4px 10px", fontSize: "0.75rem" }} onClick={() => aprobarCarpeta(c.carpeta_id)}>
+                              <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Aprobar carpeta
+                            </button>
+                          </div>
+                        </div>
                         <div className="admin-table-wrap" style={{ background: "transparent", padding: 0 }}>
                           <table className="admin-table">
                             <thead>
                               <tr>
                                 <th>Evidencia</th>
+                                <th>Autor</th>
                                 <th>Tipo</th>
                                 <th>Estado</th>
                                 <th>Evaluación</th>
@@ -562,6 +603,7 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                                       <ExternalLink size={12} />
                                     </a>
                                   </td>
+                                  <td style={{ fontSize: "0.82rem" }}>{e.autor_nombre} {e.autor_apellido}</td>
                                   <td>{e.tipo_evidencia}</td>
                                   <td>{renderBadgeResultado(e.resultado)}</td>
                                   <td>
