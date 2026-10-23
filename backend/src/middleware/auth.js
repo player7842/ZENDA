@@ -1,6 +1,7 @@
 // Middleware de autenticación mediante verificación de token JWT
 
 import jwt from 'jsonwebtoken';
+import env from '../config/env.js';
 
 const auth = (req, res, next) => {
   // Obtener el token del header Authorization
@@ -13,7 +14,7 @@ const auth = (req, res, next) => {
 
   try {
     // Verificación y decodificación del token JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.jwtSecret);
     req.user = decoded; // Adjuntar info del usuario al request
     next();
   } catch (error) {

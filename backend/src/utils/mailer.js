@@ -1,18 +1,22 @@
 // backend/src/utils/mailer.js
 import nodemailer from 'nodemailer';
+import env from '../config/env.js';
 
-// Configuración SMTP con Gmail (Contraseña de aplicación de 16 caracteres)
+// Configuración SMTP con Gmail (contraseña de aplicación de 16 caracteres).
+// Sin credenciales, el transporte falla al enviar; el controlador lo registra
+// y responde igual para no revelar si el correo existe.
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'tu_correo_real@gmail.com',
-    pass: process.env.EMAIL_PASS || 'abcd efgh ijkl mnop', // Tu contraseña de app de 16 letras
+    user: env.emailUser,
+    pass: env.emailPass,
   },
 });
 
 export async function enviarCorreoRecuperacion(correoDestino, token) {
-  // Redirige al frontend local
-  const urlRestauracion = `http://localhost:5173/reset-password?token=${token}`;
+  // El origen sale de FRONTEND_URL: en producción es el dominio de Vercel,
+  // en desarrollo puede ser localhost (H-03).
+  const urlRestauracion = `${env.frontendUrl}/reset-password?token=${token}`;
 
   const mailOptions = {
     from: '"Plataforma ZENDA" <no-reply@zenda.sena.edu.co>',
@@ -34,5 +38,5 @@ export async function enviarCorreoRecuperacion(correoDestino, token) {
     `,
   };
 
-  return await transporter.sendMail(mailOptions);
+  return transporter.sendMail(mailOptions);
 }

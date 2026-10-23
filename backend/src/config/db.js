@@ -22,8 +22,8 @@ const pool = new Pool(
 // Verificación de conectividad con la base de datos
 export const testConnection = async () => {
   try {
-    const client = await pool.query('SELECT NOW()');
-    console.log('PostgreSQL conectado exitosamente');
+    await pool.query('SELECT NOW()');
+    console.info('PostgreSQL conectado exitosamente');
     return true;
   } catch (error) {
     console.error('Error conectando a PostgreSQL:', error.message);
