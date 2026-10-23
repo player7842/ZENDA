@@ -22,14 +22,15 @@ const TRANSICIONES = {
     'Incompleta': { 'En proceso': 'responsable' },
 };
 
-// Busca el proyecto activo del usuario (a través de su grupo distinto de "General")
+// Busca el proyecto activo del usuario (grupo que no sea el General).
 async function obtenerProyectoDelUsuario(usuarioId) {
     const { rows } = await pool.query(
         `SELECT g.grupo_id, g.lider_id, p.proyecto_id
      FROM integrantes_grupo ig
      JOIN grupos g ON g.grupo_id = ig.grupo_id
      JOIN proyectos p ON p.grupo_id = g.grupo_id
-     WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
+     WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND NOT g.es_general
+     ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
      LIMIT 1`,
         [usuarioId]
     );
@@ -54,7 +55,7 @@ export async function crearTarea(req, res) {
             return res.status(404).json({ message: 'No perteneces a ningún proyecto activo' });
         }
         if (proyecto.lider_id !== usuarioId) {
-            return res.status(403).json({ message: 'Solo el Scrum Master puede crear y asignar tareas' });
+            return res.status(403).json({ message: 'Solo el líder del grupo puede crear y asignar tareas' });
         }
 
         // El responsable debe ser integrante activo del mismo grupo

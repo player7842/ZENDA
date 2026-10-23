@@ -6,15 +6,18 @@
 // Todas las fechas (fecha_creacion/fecha_actualizacion) son NOT NULL y
 // las ponemos aquí con now().
 
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../../config/db.js';
 import env from '../../config/env.js';
 import { enviarCorreoRecuperacion } from '../../utils/mailer.js';
+import { obtenerOCrearGrupoGeneral } from '../../services/grupos.js';
 
 // Longitud mínima de contraseña, alineada con el restablecimiento y con la
 // creación de usuarios desde el panel de administración.
 const LONGITUD_MINIMA_PASSWORD = 8;
+const LONGITUD_MAXIMA_PASSWORD = 72;
 
 // Campos que se devuelven SIEMPRE en un login/registro (nunca la contraseña)
 const CAMPOS_PUBLICOS = `
@@ -25,50 +28,101 @@ const CAMPOS_PUBLICOS = `
 // Toleramos que el frontend mande email aunque el campo en BD es correo
 const obtenerCorreo = (body) => (body.correo || body.email || '').trim().toLowerCase();
 
-// Registrar un nuevo usuario (rol inicial asignado: APRENDIZ)
-// Dominio institucional obligatorio para el auto-registro de aprendices
+// Dominio institucional obligatorio para el auto-registro de aprendices.
+// La validación es estricta: usuario@soy.sena.edu.co y sin espacios.
 const DOMINIO_PERMITIDO = '@soy.sena.edu.co';
+const CORREO_INSTITUCIONAL = /^[^\s@]+@soy\.sena\.edu\.co$/i;
+const TIPOS_DOCUMENTO = new Set(['CC', 'TI', 'CE', 'PA', 'PPT']);
 
-// Busca (o crea) el grupo "General" de una ficha — mismo patrón que usa
-// fichasController, pero aquí no hay admin de por medio: es autoservicio.
-// El lider del grupo General queda como el PRIMER aprendiz que se registra
-// en esa ficha (si el grupo no existe todavía); si ya existe, no se toca.
-async function obtenerOCrearGrupoGeneral(client, fichaId, liderFallbackId) {
-  const existente = await client.query(
-    'SELECT grupo_id FROM grupos WHERE ficha_id = $1 AND nombre_grupo = $2 LIMIT 1',
-    [fichaId, 'General']
+const firmarSesion = (usuario) =>
+  jwt.sign(
+    {
+      usuario_id: usuario.usuario_id,
+      correo: usuario.correo,
+      rol: usuario.rol,
+      purpose: 'session',
+      tv: usuario.token_version ?? 0,
+    },
+    env.jwtSecret,
+    { expiresIn: env.jwtSessionExpires }
   );
-  if (existente.rows.length > 0) return existente.rows[0].grupo_id;
 
-  const nuevo = await client.query(
-    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, cupo_maximo, estado_grupo, fecha_creacion)
-     VALUES ('General', $1, $2, $3, 50, 'Activo', now())
-     RETURNING grupo_id`,
-    [`GRP-GENERAL-${fichaId}`, fichaId, liderFallbackId]
-  );
-  return nuevo.rows[0].grupo_id;
-}
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
-// Registrar un nuevo aprendiz: valida correo institucional y ficha, crea el
-// usuario y lo vincula de una vez al grupo General de su ficha. Ya no se
-// elige sub-rol Scrum: el liderazgo es grupos.lider_id.
+const validarPassword = (password) => {
+  if (typeof password !== 'string' || password.length < LONGITUD_MINIMA_PASSWORD) {
+    return `La contraseña debe tener mínimo ${LONGITUD_MINIMA_PASSWORD} caracteres`;
+  }
+  if (password.length > LONGITUD_MAXIMA_PASSWORD) {
+    return `La contraseña no puede superar ${LONGITUD_MAXIMA_PASSWORD} caracteres`;
+  }
+  return null;
+};
+
+// Registrar un nuevo aprendiz: valida correo institucional, documento,
+// aceptaciones legales y ficha; crea el usuario y lo vincula de una vez al
+// grupo General de su ficha. Ya no se elige sub-rol Scrum: el liderazgo es
+// grupos.lider_id.
 export const register = async (req, res) => {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
-    const { nombre, apellido, tipo_documento, numero_documento, password, numero_ficha } = req.body;
+    const {
+      nombre,
+      apellido,
+      tipo_documento,
+      numero_documento,
+      password,
+      numero_ficha,
+      acepta_terminos,
+      acepta_privacidad,
+      acepta_cookies,
+      acepta_tratamiento_datos,
+    } = req.body;
     const correo = obtenerCorreo(req.body);
 
-    if (!nombre || !apellido || !correo || !password) {
+    const nombreLimpio = String(nombre || '').trim();
+    const apellidoLimpio = String(apellido || '').trim();
+    const documentoLimpio = String(numero_documento || '').replace(/\D/g, '');
+    const tipoDocumento = String(tipo_documento || '').trim().toUpperCase();
+
+    if (!nombreLimpio || !apellidoLimpio || !correo || !password) {
       return res.status(400).json({ message: 'Faltan datos obligatorios del usuario' });
     }
 
-    if (!correo.endsWith(DOMINIO_PERMITIDO)) {
-      return res.status(400).json({ message: `El correo debe ser institucional (${DOMINIO_PERMITIDO})` });
+    if (nombreLimpio.length > 80 || apellidoLimpio.length > 80) {
+      return res.status(400).json({ message: 'Nombre y apellido no pueden superar 80 caracteres' });
     }
 
-    if (password.length < LONGITUD_MINIMA_PASSWORD) {
+    if (!CORREO_INSTITUCIONAL.test(correo)) {
+      return res
+        .status(400)
+        .json({ message: `El correo debe ser institucional (usuario${DOMINIO_PERMITIDO})` });
+    }
+
+    const errorPassword = validarPassword(password);
+    if (errorPassword) return res.status(400).json({ message: errorPassword });
+
+    if (!TIPOS_DOCUMENTO.has(tipoDocumento)) {
+      return res.status(400).json({ message: 'El tipo de documento no es válido' });
+    }
+
+    if (documentoLimpio.length < 6 || documentoLimpio.length > 11) {
+      return res
+        .status(400)
+        .json({ message: 'El número de documento debe tener entre 6 y 11 dígitos' });
+    }
+
+    const aceptaciones = [
+      acepta_terminos,
+      acepta_privacidad,
+      acepta_cookies,
+      acepta_tratamiento_datos,
+    ];
+    if (aceptaciones.some((valor) => valor !== true)) {
       return res.status(400).json({
-        message: `La contraseña debe tener mínimo ${LONGITUD_MINIMA_PASSWORD} caracteres`,
+        message:
+          'Debes aceptar los términos, la política de privacidad, el uso de cookies y el tratamiento de datos personales',
       });
     }
 
@@ -76,28 +130,35 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'Selecciona tu ficha' });
     }
 
-    const existingUser = await pool.query('SELECT usuario_id FROM usuarios WHERE correo = $1', [correo]);
+    const existingUser = await pool.query('SELECT usuario_id FROM usuarios WHERE correo = $1', [
+      correo,
+    ]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ message: 'Este correo ya está registrado' });
+      return res.status(409).json({ message: 'Este correo ya está registrado' });
     }
 
-    const ficha = await pool.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [numero_ficha]);
+    const ficha = await pool.query(
+      'SELECT ficha_id, numero_ficha FROM fichas WHERE numero_ficha = $1',
+      [numero_ficha]
+    );
     if (ficha.rows.length === 0) {
       return res.status(400).json({ message: 'Esa ficha no existe' });
     }
-    const fichaId = ficha.rows[0].ficha_id;
+    const { ficha_id: fichaId } = ficha.rows[0];
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     await client.query('BEGIN');
+    transaccionAbierta = true;
 
     const result = await client.query(
       `INSERT INTO usuarios
-         (rol, nombre, apellido, correo, contrasena, estado, fecha_creacion, fecha_actualizacion, tipo_documento, numero_documento)
-       VALUES ('APRENDIZ', $1, $2, $3, $4, 'Activo', now(), now(), $5, $6)
-       RETURNING ${CAMPOS_PUBLICOS}`,
-      [nombre, apellido, correo, hashedPassword, tipo_documento || 'CC', numero_documento || '']
+         (rol, nombre, apellido, correo, contrasena, estado, fecha_creacion, fecha_actualizacion,
+          tipo_documento, numero_documento, acepta_terminos, acepta_privacidad,
+          acepta_cookies, acepta_tratamiento_datos, fecha_aceptacion_legal)
+       VALUES ('APRENDIZ', $1, $2, $3, $4, 'Activo', now(), now(), $5, $6, true, true, true, true, now())
+       RETURNING ${CAMPOS_PUBLICOS}, token_version`,
+      [nombreLimpio, apellidoLimpio, correo, hashedPassword, tipoDocumento, documentoLimpio]
     );
     const user = result.rows[0];
 
@@ -110,16 +171,21 @@ export const register = async (req, res) => {
     );
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
 
-    const token = jwt.sign(
-      { usuario_id: user.usuario_id, correo: user.correo, rol: user.rol },
-      env.jwtSecret,
-      { expiresIn: '24h' }
-    );
+    const token = firmarSesion(user);
+    const { token_version, ...usuarioPublico } = user;
 
-    res.status(201).json({ message: 'Usuario registrado exitosamente', user, token });
+    res.status(201).json({
+      message: 'Usuario registrado exitosamente',
+      user: usuarioPublico,
+      token,
+    });
   } catch (error) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Este correo ya está registrado' });
+    }
     console.error('Error en register:', error);
     res.status(500).json({ message: 'Error del servidor, inténtalo de nuevo' });
   } finally {
@@ -133,7 +199,6 @@ export const login = async (req, res) => {
     const { password } = req.body;
     const correo = obtenerCorreo(req.body);
 
-    // Búsqueda del usuario por correo electrónico
     const result = await pool.query(`SELECT * FROM usuarios WHERE correo = $1`, [correo]);
     if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Credenciales incorrectas, intenta de nuevo' });
@@ -146,21 +211,13 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: 'Tu cuenta está inactiva, habla con un administrador' });
     }
 
-    // Comparar contraseñas
-    const validPassword = await bcrypt.compare(password, user.contrasena);
+    const validPassword = await bcrypt.compare(password || '', user.contrasena);
     if (!validPassword) {
       return res.status(401).json({ message: 'Credenciales incorrectas, intenta de nuevo' });
     }
 
-    // Generar token JWT con el rol en mayúsculas (ENUM de la BD)
-    const token = jwt.sign(
-      { usuario_id: user.usuario_id, correo: user.correo, rol: user.rol },
-      env.jwtSecret,
-      { expiresIn: '24h' }
-    );
-
-    // Se excluye la contraseña de la respuesta por seguridad
-    const { contrasena, ...userWithoutPassword } = user;
+    const token = firmarSesion(user);
+    const { contrasena, token_version, ...userWithoutPassword } = user;
 
     res.json({ message: 'Login exitoso', user: userWithoutPassword, token });
   } catch (error) {
@@ -169,11 +226,10 @@ export const login = async (req, res) => {
   }
 };
 
-
-
 // Solicitar recuperación de contraseña (envía email real).
 // La respuesta es SIEMPRE la misma exista o no el correo, para no revelar
-// qué cuentas están registradas (H-01).
+// qué cuentas están registradas (H-01). El token se guarda hasheado y solo
+// puede usarse una vez (C-01).
 export const forgotPassword = async (req, res) => {
   const RESPUESTA_UNIFORME =
     'Si el correo está registrado, recibirás un enlace de recuperación en unos minutos.';
@@ -184,7 +240,10 @@ export const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Ingresa tu correo electrónico' });
     }
 
-    const result = await pool.query('SELECT usuario_id, correo FROM usuarios WHERE correo = $1', [correo]);
+    const result = await pool.query(
+      'SELECT usuario_id, correo FROM usuarios WHERE correo = $1 AND estado = $2',
+      [correo, 'Activo']
+    );
     if (result.rows.length === 0) {
       // No se revela la ausencia del correo.
       return res.json({ message: RESPUESTA_UNIFORME });
@@ -192,11 +251,23 @@ export const forgotPassword = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Generar token temporal de 15 minutos
+    // Token temporal de 15 minutos con propósito explícito de reset.
     const token = jwt.sign(
-      { usuario_id: user.usuario_id, correo: user.correo },
+      { usuario_id: user.usuario_id, correo: user.correo, purpose: 'reset' },
       env.jwtSecret,
       { expiresIn: '15m' }
+    );
+
+    // Solo queda vigente el enlace más reciente y se guarda su hash.
+    await pool.query(
+      `DELETE FROM recuperacion_contrasena
+       WHERE usuario_id = $1 AND usado_en IS NULL`,
+      [user.usuario_id]
+    );
+    await pool.query(
+      `INSERT INTO recuperacion_contrasena (usuario_id, token_hash, expira_en, creado_en)
+       VALUES ($1, $2, now() + interval '15 minutes', now())`,
+      [user.usuario_id, hashToken(token)]
     );
 
     try {
@@ -213,8 +284,10 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// Restablecer la contraseña usando el token
+// Restablecer la contraseña usando el token de un solo uso.
 export const resetPassword = async (req, res) => {
+  const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const { token, contrasena } = req.body;
 
@@ -222,26 +295,69 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Token y nueva contraseña son obligatorios' });
     }
 
-    if (contrasena.length < LONGITUD_MINIMA_PASSWORD) {
-      return res.status(400).json({
-        message: `La contraseña debe tener mínimo ${LONGITUD_MINIMA_PASSWORD} caracteres`,
-      });
+    const errorPassword = validarPassword(contrasena);
+    if (errorPassword) return res.status(400).json({ message: errorPassword });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, env.jwtSecret);
+    } catch {
+      return res.status(400).json({ message: 'El token es inválido o ha expirado' });
     }
 
-    // Verificar firma del token
-    const decoded = jwt.verify(token, env.jwtSecret);
+    // Un JWT de sesión NO sirve para cambiar la contraseña (C-01).
+    if (decoded.purpose !== 'reset' || !decoded.usuario_id) {
+      return res.status(400).json({ message: 'El token es inválido o ha expirado' });
+    }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(contrasena, salt);
+    await client.query('BEGIN');
+    transaccionAbierta = true;
 
-    await pool.query(
-      'UPDATE usuarios SET contrasena = $1, fecha_actualizacion = now() WHERE usuario_id = $2',
+    const tokenValido = await client.query(
+      `SELECT recuperacion_id
+       FROM recuperacion_contrasena
+       WHERE token_hash = $1
+         AND usuario_id = $2
+         AND usado_en IS NULL
+         AND expira_en > now()
+       FOR UPDATE`,
+      [hashToken(token), decoded.usuario_id]
+    );
+
+    if (tokenValido.rows.length === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(400).json({ message: 'El token es inválido, ya fue usado o ha expirado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+    await client.query(
+      `UPDATE recuperacion_contrasena
+       SET usado_en = now()
+       WHERE recuperacion_id = $1`,
+      [tokenValido.rows[0].recuperacion_id]
+    );
+
+    // token_version invalida las sesiones emitidas antes del cambio (C-01).
+    await client.query(
+      `UPDATE usuarios
+       SET contrasena = $1,
+           token_version = token_version + 1,
+           fecha_actualizacion = now()
+       WHERE usuario_id = $2`,
       [hashedPassword, decoded.usuario_id]
     );
 
+    await client.query('COMMIT');
+    transaccionAbierta = false;
+
     res.json({ message: 'Contraseña actualizada exitosamente' });
   } catch (error) {
+    if (transaccionAbierta) await client.query('ROLLBACK');
     console.error('Error en resetPassword:', error);
-    res.status(400).json({ message: 'El token es inválido o ha expirado' });
+    res.status(500).json({ message: 'Error del servidor al restablecer la contraseña' });
+  } finally {
+    client.release();
   }
 };

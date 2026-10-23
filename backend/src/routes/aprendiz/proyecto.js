@@ -12,6 +12,7 @@ import {
   cambiarMiFicha,
   getResumenAprendiz,
   getFichaActual,
+  actualizarCupoProyecto,
 } from '../../controllers/aprendizController/proyectoController.js';
 
 // Controlador de tareas de proyecto
@@ -27,6 +28,7 @@ const router = express.Router();
 router.post('/', auth, isAprendiz, crearProyecto);
 router.post('/unirse', auth, isAprendiz, unirseAProyecto);
 router.get('/mio', auth, isAprendiz, getMiProyecto);
+router.put('/mio/cupo', auth, isAprendiz, actualizarCupoProyecto);
 router.get('/observaciones', auth, isAprendiz, getObservacionesDeMiProyecto);
 router.get('/fases/:faseId/carpetas', auth, isAprendiz, getCarpetasDeFaseAprendiz);
 router.post('/fases/:faseId/carpetas', auth, isAprendiz, crearCarpeta);

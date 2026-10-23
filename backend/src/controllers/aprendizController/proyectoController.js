@@ -5,24 +5,28 @@
       cupo y fechas). Queda como líder del grupo (grupos.lider_id). Al
       crearse se generan las 5 fases fijas y un código de invitación único.
     - unirseAProyecto: otro aprendiz entra a un grupo existente usando el
-      código de invitación, respetando el cupo máximo (RN-009).
+      código de invitación, respetando el cupo máximo (RN-009) y la ficha.
     - getMiProyecto: devuelve el proyecto activo del aprendiz logueado.
     - Carpetas y evidencias: cualquier integrante activo del grupo puede
       crearlas y subir evidencias, con el autor registrado (RN-012).
   Regla de negocio clave: un aprendiz solo puede estar en UN proyecto
-  activo a la vez (grupo con nombre_grupo distinto de "General" — el grupo
-  "General" es solo de inscripción a la ficha y no cuenta para esta regla).
+  activo a la vez (grupo con `es_general = false`; el grupo General es solo
+  de inscripción a la ficha y no cuenta para esta regla, C-05).
 */
 
+import crypto from 'node:crypto';
 import pool from '../../config/db.js';
 import {
   CUPO_POR_DEFECTO,
-  calcularEstadoFase,
   calcularProgreso,
   puedeUnirse,
   validarCupo,
 } from '../../domain/reglas.js';
-import { recalcularCarpetaYFase, resultadosDeFase } from '../../services/cascada.js';
+import {
+  bloquearCarpeta,
+  recalcularCarpetaYFase,
+} from '../../services/cascada.js';
+import { obtenerOCrearGrupoGeneral } from '../../services/grupos.js';
 
 const FASES_FIJAS = [
   { numero: 1, nombre: 'FASE 1 - ANALISIS' },
@@ -32,82 +36,206 @@ const FASES_FIJAS = [
   { numero: 5, nombre: 'FASE 5 - CIERRE/ENTREGA' },
 ];
 
-// Genera un código de invitación único tipo "PRY-4F82A1"
-function generarCodigoProyecto() {
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `PRY-${random}`;
+const TIPOS_EVIDENCIA = new Set(['Documento', 'Imagen', 'Video', 'Enlace']);
+
+const MAXIMOS = {
+  nombre_grupo: 50,
+  nombre_proyecto: 150,
+  descripcion: 500,
+  problema: 500,
+  objetivo: 500,
+  alcance: 500,
+  tecnologias: 500,
+  nombre_carpeta: 150,
+  nombre_evidencia: 200,
+  ubicacion: 500,
+};
+
+const texto = (valor) => String(valor ?? '').trim();
+
+// C-07 / Q-01: solo se aceptan URLs http(s) y con longitud razonable.
+function esUrlSegura(valor) {
+  const url = texto(valor);
+  if (!url || url.length > MAXIMOS.ubicacion) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
-// Busca la ficha activa del aprendiz (a través de su grupo "General")
+function fechaValida(valor) {
+  const cadena = texto(valor);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(cadena)) return null;
+  const fecha = new Date(`${cadena}T00:00:00Z`);
+  if (Number.isNaN(fecha.getTime())) return null;
+  // Rechaza fechas que JavaScript normaliza (por ejemplo, 2026-02-31).
+  return fecha.toISOString().slice(0, 10) === cadena ? fecha : null;
+}
+
+function errorDeValidacion(campo, valor, obligatorio = true) {
+  const contenido = texto(valor);
+  if (!contenido) return obligatorio ? `El campo ${campo} es obligatorio` : null;
+  if (contenido.length > MAXIMOS[campo]) {
+    return `El campo ${campo} no puede superar ${MAXIMOS[campo]} caracteres`;
+  }
+  return null;
+}
+
+// Genera un código de invitación con entropía criptográfica (Q-09).
+function generarCodigoProyecto() {
+  return `PRY-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+}
+
+async function codigoProyectoDisponible(client) {
+  for (let intento = 0; intento < 8; intento += 1) {
+    const codigo = generarCodigoProyecto();
+    const { rowCount } = await client.query(
+      'SELECT 1 FROM grupos WHERE codigo_grupo = $1',
+      [codigo]
+    );
+    if (rowCount === 0) return codigo;
+  }
+  throw new Error('No se pudo generar un código de grupo único');
+}
+
+// Busca la ficha activa del aprendiz (a través de su grupo General).
 async function obtenerFichaDelAprendiz(client, usuarioId) {
   const { rows } = await client.query(
     `SELECT g.ficha_id
      FROM integrantes_grupo ig
      JOIN grupos g ON g.grupo_id = ig.grupo_id
-     WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo = 'General'
+     WHERE ig.usuario_id = $1
+       AND ig.estado_integrante = 'Activo'
+       AND g.es_general
+     ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
      LIMIT 1`,
     [usuarioId]
   );
   return rows[0]?.ficha_id || null;
 }
 
-// Revisa si el aprendiz ya pertenece a un proyecto activo (grupo distinto de "General")
+// Revisa si el aprendiz ya pertenece a un proyecto activo.
 async function tieneProyectoActivo(client, usuarioId) {
   const { rows } = await client.query(
     `SELECT 1
      FROM integrantes_grupo ig
      JOIN grupos g ON g.grupo_id = ig.grupo_id
-     WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
+     WHERE ig.usuario_id = $1
+       AND ig.estado_integrante = 'Activo'
+       AND NOT g.es_general
      LIMIT 1`,
     [usuarioId]
   );
   return rows.length > 0;
 }
 
+// Bloquea la fila del usuario para serializar creación/unión (RN-007, C-06).
+async function bloquearUsuario(client, usuarioId) {
+  await client.query('SELECT usuario_id FROM usuarios WHERE usuario_id = $1 FOR UPDATE', [
+    usuarioId,
+  ]);
+}
+
 // POST /api/aprendiz/proyectos — crear grupo + proyecto + fases automáticas
 export async function crearProyecto(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const usuarioId = req.user.usuario_id;
     const {
-      nombre_grupo, nombre_proyecto, descripcion, problema,
-      objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada,
-      cupo_maximo, cupo_integrantes,
+      nombre_grupo,
+      nombre_proyecto,
+      descripcion,
+      problema,
+      objetivo,
+      alcance,
+      tecnologias,
+      fecha_inicio,
+      fecha_fin_estimada,
+      cupo_maximo,
     } = req.body;
 
-    if (!nombre_grupo || !nombre_proyecto || !descripcion || !problema || !objetivo || !alcance || !fecha_inicio || !fecha_fin_estimada) {
-      return res.status(400).json({ message: 'Faltan campos obligatorios del proyecto' });
+    const nombreGrupo = texto(nombre_grupo);
+    if (nombreGrupo.toLowerCase() === 'general') {
+      return res.status(400).json({ message: 'El nombre "General" está reservado por el sistema' });
     }
 
-    const cupoRecibido = cupo_maximo ?? cupo_integrantes ?? CUPO_POR_DEFECTO;
+    const camposObligatorios = {
+      nombre_grupo: nombreGrupo,
+      nombre_proyecto,
+      descripcion,
+      problema,
+      objetivo,
+      alcance,
+    };
+    for (const [campo, valor] of Object.entries(camposObligatorios)) {
+      const error = errorDeValidacion(campo, valor);
+      if (error) return res.status(400).json({ message: error });
+    }
+
+    const errorTecnologias = errorDeValidacion('tecnologias', tecnologias, false);
+    if (errorTecnologias) return res.status(400).json({ message: errorTecnologias });
+
+    const inicio = fechaValida(fecha_inicio);
+    const fin = fechaValida(fecha_fin_estimada);
+    if (!inicio || !fin) {
+      return res.status(400).json({ message: 'Las fechas del proyecto no son válidas' });
+    }
+    if (fin <= inicio) {
+      return res
+        .status(400)
+        .json({ message: 'La fecha fin estimada debe ser posterior a la fecha de inicio' });
+    }
+
+    const cupoRecibido = cupo_maximo ?? CUPO_POR_DEFECTO;
     const cupo = validarCupo(cupoRecibido);
     if (!cupo.valido) {
       return res.status(400).json({ message: cupo.mensaje });
     }
 
     await client.query('BEGIN');
+    transaccionAbierta = true;
+
+    await bloquearUsuario(client, usuarioId);
 
     const yaTieneProyecto = await tieneProyectoActivo(client, usuarioId);
     if (yaTieneProyecto) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({ message: 'Ya perteneces a un proyecto activo' });
     }
 
     const fichaId = await obtenerFichaDelAprendiz(client, usuarioId);
     if (!fichaId) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({ message: 'No estás inscrito en ninguna ficha' });
     }
 
-    const codigoGrupo = generarCodigoProyecto();
+    const codigoGrupo = await codigoProyectoDisponible(client);
 
-    const grupoResult = await client.query(
-      `INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, cupo_maximo, estado_grupo, fecha_creacion)
-       VALUES ($1, $2, $3, $4, $5, 'Activo', now())
-       RETURNING grupo_id`,
-      [fichaId, usuarioId, nombre_grupo, codigoGrupo, cupo.cupo]
-    );
-    const grupoId = grupoResult.rows[0].grupo_id;
+    let grupoId;
+    try {
+      const grupoResult = await client.query(
+        `INSERT INTO grupos
+           (ficha_id, lider_id, nombre_grupo, codigo_grupo, cupo_maximo, estado_grupo, fecha_creacion, es_general)
+         VALUES ($1, $2, $3, $4, $5, 'Activo', now(), false)
+         RETURNING grupo_id`,
+        [fichaId, usuarioId, nombreGrupo, codigoGrupo, cupo.cupo]
+      );
+      grupoId = grupoResult.rows[0].grupo_id;
+    } catch (error) {
+      if (error.code === '23505') {
+        await client.query('ROLLBACK');
+        transaccionAbierta = false;
+        return res
+          .status(409)
+          .json({ message: 'No se pudo generar un código de grupo único, intenta de nuevo' });
+      }
+      throw error;
+    }
 
     await client.query(
       `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
@@ -116,22 +244,36 @@ export async function crearProyecto(req, res) {
     );
 
     const proyectoResult = await client.query(
-      `INSERT INTO proyectos (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto)
+      `INSERT INTO proyectos
+         (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance,
+          tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Activo')
        RETURNING proyecto_id`,
-      [grupoId, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias || null, fecha_inicio, fecha_fin_estimada]
+      [
+        grupoId,
+        texto(nombre_proyecto),
+        texto(descripcion),
+        texto(problema),
+        texto(objetivo),
+        texto(alcance),
+        texto(tecnologias) || null,
+        texto(fecha_inicio),
+        texto(fecha_fin_estimada),
+      ]
     );
     const proyectoId = proyectoResult.rows[0].proyecto_id;
 
-    for (const fase of FASES_FIJAS) {
-      await client.query(
-        `INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase)
-         VALUES ($1, $2, $3, 'Pendiente')`,
-        [proyectoId, fase.numero, fase.nombre]
-      );
-    }
+    const valoresFases = FASES_FIJAS.map(
+      (fase) => `(${proyectoId}, ${fase.numero}, '${fase.nombre}', 'Pendiente')`
+    ).join(', ');
+    await client.query(
+      `INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase)
+       VALUES ${valoresFases}`
+    );
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
+
     res.status(201).json({
       grupo_id: grupoId,
       proyecto_id: proyectoId,
@@ -139,7 +281,8 @@ export async function crearProyecto(req, res) {
       cupo_maximo: cupo.cupo,
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al crear el proyecto:', err);
     res.status(500).json({ message: 'Error al crear el proyecto' });
   } finally {
     client.release();
@@ -149,38 +292,60 @@ export async function crearProyecto(req, res) {
 // POST /api/aprendiz/proyectos/unirse — unirse con código de invitación
 export async function unirseAProyecto(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const usuarioId = req.user.usuario_id;
-    const { codigo_grupo } = req.body;
+    const codigo = texto(req.body.codigo_grupo).toUpperCase();
 
-    if (!codigo_grupo) {
+    if (!codigo) {
       return res.status(400).json({ message: 'Falta el código de grupo' });
     }
 
     await client.query('BEGIN');
+    transaccionAbierta = true;
+
+    await bloquearUsuario(client, usuarioId);
 
     const yaTieneProyecto = await tieneProyectoActivo(client, usuarioId);
     if (yaTieneProyecto) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({ message: 'Ya perteneces a un proyecto activo' });
+    }
+
+    const fichaId = await obtenerFichaDelAprendiz(client, usuarioId);
+    if (!fichaId) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(400).json({ message: 'No estás inscrito en ninguna ficha' });
     }
 
     // FOR UPDATE serializa las solicitudes concurrentes al mismo grupo: el
     // conteo del cupo y la inserción ocurren bajo el mismo bloqueo.
     const grupoResult = await client.query(
-      `SELECT grupo_id, cupo_maximo
+      `SELECT grupo_id, ficha_id, cupo_maximo
        FROM grupos
        WHERE codigo_grupo = $1
          AND estado_grupo = 'Activo'
-         AND nombre_grupo <> 'General'
+         AND NOT es_general
        FOR UPDATE`,
-      [codigo_grupo]
+      [codigo]
     );
     if (grupoResult.rowCount === 0) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(404).json({ message: 'Código de grupo no encontrado' });
     }
     const grupo = grupoResult.rows[0];
+
+    // Decisión de Semana 2: solo se puede unir a un grupo de la propia ficha.
+    if (grupo.ficha_id !== fichaId) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res
+        .status(403)
+        .json({ message: 'El grupo pertenece a otra ficha; no puedes unirte' });
+    }
 
     const conteo = await client.query(
       `SELECT count(*)::int AS total
@@ -191,6 +356,7 @@ export async function unirseAProyecto(req, res) {
 
     if (!puedeUnirse(grupo.cupo_maximo, conteo.rows[0].total)) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({
         message: `El grupo está completo (cupo máximo: ${grupo.cupo_maximo})`,
       });
@@ -205,9 +371,11 @@ export async function unirseAProyecto(req, res) {
     );
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
     res.status(200).json({ message: 'Te uniste al proyecto correctamente' });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al unirse al proyecto:', err);
     res.status(500).json({ message: 'Error al unirse al proyecto' });
   } finally {
     client.release();
@@ -227,7 +395,10 @@ export async function getMiProyecto(req, res) {
                   AND ig2.estado_integrante = 'Activo') AS total_integrantes
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
-       WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
+       WHERE ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'
+         AND NOT g.es_general
+       ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
       [usuarioId]
     );
@@ -236,10 +407,9 @@ export async function getMiProyecto(req, res) {
     }
     const grupo = grupoResult.rows[0];
 
-    const proyectoResult = await pool.query(
-      `SELECT * FROM proyectos WHERE grupo_id = $1`,
-      [grupo.grupo_id]
-    );
+    const proyectoResult = await pool.query(`SELECT * FROM proyectos WHERE grupo_id = $1`, [
+      grupo.grupo_id,
+    ]);
     const proyecto = proyectoResult.rows[0] || null;
 
     const integrantesResult = await pool.query(
@@ -275,7 +445,7 @@ export async function getMiProyecto(req, res) {
              SELECT e2.resultado
              FROM evaluaciones e2
              WHERE e2.evidencia_id = ev.evidencia_id
-             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             ORDER BY e2.evaluacion_id DESC
              LIMIT 1
            ) ult ON true
            WHERE f.proyecto_id = $1
@@ -292,11 +462,69 @@ export async function getMiProyecto(req, res) {
       fases: fasesResult.rows,
     });
   } catch (err) {
+    console.error('Error al obtener el proyecto:', err);
     res.status(500).json({ message: 'Error al obtener el proyecto' });
   }
 }
 
+// PUT /api/aprendiz/proyectos/mio/cupo — el líder ajusta el cupo (RN-009).
+export async function actualizarCupoProyecto(req, res) {
+  const client = await pool.connect();
+  let transaccionAbierta = false;
+  try {
+    const usuarioId = req.user.usuario_id;
+    const cupo = validarCupo(req.body.cupo_maximo);
+    if (!cupo.valido) return res.status(400).json({ message: cupo.mensaje });
 
+    await client.query('BEGIN');
+    transaccionAbierta = true;
+    await bloquearUsuario(client, usuarioId);
+
+    const grupoResult = await client.query(
+      `SELECT g.grupo_id, g.cupo_maximo
+       FROM grupos g
+       WHERE g.lider_id = $1 AND g.estado_grupo = 'Activo' AND NOT g.es_general
+       FOR UPDATE`,
+      [usuarioId]
+    );
+    if (grupoResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(403).json({ message: 'Solo el líder puede cambiar el cupo del grupo' });
+    }
+
+    const grupo = grupoResult.rows[0];
+    const { rows } = await client.query(
+      `SELECT count(*)::int AS total
+       FROM integrantes_grupo
+       WHERE grupo_id = $1 AND estado_integrante = 'Activo'`,
+      [grupo.grupo_id]
+    );
+
+    if (cupo.cupo < rows[0].total) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(400).json({
+        message: `El cupo no puede ser menor que los ${rows[0].total} integrantes activos`,
+      });
+    }
+
+    await client.query('UPDATE grupos SET cupo_maximo = $1 WHERE grupo_id = $2', [
+      cupo.cupo,
+      grupo.grupo_id,
+    ]);
+    await client.query('COMMIT');
+    transaccionAbierta = false;
+
+    res.json({ message: 'Cupo actualizado correctamente', cupo_maximo: cupo.cupo });
+  } catch (err) {
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al actualizar el cupo:', err);
+    res.status(500).json({ message: 'Error al actualizar el cupo' });
+  } finally {
+    client.release();
+  }
+}
 
 // Verifica que el usuario sea integrante ACTIVO del grupo dueño de la fase
 // (RN-012: cualquier integrante puede crear carpetas y subir evidencias).
@@ -314,16 +542,14 @@ async function verificarIntegranteDeFase(client, usuarioId, faseId) {
 }
 
 // POST /api/aprendiz/proyectos/fases/:faseId/carpetas
-// Cualquier integrante activo crea una carpeta dentro de una fase.
 export async function crearCarpeta(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
     const { faseId } = req.params;
-    const { nombre_carpeta } = req.body;
+    const nombreCarpeta = texto(req.body.nombre_carpeta);
 
-    if (!nombre_carpeta || !String(nombre_carpeta).trim()) {
-      return res.status(400).json({ message: 'El nombre de la carpeta es obligatorio' });
-    }
+    const error = errorDeValidacion('nombre_carpeta', nombreCarpeta);
+    if (error) return res.status(400).json({ message: error });
 
     const check = await verificarIntegranteDeFase(pool, usuarioId, faseId);
     if (!check) {
@@ -334,29 +560,54 @@ export async function crearCarpeta(req, res) {
       `INSERT INTO carpetas (fase_id, nombre_carpeta, fecha_creacion)
        VALUES ($1, $2, now())
        RETURNING carpeta_id, nombre_carpeta, estado_carpeta`,
-      [faseId, String(nombre_carpeta).trim()]
+      [faseId, nombreCarpeta]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
+    console.error('Error al crear la carpeta:', err);
     res.status(500).json({ message: 'Error al crear la carpeta' });
   }
 }
 
 // POST /api/aprendiz/proyectos/carpetas/:carpetaId/evidencias
-// Cualquier integrante sube una evidencia; el autor sale del token.
 export async function subirEvidencia(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const usuarioId = req.user.usuario_id;
     const { carpetaId } = req.params;
     const { nombre_evidencia, tipo_evidencia, ubicacion } = req.body;
+    const nombreEvidencia = texto(nombre_evidencia);
+    const tipoEvidencia = texto(tipo_evidencia);
+    const ubicacionLimpia = texto(ubicacion);
 
-    if (!nombre_evidencia || !tipo_evidencia || !ubicacion) {
-      return res.status(400).json({ message: 'Faltan datos de la evidencia' });
+    const errorNombre = errorDeValidacion('nombre_evidencia', nombreEvidencia);
+    if (errorNombre) return res.status(400).json({ message: errorNombre });
+    if (!TIPOS_EVIDENCIA.has(tipoEvidencia)) {
+      return res
+        .status(400)
+        .json({ message: 'El tipo de evidencia debe ser Documento, Imagen, Video o Enlace' });
+    }
+    if (!esUrlSegura(ubicacionLimpia)) {
+      return res
+        .status(400)
+        .json({ message: 'La ubicación debe ser una URL http(s) válida de máximo 500 caracteres' });
     }
 
-    const { rows: carpetaRows } = await client.query(
-      `SELECT c.carpeta_id
+    await client.query('BEGIN');
+    transaccionAbierta = true;
+
+    // Bloquea la carpeta antes de insertar para que dos entregas o una
+    // entrega y una evaluación no calculen el estado a la vez (C-06).
+    const carpeta = await bloquearCarpeta(client, carpetaId);
+    if (!carpeta) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(404).json({ message: 'La carpeta no existe' });
+    }
+
+    const { rowCount } = await client.query(
+      `SELECT 1
        FROM carpetas c
        JOIN fases f ON f.fase_id = c.fase_id
        JOIN proyectos p ON p.proyecto_id = f.proyecto_id
@@ -367,26 +618,29 @@ export async function subirEvidencia(req, res) {
          AND ig.estado_integrante = 'Activo'`,
       [carpetaId, usuarioId]
     );
-    if (carpetaRows.length === 0) {
+    if (rowCount === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(403).json({ message: 'No perteneces al grupo dueño de esta carpeta' });
     }
 
-    await client.query('BEGIN');
-
     const { rows } = await client.query(
-      `INSERT INTO evidencias (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion, fecha_subida)
-       VALUES ($1, $2, $3, $4, $5, now())
+      `INSERT INTO evidencias
+         (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion, fecha_subida)
+       VALUES ($1, $2, $3, $4, $5, clock_timestamp())
        RETURNING evidencia_id`,
-      [carpetaId, usuarioId, String(nombre_evidencia).trim(), tipo_evidencia, ubicacion]
+      [carpetaId, usuarioId, nombreEvidencia, tipoEvidencia, ubicacionLimpia]
     );
 
     // Una evidencia nueva sin evaluar devuelve la carpeta/fase a "En revisión".
     await recalcularCarpetaYFase(client, carpetaId);
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
     res.status(201).json({ evidencia_id: rows[0].evidencia_id });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al subir la evidencia:', err);
     res.status(500).json({ message: 'Error al subir la evidencia' });
   } finally {
     client.release();
@@ -394,9 +648,6 @@ export async function subirEvidencia(req, res) {
 }
 
 // GET /api/aprendiz/proyectos/fases/:faseId/carpetas
-// Cualquier integrante activo del grupo (líder o no) puede ver la lista de
-// chequeo de su fase: carpetas, evidencias y el resultado de evaluación
-// vigente (la más reciente), además del progreso de la fase.
 export async function getCarpetasDeFaseAprendiz(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
@@ -415,55 +666,64 @@ export async function getCarpetasDeFaseAprendiz(req, res) {
       [faseId]
     );
 
+    // Una sola consulta para todas las evidencias de la fase (Q-04), no una
+    // consulta por carpeta.
+    const { rows: evidencias } = await pool.query(
+      `SELECT ev.carpeta_id, ev.evidencia_id, ev.nombre_evidencia, ev.tipo_evidencia,
+              ev.ubicacion, ev.fecha_subida,
+              au.nombre AS autor_nombre, au.apellido AS autor_apellido,
+              ult.resultado, ult.fecha_evaluacion,
+              inst.nombre AS evaluador_nombre, inst.apellido AS evaluador_apellido
+       FROM evidencias ev
+       JOIN carpetas c ON c.carpeta_id = ev.carpeta_id
+       JOIN usuarios au ON au.usuario_id = ev.usuario_id
+       LEFT JOIN LATERAL (
+         SELECT e2.resultado, e2.fecha_evaluacion, e2.instructor_id
+         FROM evaluaciones e2
+         WHERE e2.evidencia_id = ev.evidencia_id
+         ORDER BY e2.evaluacion_id DESC
+         LIMIT 1
+       ) ult ON true
+       LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
+       WHERE c.fase_id = $1
+       ORDER BY ev.evidencia_id`,
+      [faseId]
+    );
+
+    const porCarpeta = new Map();
+    for (const evidencia of evidencias) {
+      if (!porCarpeta.has(evidencia.carpeta_id)) porCarpeta.set(evidencia.carpeta_id, []);
+      porCarpeta.get(evidencia.carpeta_id).push(evidencia);
+    }
     for (const carpeta of carpetas) {
-      const { rows: evidencias } = await pool.query(
-        `SELECT ev.evidencia_id, ev.nombre_evidencia, ev.tipo_evidencia, ev.ubicacion,
-                ev.fecha_subida,
-                au.nombre AS autor_nombre, au.apellido AS autor_apellido,
-                ult.resultado, ult.fecha_evaluacion,
-                inst.nombre AS evaluador_nombre, inst.apellido AS evaluador_apellido
-         FROM evidencias ev
-         JOIN usuarios au ON au.usuario_id = ev.usuario_id
-         LEFT JOIN LATERAL (
-           SELECT e2.resultado, e2.fecha_evaluacion, e2.instructor_id
-           FROM evaluaciones e2
-           WHERE e2.evidencia_id = ev.evidencia_id
-           ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
-           LIMIT 1
-         ) ult ON true
-         LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
-         WHERE ev.carpeta_id = $1
-         ORDER BY ev.evidencia_id`,
-        [carpeta.carpeta_id]
-      );
-      carpeta.evidencias = evidencias;
+      carpeta.evidencias = porCarpeta.get(carpeta.carpeta_id) || [];
     }
 
-    const filas = await resultadosDeFase(pool, faseId);
-    const resultados = filas.map((fila) => fila.resultado);
     const { rows: faseRows } = await pool.query(
       `SELECT fase_id, nombre_fase, estado_fase FROM fases WHERE fase_id = $1`,
       [faseId]
     );
 
+    const resultados = evidencias.map((evidencia) => evidencia.resultado);
+    const progreso = calcularProgreso(resultados);
+
     res.json({
       fase: faseRows[0] || null,
-      estado_fase: calcularEstadoFase(resultados),
+      estado_fase: faseRows[0]?.estado_fase || 'Pendiente',
       progreso: {
-        ...calcularProgreso(resultados),
+        ...progreso,
         carpetas_total: carpetas.length,
         carpetas_aprobadas: carpetas.filter((c) => c.estado_carpeta === 'Aprobada').length,
       },
       carpetas,
     });
   } catch (err) {
+    console.error('Error al obtener la lista de chequeo:', err);
     res.status(500).json({ message: 'Error al obtener la lista de chequeo' });
   }
 }
 
 // GET /api/aprendiz/proyectos/observaciones
-// Devuelve las observaciones que el instructor publicó al proyecto activo
-// del aprendiz logueado (cualquier integrante las puede ver).
 export async function getObservacionesDeMiProyecto(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
@@ -472,7 +732,10 @@ export async function getObservacionesDeMiProyecto(req, res) {
       `SELECT g.grupo_id
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
-       WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
+       WHERE ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'
+         AND NOT g.es_general
+       ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
       [usuarioId]
     );
@@ -490,23 +753,27 @@ export async function getObservacionesDeMiProyecto(req, res) {
 
     const { rows } = await pool.query(
       `SELECT o.observacion_id, o.titulo, o.descripcion, o.fecha_observacion,
+              o.evidencia_id, ev.nombre_evidencia,
               u.nombre, u.apellido
        FROM observaciones o
        JOIN usuarios u ON u.usuario_id = o.instructor_id
+       LEFT JOIN evidencias ev ON ev.evidencia_id = o.evidencia_id
        WHERE o.proyecto_id = $1
        ORDER BY o.fecha_observacion DESC`,
       [proyectoResult.rows[0].proyecto_id]
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error al obtener las observaciones:', err);
     res.status(500).json({ message: 'Error al obtener las observaciones' });
   }
 }
 
 // PUT /api/aprendiz/proyectos/mi-ficha — el aprendiz corrige su propia ficha,
-// SOLO si aún no tiene un proyecto activo (Opción 1: integridad de datos).
+// SOLO si aún no tiene un proyecto activo.
 export async function cambiarMiFicha(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const usuarioId = req.user.usuario_id;
     const { numero_ficha } = req.body;
@@ -516,79 +783,62 @@ export async function cambiarMiFicha(req, res) {
     }
 
     await client.query('BEGIN');
+    transaccionAbierta = true;
+    await bloquearUsuario(client, usuarioId);
 
     const yaTieneProyecto = await tieneProyectoActivo(client, usuarioId);
     if (yaTieneProyecto) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ message: 'Ya tienes un proyecto activo, no puedes cambiar de ficha' });
+      transaccionAbierta = false;
+      return res
+        .status(400)
+        .json({ message: 'Ya tienes un proyecto activo, no puedes cambiar de ficha' });
     }
 
-    const ficha = await client.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [numero_ficha]);
+    const ficha = await client.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [
+      numero_ficha,
+    ]);
     if (ficha.rows.length === 0) {
       await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({ message: 'Esa ficha no existe' });
     }
     const fichaId = ficha.rows[0].ficha_id;
 
-    // Inactiva su ingreso actual en el grupo General de cualquier ficha
     await client.query(
       `UPDATE integrantes_grupo ig
        SET estado_integrante = 'Inactivo', fecha_salida = now()
        FROM grupos g
-       WHERE g.grupo_id = ig.grupo_id AND g.nombre_grupo = 'General'
-         AND ig.usuario_id = $1 AND ig.estado_integrante = 'Activo'`,
+       WHERE g.grupo_id = ig.grupo_id
+         AND g.es_general
+         AND ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'`,
       [usuarioId]
     );
 
-    const grupoId = await obtenerGrupoGeneralAprendiz(client, fichaId, usuarioId);
+    const grupoId = await obtenerOCrearGrupoGeneral(client, fichaId, usuarioId);
 
-    const yaExiste = await client.query(
-      'SELECT integrante_id FROM integrantes_grupo WHERE grupo_id = $1 AND usuario_id = $2',
+    await client.query(
+      `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
+       VALUES ($1, $2, 'Activo', now())
+       ON CONFLICT (grupo_id, usuario_id)
+       DO UPDATE SET estado_integrante = 'Activo', fecha_salida = NULL, fecha_ingreso = now()`,
       [grupoId, usuarioId]
     );
-    if (yaExiste.rows.length > 0) {
-      await client.query(
-        `UPDATE integrantes_grupo SET estado_integrante = 'Activo', fecha_salida = NULL WHERE integrante_id = $1`,
-        [yaExiste.rows[0].integrante_id]
-      );
-    } else {
-      await client.query(
-        `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
-         VALUES ($1, $2, 'Activo', now())`,
-        [grupoId, usuarioId]
-      );
-    }
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
     res.json({ message: 'Ficha actualizada correctamente' });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al cambiar de ficha:', err);
     res.status(500).json({ message: 'Error al cambiar de ficha' });
   } finally {
     client.release();
   }
 }
 
-// Helper local: busca (o crea) el grupo General de una ficha, con el
-// mismo aprendiz como líder de respaldo si el grupo aún no existe.
-async function obtenerGrupoGeneralAprendiz(client, fichaId, usuarioId) {
-  const existente = await client.query(
-    'SELECT grupo_id FROM grupos WHERE ficha_id = $1 AND nombre_grupo = $2 LIMIT 1',
-    [fichaId, 'General']
-  );
-  if (existente.rows.length > 0) return existente.rows[0].grupo_id;
-
-  const nuevo = await client.query(
-    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, cupo_maximo, estado_grupo, fecha_creacion)
-     VALUES ('General', $1, $2, $3, 50, 'Activo', now())
-     RETURNING grupo_id`,
-    [`GRP-GENERAL-${fichaId}`, fichaId, usuarioId]
-  );
-  return nuevo.rows[0].grupo_id;
-}
-
 // GET /api/aprendiz/proyectos/resumen — dashboard agregado en 2 consultas SQL
-// (reemplaza las 5+ llamadas en cascada que hacía el frontend antes)
 export async function getResumenAprendiz(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
@@ -598,7 +848,10 @@ export async function getResumenAprendiz(req, res) {
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        JOIN proyectos p ON p.grupo_id = g.grupo_id
-       WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
+       WHERE ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'
+         AND NOT g.es_general
+       ORDER BY ig.fecha_ingreso DESC, p.proyecto_id DESC
        LIMIT 1`,
       [usuarioId]
     );
@@ -626,7 +879,7 @@ export async function getResumenAprendiz(req, res) {
              SELECT e2.resultado
              FROM evaluaciones e2
              WHERE e2.evidencia_id = e.evidencia_id
-             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             ORDER BY e2.evaluacion_id DESC
              LIMIT 1
            ) ult ON true
            WHERE f.proyecto_id = $1 AND ult.resultado IS NOT NULL) AS evidencias_evaluadas,
@@ -638,7 +891,7 @@ export async function getResumenAprendiz(req, res) {
              SELECT e2.resultado
              FROM evaluaciones e2
              WHERE e2.evidencia_id = e.evidencia_id
-             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             ORDER BY e2.evaluacion_id DESC
              LIMIT 1
            ) ult ON true
            WHERE f.proyecto_id = $1 AND ult.resultado = 'APROBADO') AS evidencias_aprobadas
@@ -661,12 +914,13 @@ export async function getResumenAprendiz(req, res) {
       },
     });
   } catch (err) {
+    console.error('Error al obtener el resumen:', err);
     res.status(500).json({ message: 'Error al obtener el resumen' });
   }
 }
 
 // GET /api/aprendiz/proyectos/mi-ficha — devuelve el número de la ficha
-// vigente del aprendiz (a través de su grupo "General" activo).
+// vigente del aprendiz (a través de su grupo General activo).
 export async function getFichaActual(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
@@ -675,7 +929,10 @@ export async function getFichaActual(req, res) {
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        JOIN fichas f ON f.ficha_id = g.ficha_id
-       WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo = 'General'
+       WHERE ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'
+         AND g.es_general
+       ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
       [usuarioId]
     );
@@ -684,6 +941,7 @@ export async function getFichaActual(req, res) {
     }
     res.json({ numero_ficha: rows[0].numero_ficha });
   } catch (err) {
+    console.error('Error al obtener tu ficha actual:', err);
     res.status(500).json({ message: 'Error al obtener tu ficha actual' });
   }
 }

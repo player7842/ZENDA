@@ -1,11 +1,12 @@
 import pool from '../../config/db.js';
 import {
-  calcularEstadoFase,
   calcularProgreso,
   normalizarResultado,
-  RESULTADO_APROBADO,
 } from '../../domain/reglas.js';
-import { recalcularCarpetaYFase, resultadosDeFase } from '../../services/cascada.js';
+import {
+  bloquearCarpeta,
+  recalcularCarpetaYFase,
+} from '../../services/cascada.js';
 
 const FILTRO_ASIGNACION_VIGENTE = `ifi.fecha_fin IS NULL AND ifi.estado = 'Activo'`;
 
@@ -25,6 +26,7 @@ export async function getMisFichas(req, res) {
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener fichas del instructor' });
   }
 }
@@ -50,12 +52,13 @@ export async function getAprendicesDeFicha(req, res) {
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        JOIN usuarios u ON u.usuario_id = ig.usuario_id
-       WHERE g.ficha_id = $1 AND g.nombre_grupo = 'General' AND ig.estado_integrante = 'Activo'
+       WHERE g.ficha_id = $1 AND g.es_general AND ig.estado_integrante = 'Activo'
        ORDER BY u.apellido`,
       [id]
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener aprendices' });
   }
 }
@@ -81,12 +84,13 @@ export async function getGruposDeFicha(req, res) {
       `SELECT g.grupo_id, g.nombre_grupo, g.codigo_grupo, p.proyecto_id, p.nombre_proyecto, p.estado_proyecto
        FROM grupos g
        JOIN proyectos p ON p.grupo_id = g.grupo_id
-       WHERE g.ficha_id = $1 AND g.nombre_grupo <> 'General' AND g.estado_grupo = 'Activo'
+       WHERE g.ficha_id = $1 AND NOT g.es_general AND g.estado_grupo = 'Activo'
        ORDER BY g.nombre_grupo`,
       [id]
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener los grupos de la ficha' });
   }
 }
@@ -130,6 +134,7 @@ export async function getReadmeProyecto(req, res) {
 
     res.json({ proyecto, integrantes: integrantes.rows, fases: fases.rows });
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener el README del proyecto' });
   }
 }
@@ -173,40 +178,48 @@ export async function getCarpetasDeFase(req, res) {
       [faseId]
     );
 
+    // Una sola consulta para toda la fase (Q-04).
+    const { rows: evidencias } = await pool.query(
+      `SELECT ev.carpeta_id, ev.evidencia_id, ev.nombre_evidencia, ev.tipo_evidencia,
+              ev.ubicacion, ev.fecha_subida,
+              au.nombre AS autor_nombre, au.apellido AS autor_apellido,
+              ult.resultado, ult.fecha_evaluacion,
+              inst.nombre AS evaluador_nombre, inst.apellido AS evaluador_apellido
+       FROM evidencias ev
+       JOIN carpetas c ON c.carpeta_id = ev.carpeta_id
+       JOIN usuarios au ON au.usuario_id = ev.usuario_id
+       LEFT JOIN LATERAL (
+         SELECT e2.resultado, e2.fecha_evaluacion, e2.instructor_id
+         FROM evaluaciones e2
+         WHERE e2.evidencia_id = ev.evidencia_id
+         ORDER BY e2.evaluacion_id DESC
+         LIMIT 1
+       ) ult ON true
+       LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
+       WHERE c.fase_id = $1
+       ORDER BY ev.evidencia_id`,
+      [faseId]
+    );
+
+    const porCarpeta = new Map();
+    for (const evidencia of evidencias) {
+      if (!porCarpeta.has(evidencia.carpeta_id)) porCarpeta.set(evidencia.carpeta_id, []);
+      porCarpeta.get(evidencia.carpeta_id).push(evidencia);
+    }
     for (const carpeta of carpetas) {
-      const { rows: evidencias } = await pool.query(
-        `SELECT ev.evidencia_id, ev.nombre_evidencia, ev.tipo_evidencia, ev.ubicacion,
-                ev.fecha_subida,
-                au.nombre AS autor_nombre, au.apellido AS autor_apellido,
-                ult.resultado, ult.fecha_evaluacion,
-                inst.nombre AS evaluador_nombre, inst.apellido AS evaluador_apellido
-         FROM evidencias ev
-         JOIN usuarios au ON au.usuario_id = ev.usuario_id
-         LEFT JOIN LATERAL (
-           SELECT e2.resultado, e2.fecha_evaluacion, e2.instructor_id
-           FROM evaluaciones e2
-           WHERE e2.evidencia_id = ev.evidencia_id
-           ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
-           LIMIT 1
-         ) ult ON true
-         LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
-         WHERE ev.carpeta_id = $1
-         ORDER BY ev.evidencia_id`,
-        [carpeta.carpeta_id]
-      );
-      carpeta.evidencias = evidencias;
+      carpeta.evidencias = porCarpeta.get(carpeta.carpeta_id) || [];
     }
 
-    const filas = await resultadosDeFase(pool, faseId);
-    const resultados = filas.map((fila) => fila.resultado);
     const { rows: faseRows } = await pool.query(
       `SELECT fase_id, nombre_fase, estado_fase FROM fases WHERE fase_id = $1`,
       [faseId]
     );
 
+    const resultados = evidencias.map((evidencia) => evidencia.resultado);
+
     res.json({
       fase: faseRows[0] || null,
-      estado_fase: calcularEstadoFase(resultados),
+      estado_fase: faseRows[0]?.estado_fase || 'Pendiente',
       progreso: {
         ...calcularProgreso(resultados),
         carpetas_total: carpetas.length,
@@ -215,6 +228,7 @@ export async function getCarpetasDeFase(req, res) {
       carpetas,
     });
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener la lista de chequeo' });
   }
 }
@@ -224,6 +238,7 @@ export async function getCarpetasDeFase(req, res) {
 // RN-018: recalcula carpeta y fase completas.
 export async function evaluarEvidencia(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const instructorId = req.user.usuario_id;
     const { evidenciaId } = req.params;
@@ -233,8 +248,12 @@ export async function evaluarEvidencia(req, res) {
       return res.status(400).json({ message: 'Resultado inválido, debe ser APROBADO o REPROBADO' });
     }
 
-    // Encuentra la carpeta/fase dueña de esta evidencia y confirma que la
-    // asignación del instructor siga vigente.
+    await client.query('BEGIN');
+    transaccionAbierta = true;
+
+    // Bloquea la carpeta y confirma, en la misma consulta, que la asignación
+    // del instructor sigue vigente. Así la evaluación y el recálculo quedan
+    // serializados con otras entregas/evaluaciones (C-06).
     const { rows: cadena } = await client.query(
       `SELECT f.fase_id, c.carpeta_id
        FROM evidencias e
@@ -245,25 +264,27 @@ export async function evaluarEvidencia(req, res) {
        JOIN instructor_ficha ifi ON ifi.ficha_id = g.ficha_id
        WHERE e.evidencia_id = $1
          AND ifi.instructor_id = $2
-         AND ${FILTRO_ASIGNACION_VIGENTE}`,
+         AND ${FILTRO_ASIGNACION_VIGENTE}
+       FOR UPDATE OF c`,
       [evidenciaId, instructorId]
     );
     if (cadena.length === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(403).json({ message: 'Esta evidencia no está a tu cargo' });
     }
     const { fase_id: faseId, carpeta_id: carpetaId } = cadena[0];
 
-    await client.query('BEGIN');
-
     await client.query(
       `INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
-       VALUES ($1, $2, $3, now())`,
+       VALUES ($1, $2, $3, clock_timestamp())`,
       [evidenciaId, instructorId, resultado]
     );
 
     const cascada = await recalcularCarpetaYFase(client, carpetaId);
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
     res.json({
       message: 'Evaluación guardada',
       estado_carpeta: cascada.estadoCarpeta,
@@ -272,7 +293,8 @@ export async function evaluarEvidencia(req, res) {
       fase_id: faseId,
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al evaluar la evidencia:', err);
     res.status(500).json({ message: 'Error al evaluar la evidencia' });
   } finally {
     client.release();
@@ -284,12 +306,23 @@ export async function evaluarEvidencia(req, res) {
 // vigente no esté aprobada (conserva el historial, RN-017/RN-019).
 export async function aprobarCarpeta(req, res) {
   const client = await pool.connect();
+  let transaccionAbierta = false;
   try {
     const instructorId = req.user.usuario_id;
     const { carpetaId } = req.params;
 
+    await client.query('BEGIN');
+    transaccionAbierta = true;
+
+    const carpeta = await bloquearCarpeta(client, carpetaId);
+    if (!carpeta) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
+      return res.status(404).json({ message: 'La carpeta no existe' });
+    }
+
     const { rows: cadena } = await client.query(
-      `SELECT c.carpeta_id, c.fase_id
+      `SELECT c.carpeta_id
        FROM carpetas c
        JOIN fases f ON f.fase_id = c.fase_id
        JOIN proyectos p ON p.proyecto_id = f.proyecto_id
@@ -301,55 +334,70 @@ export async function aprobarCarpeta(req, res) {
       [carpetaId, instructorId]
     );
     if (cadena.length === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(403).json({ message: 'Esta carpeta no está a tu cargo' });
     }
 
-    const { rows: evidencias } = await client.query(
-      `SELECT ev.evidencia_id, ult.resultado
+    const { rows: resumen } = await client.query(
+      `SELECT count(*)::int AS total,
+              count(*) FILTER (WHERE ult.resultado IS DISTINCT FROM 'APROBADO')::int AS pendientes
        FROM evidencias ev
        LEFT JOIN LATERAL (
          SELECT e2.resultado
          FROM evaluaciones e2
          WHERE e2.evidencia_id = ev.evidencia_id
-         ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+         ORDER BY e2.evaluacion_id DESC
          LIMIT 1
        ) ult ON true
-       WHERE ev.carpeta_id = $1
-       ORDER BY ev.evidencia_id`,
+       WHERE ev.carpeta_id = $1`,
       [carpetaId]
     );
 
-    if (evidencias.length === 0) {
+    if (resumen[0].total === 0) {
+      await client.query('ROLLBACK');
+      transaccionAbierta = false;
       return res.status(400).json({ message: 'La carpeta no tiene evidencias para aprobar' });
     }
 
-    await client.query('BEGIN');
-
-    const pendientes = evidencias.filter((e) => e.resultado !== RESULTADO_APROBADO);
-
-    for (const evidencia of pendientes) {
-      await client.query(
-        `INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
-         VALUES ($1, $2, $3, now())`,
-        [evidencia.evidencia_id, instructorId, RESULTADO_APROBADO]
-      );
-    }
+    // Un solo INSERT ... SELECT en lugar de un INSERT por evidencia (Q-05).
+    const { rows: insertadas } = await client.query(
+      `INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
+       SELECT ev.evidencia_id, $2, 'APROBADO', clock_timestamp()
+       FROM evidencias ev
+       LEFT JOIN LATERAL (
+         SELECT e2.resultado
+         FROM evaluaciones e2
+         WHERE e2.evidencia_id = ev.evidencia_id
+         ORDER BY e2.evaluacion_id DESC
+         LIMIT 1
+       ) ult ON true
+       WHERE ev.carpeta_id = $1
+         AND ult.resultado IS DISTINCT FROM 'APROBADO'
+       RETURNING evidencia_id`,
+      [carpetaId, instructorId]
+    );
 
     const cascada = await recalcularCarpetaYFase(client, carpetaId);
 
     await client.query('COMMIT');
+    transaccionAbierta = false;
+
+    const aprobadasAhora = insertadas.length;
     res.json({
       message:
-        pendientes.length === 0
+        aprobadasAhora === 0
           ? 'La carpeta ya estaba aprobada'
-          : `Carpeta aprobada (${pendientes.length} evidencia(s))`,
-      evidencias_aprobadas: evidencias.length,
+          : `Carpeta aprobada (${aprobadasAhora} evidencia(s))`,
+      evidencias_aprobadas: aprobadasAhora,
+      evidencias_total: resumen[0].total,
       estado_carpeta: cascada.estadoCarpeta,
       estado_fase: cascada.estadoFase,
       progreso: cascada.progreso,
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (transaccionAbierta) await client.query('ROLLBACK');
+    console.error('Error al aprobar la carpeta:', err);
     res.status(500).json({ message: 'Error al aprobar la carpeta' });
   } finally {
     client.release();
@@ -387,7 +435,7 @@ export async function getEvidenciasDeFicha(req, res) {
          SELECT e2.resultado
          FROM evaluaciones e2
          WHERE e2.evidencia_id = e.evidencia_id
-         ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+         ORDER BY e2.evaluacion_id DESC
          LIMIT 1
        ) ult ON true
        WHERE g.ficha_id = $1
@@ -396,6 +444,7 @@ export async function getEvidenciasDeFicha(req, res) {
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener las evidencias de la ficha' });
   }
 }
@@ -428,15 +477,18 @@ export async function getObservacionesDeProyecto(req, res) {
 
     const { rows } = await pool.query(
       `SELECT o.observacion_id, o.titulo, o.descripcion, o.fecha_observacion,
+              o.evidencia_id, ev.nombre_evidencia,
               u.nombre, u.apellido
        FROM observaciones o
        JOIN usuarios u ON u.usuario_id = o.instructor_id
+       LEFT JOIN evidencias ev ON ev.evidencia_id = o.evidencia_id
        WHERE o.proyecto_id = $1
        ORDER BY o.fecha_observacion DESC`,
       [proyectoId]
     );
     res.json(rows);
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener las observaciones' });
   }
 }
@@ -446,23 +498,55 @@ export async function crearObservacion(req, res) {
   try {
     const instructorId = req.user.usuario_id;
     const { proyectoId } = req.params;
-    const { titulo, descripcion } = req.body;
+    const { titulo, descripcion, evidencia_id } = req.body;
+    const tituloLimpio = String(titulo || '').trim();
+    const descripcionLimpia = String(descripcion || '').trim();
 
-    if (!titulo || !descripcion) {
+    if (!tituloLimpio || !descripcionLimpia) {
       return res.status(400).json({ message: 'Faltan el título o la descripción' });
+    }
+    if (tituloLimpio.length > 150 || descripcionLimpia.length > 500) {
+      return res
+        .status(400)
+        .json({ message: 'El título admite 150 caracteres y la descripción 500' });
     }
 
     const esDueño = await verificarInstructorDueñoDeProyecto(instructorId, proyectoId);
     if (!esDueño) return res.status(403).json({ message: 'Este proyecto no está a tu cargo' });
 
+    // HU-026: si la observación apunta a una evidencia, debe pertenecer al
+    // mismo proyecto (no se puede observar una evidencia ajena).
+    let evidenciaId = null;
+    if (evidencia_id !== undefined && evidencia_id !== null && evidencia_id !== '') {
+      evidenciaId = Number(evidencia_id);
+      if (!Number.isInteger(evidenciaId) || evidenciaId <= 0) {
+        return res.status(400).json({ message: 'La evidencia indicada no es válida' });
+      }
+      const { rowCount } = await pool.query(
+        `SELECT 1
+         FROM evidencias ev
+         JOIN carpetas c ON c.carpeta_id = ev.carpeta_id
+         JOIN fases f ON f.fase_id = c.fase_id
+         WHERE ev.evidencia_id = $1 AND f.proyecto_id = $2`,
+        [evidenciaId, proyectoId]
+      );
+      if (rowCount === 0) {
+        return res
+          .status(400)
+          .json({ message: 'La evidencia no pertenece al proyecto indicado' });
+      }
+    }
+
     const { rows } = await pool.query(
-      `INSERT INTO observaciones (proyecto_id, instructor_id, titulo, descripcion, fecha_observacion)
-       VALUES ($1, $2, $3, $4, now())
+      `INSERT INTO observaciones
+         (proyecto_id, evidencia_id, instructor_id, titulo, descripcion, fecha_observacion)
+       VALUES ($1, $2, $3, $4, $5, clock_timestamp())
        RETURNING observacion_id`,
-      [proyectoId, instructorId, titulo, descripcion]
+      [proyectoId, evidenciaId, instructorId, tituloLimpio, descripcionLimpia]
     );
     res.status(201).json({ observacion_id: rows[0].observacion_id });
   } catch (err) {
+    console.error('Error al crear la observación:', err);
     res.status(500).json({ message: 'Error al crear la observación' });
   }
 }
@@ -488,7 +572,7 @@ export async function getResumenInstructor(req, res) {
          SELECT e2.resultado
          FROM evaluaciones e2
          WHERE e2.evidencia_id = e.evidencia_id
-         ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+         ORDER BY e2.evaluacion_id DESC
          LIMIT 1
        ) ult ON true
        WHERE ifi.instructor_id = $1 AND ${FILTRO_ASIGNACION_VIGENTE}`,
@@ -515,7 +599,7 @@ export async function getResumenInstructor(req, res) {
               count(*) FILTER (WHERE f.estado_fase = 'Aprobada')::int AS aprobadas
        FROM fichas fi
        JOIN instructor_ficha ifi ON ifi.ficha_id = fi.ficha_id
-       LEFT JOIN grupos g ON g.ficha_id = fi.ficha_id AND g.nombre_grupo <> 'General'
+       LEFT JOIN grupos g ON g.ficha_id = fi.ficha_id AND NOT g.es_general
        LEFT JOIN proyectos p ON p.grupo_id = g.grupo_id
        LEFT JOIN fases f ON f.proyecto_id = p.proyecto_id
        WHERE ifi.instructor_id = $1 AND ${FILTRO_ASIGNACION_VIGENTE}
@@ -541,6 +625,7 @@ export async function getResumenInstructor(req, res) {
       })),
     });
   } catch (err) {
+    console.error('Error en instructorController:', err);
     res.status(500).json({ message: 'Error al obtener el resumen del instructor' });
   }
 }

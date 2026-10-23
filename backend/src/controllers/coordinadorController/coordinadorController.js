@@ -7,10 +7,11 @@
 // mismo modelo de datos que fichasController/userController, acotado.
 
 import pool from '../../config/db.js';
+import env from '../../config/env.js';
 import { verificarPassword } from '../../utils/confirmarAdmin.js';
 import { sincronizarFichasInstructor } from '../../services/asignaciones.js';
 
-const CODIGO_PROGRAMA_ADSO = 2338;
+const CODIGO_PROGRAMA_ADSO = env.codigoProgramaCoordinador;
 
 // ==================================================================
 // Helper: resolverFichasADSO(db, numeros)
@@ -160,7 +161,7 @@ export const getDashboardCoordinador = async (req, res) => {
         (SELECT count(*)::int FROM grupos g
            JOIN fichas f ON f.ficha_id = g.ficha_id
            JOIN programas p ON p.programa_id = f.programa_id
-           WHERE p.codigo_programa = $1 AND g.nombre_grupo <> 'General' AND g.estado_grupo = 'Activo') AS total_grupos`,
+           WHERE p.codigo_programa = $1 AND NOT g.es_general AND g.estado_grupo = 'Activo') AS total_grupos`,
       [CODIGO_PROGRAMA_ADSO]
     );
 
@@ -202,7 +203,7 @@ export const getGruposCoordinador = async (req, res) => {
        JOIN programas prg ON prg.programa_id = f.programa_id
        LEFT JOIN proyectos p ON p.grupo_id = g.grupo_id
        LEFT JOIN usuarios lu ON lu.usuario_id = g.lider_id
-       WHERE prg.codigo_programa = $1 AND g.nombre_grupo <> 'General'
+       WHERE prg.codigo_programa = $1 AND NOT g.es_general
        ORDER BY f.numero_ficha, g.nombre_grupo`,
       [CODIGO_PROGRAMA_ADSO]
     );
@@ -298,7 +299,7 @@ export const getSeguimientoProyecto = async (req, res) => {
              SELECT e2.resultado, e2.fecha_evaluacion
              FROM evaluaciones e2
              WHERE e2.evidencia_id = e.evidencia_id
-             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             ORDER BY e2.evaluacion_id DESC
              LIMIT 1
            ) ult ON true
            WHERE e.carpeta_id = $1

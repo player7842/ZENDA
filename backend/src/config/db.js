@@ -11,12 +11,26 @@ dotenv.config({ path: resolve(__dirname, '../../.env') });
 import pg from 'pg';
 const { Pool } = pg;
 
+const sslRechazaCertificadosInvalidos =
+  process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
+
 const pool = new Pool(
   process.env.DATABASE_URL
-    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
-    : { user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT) || 5432, database: process.env.DB_NAME,
-        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false }
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: sslRechazaCertificadosInvalidos },
+      }
+    : {
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT) || 5432,
+        database: process.env.DB_NAME,
+        ssl:
+          process.env.DB_SSL === 'true'
+            ? { rejectUnauthorized: sslRechazaCertificadosInvalidos }
+            : false,
+      }
 );
 
 // Verificación de conectividad con la base de datos

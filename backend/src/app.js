@@ -28,7 +28,7 @@ app.use(helmet());
 // Limitador de tasa general para la API
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 300, // límite de 300 peticiones por ventana
+  limit: 300, // límite de 300 peticiones por ventana
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiadas solicitudes desde esta IP, por favor intenta más tarde.' },
@@ -38,7 +38,7 @@ app.use('/api/', generalLimiter);
 // Limitador más estricto para autenticación y recuperación de contraseñas
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // máximo 20 intentos cada 15 min
+  limit: 20, // máximo 20 intentos cada 15 min
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Demasiados intentos de autenticación, por favor intenta más tarde.' },

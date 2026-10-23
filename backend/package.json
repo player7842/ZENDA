@@ -2,6 +2,7 @@
   "name": "zenda-backend",
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=22"
   },
@@ -14,23 +15,23 @@
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "express-rate-limit": "^8.7.1",
-    "helmet": "^8.3.0",
-    "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^10.0.9",
-    "pg": "^8.13.0"
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.6",
+    "dotenv": "16.6.1",
+    "express": "4.22.2",
+    "express-rate-limit": "8.7.1",
+    "helmet": "8.3.0",
+    "jsonwebtoken": "9.0.3",
+    "nodemailer": "10.0.9",
+    "pg": "8.23.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "eslint": "^9.39.1",
-    "globals": "^16.5.0",
-    "nodemon": "^3.1.0",
-    "supertest": "^7.1.4",
-    "vitest": "^3.2.4"
+    "@eslint/js": "9.39.5",
+    "eslint": "9.39.5",
+    "globals": "16.5.0",
+    "nodemon": "3.1.14",
+    "supertest": "7.3.1",
+    "vitest": "3.2.7"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

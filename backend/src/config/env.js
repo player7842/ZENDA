@@ -26,15 +26,19 @@ if (faltantes.length > 0) {
     `[config] Faltan variables de entorno obligatorias: ${faltantes.join(', ')}.`
   );
   console.error(
-    '[config] Copia backend/env.example a backend/.env y define un JWT_SECRET largo y aleatorio.'
+    '[config] Copia backend/.env.example a backend/.env y define un JWT_SECRET largo y aleatorio.'
   );
   process.exit(1);
 }
 
 if (process.env.JWT_SECRET.trim().length < 32) {
-  console.warn(
-    '[config] Advertencia: JWT_SECRET tiene menos de 32 caracteres. Usa uno más largo en producción.'
-  );
+  const mensaje =
+    '[config] JWT_SECRET tiene menos de 32 caracteres. Usa un secreto largo y aleatorio.';
+  if (process.env.NODE_ENV === 'production') {
+    console.error(mensaje);
+    process.exit(1);
+  }
+  console.warn(`[config] Advertencia: ${mensaje}`);
 }
 
 // FRONTEND_URL admite varios orígenes separados por coma (Vercel + local).
@@ -48,10 +52,14 @@ export const env = {
   isProduction: process.env.NODE_ENV === 'production',
   port: Number(process.env.PORT) || 4000,
   jwtSecret: process.env.JWT_SECRET.trim(),
+  // La sesión actual dura 24 h. HU-004 (Semanas 3–6) la reducirá a 15 min
+  // con refresh rotativo; hasta entonces esta variable documenta el valor real.
+  jwtSessionExpires: process.env.JWT_SESSION_EXPIRES || '24h',
   frontendUrls,
   frontendUrl: frontendUrls[0],
   emailUser: process.env.EMAIL_USER || '',
   emailPass: process.env.EMAIL_PASS || '',
+  codigoProgramaCoordinador: Number(process.env.CODIGO_PROGRAMA_COORDINADOR) || 2338,
 };
 
 export default env;

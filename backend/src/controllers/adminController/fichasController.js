@@ -13,6 +13,7 @@
 
 import pool from '../../config/db.js';
 import verificarPasswordAdmin from '../../utils/confirmarAdmin.js';
+import { obtenerOCrearGrupoGeneral } from '../../services/grupos.js';
 
 // ==================================================================
 // Helper: leerFichas(db)
@@ -28,7 +29,7 @@ const leerFichas = async () => {
            (SELECT count(*)::int
             FROM integrantes_grupo ig
             JOIN grupos g ON g.grupo_id = ig.grupo_id
-            WHERE g.ficha_id = f.ficha_id AND ig.estado_integrante = 'Activo') AS cantidad_aprendices,
+            WHERE g.ficha_id = f.ficha_id AND g.es_general AND ig.estado_integrante = 'Activo') AS cantidad_aprendices,
            (SELECT count(*)::int FROM instructor_ficha inf
              WHERE inf.ficha_id = f.ficha_id
                AND inf.fecha_fin IS NULL
@@ -41,26 +42,9 @@ const leerFichas = async () => {
 };
 
 // ==================================================================
-// Helper: obtenerGrupoGeneral(db, fichaId, liderId)
+// Grupo General: helper compartido en services/grupos.js
 // ==================================================================
-// Busca (o crea) el grupo "General" de una ficha. Todos los aprendices de
-// una ficha viven ahí. La tabla grupos exige lider_id NOT NULL, así que el
-// lider del grupo "General" queda como el admin que lo creó.
-const obtenerGrupoGeneral = async (db, fichaId, liderId) => {
-  const existente = await db.query(
-    'SELECT grupo_id FROM grupos WHERE ficha_id = $1 AND nombre_grupo = $2 LIMIT 1',
-    [fichaId, 'General']
-  );
-  if (existente.rows.length > 0) return existente.rows[0].grupo_id;
 
-  const nuevo = await db.query(
-    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, cupo_maximo, estado_grupo, fecha_creacion)
-     VALUES ('General', $1, $2, $3, 50, 'Activo', now())
-     RETURNING grupo_id`,
-    [`GRP-GENERAL-${fichaId}`, fichaId, liderId]
-  );
-  return nuevo.rows[0].grupo_id;
-};
 
 // ==================================================================
 // GET /api/fichas — listar todas las fichas con sus programas
@@ -132,7 +116,7 @@ export const createFicha = async (req, res) => {
     );
 
     // Crear el grupo "General" de la ficha desde ya
-    await obtenerGrupoGeneral(client, nueva.rows[0].ficha_id, req.user.usuario_id);
+    await obtenerOCrearGrupoGeneral(client, nueva.rows[0].ficha_id, req.user.usuario_id);
 
     await client.query('COMMIT');
     res.status(201).json({ message: 'Ficha creada exitosamente', fichas: await leerFichas() });
@@ -246,15 +230,20 @@ export const addAprendizAFicha = async (req, res) => {
       return res.status(404).json({ message: 'Ese usuario no existe' });
     }
 
-    // Inactivar ingresos activos del aprendiz en CUALQUIER ficha
+    // Inactivar solo sus ingresos al grupo General de cualquier ficha; los
+    // grupos de proyecto no se tocan (C-05).
     await client.query(
-      `UPDATE integrantes_grupo
+      `UPDATE integrantes_grupo ig
        SET estado_integrante = 'Inactivo', fecha_salida = now()
-       WHERE usuario_id = $1 AND estado_integrante = 'Activo'`,
+       FROM grupos g
+       WHERE g.grupo_id = ig.grupo_id
+         AND g.es_general
+         AND ig.usuario_id = $1
+         AND ig.estado_integrante = 'Activo'`,
       [usuario_id]
     );
 
-    const grupoId = await obtenerGrupoGeneral(client, id, req.user.usuario_id);
+    const grupoId = await obtenerOCrearGrupoGeneral(client, id, req.user.usuario_id);
 
     // Si ya es integrante (inactivo) de este grupo, lo reactivamos
     const yaExiste = await client.query(

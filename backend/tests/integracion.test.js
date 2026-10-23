@@ -1,0 +1,370 @@
+/*
+  Pruebas de integración de Semana 2 (C-03).
+
+  Usan Supertest contra la app real y PostgreSQL. Si no hay base de datos o
+  no está cargado el esquema actual, la suite se omite: así `pnpm test`
+  sigue funcionando en un equipo sin PostgreSQL, mientras que el CI (que sí
+  carga `Database/zenda_bd.sql`) ejecuta todas las pruebas.
+
+  Fuera del alcance: archivos binarios de HU-020.
+*/
+
+import crypto from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import app from '../src/app.js';
+import pool from '../src/config/db.js';
+import env from '../src/config/env.js';
+
+let dbDisponible = false;
+try {
+  const { rows } = await pool.query(
+    `SELECT
+       to_regclass('public.usuarios') IS NOT NULL AS usuarios,
+       to_regclass('public.recuperacion_contrasena') IS NOT NULL AS recuperacion,
+       (SELECT count(*)::int FROM usuarios) AS total`
+  );
+  dbDisponible = rows[0].usuarios && rows[0].recuperacion && rows[0].total > 0;
+} catch {
+  dbDisponible = false;
+}
+
+const api = request(app);
+const sufijo = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+let contador = 0;
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+async function login(correo, password) {
+  const respuesta = await api.post('/api/auth/login').send({ correo, password });
+  expect(respuesta.status).toBe(200);
+  return respuesta.body;
+}
+
+async function registrarAprendiz({ ficha = '2724285' } = {}) {
+  contador += 1;
+  const correo = `integracion${sufijo}${contador}@soy.sena.edu.co`;
+  const respuesta = await api.post('/api/auth/register').send({
+    nombre: 'Prueba',
+    apellido: `Integración ${contador}`,
+    correo,
+    tipo_documento: 'CC',
+    numero_documento: String(2000000000 + contador),
+    password: 'Prueba123!',
+    numero_ficha: ficha,
+    acepta_terminos: true,
+    acepta_privacidad: true,
+    acepta_cookies: true,
+    acepta_tratamiento_datos: true,
+  });
+  expect(respuesta.status).toBe(201);
+  return respuesta.body;
+}
+
+describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
+  let admin;
+  let instructor;
+  let lider;
+  let segundo;
+  let ajeno;
+  let proyecto;
+  let fase;
+  let carpetaId;
+  let evidenciaIds = [];
+
+  beforeAll(async () => {
+    admin = await login('admin@zenda.com', 'Admin123!');
+    instructor = await login('felipe@zenda.com', 'Prueba123!');
+  });
+
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  it('HU-001: registro con correo institucional, documento y cuatro aceptaciones', async () => {
+    const base = {
+      nombre: 'Ana',
+      apellido: 'Legal',
+      correo: `legal${sufijo}@soy.sena.edu.co`,
+      tipo_documento: 'CC',
+      numero_documento: '2011111111',
+      password: 'Prueba123!',
+      numero_ficha: '2724285',
+    };
+
+    const sinAceptaciones = await api.post('/api/auth/register').send(base);
+    expect(sinAceptaciones.status).toBe(400);
+
+    const correoInvalido = await api.post('/api/auth/register').send({
+      ...base,
+      correo: '@soy.sena.edu.co',
+      acepta_terminos: true,
+      acepta_privacidad: true,
+      acepta_cookies: true,
+      acepta_tratamiento_datos: true,
+    });
+    expect(correoInvalido.status).toBe(400);
+
+    const tipoInvalido = await api.post('/api/auth/register').send({
+      ...base,
+      correo: `legal${sufijo}b@soy.sena.edu.co`,
+      tipo_documento: 'OTRO',
+      acepta_terminos: true,
+      acepta_privacidad: true,
+      acepta_cookies: true,
+      acepta_tratamiento_datos: true,
+    });
+    expect(tipoInvalido.status).toBe(400);
+
+    lider = await registrarAprendiz();
+    expect(lider.token).toBeTruthy();
+    expect(lider.user.rol).toBe('APRENDIZ');
+  });
+
+  it('HU-014/HU-015: cupo, unión por código y ficha del aprendiz', async () => {
+    const creacion = await api
+      .post('/api/aprendiz/proyectos')
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({
+        nombre_grupo: 'Equipo Integración',
+        nombre_proyecto: 'Proyecto de integración',
+        descripcion: 'Descripción del proyecto de integración',
+        problema: 'Problema de integración',
+        objetivo: 'Objetivo de integración',
+        alcance: 'Alcance de integración',
+        tecnologias: 'Node.js, PostgreSQL',
+        fecha_inicio: '2026-01-10',
+        fecha_fin_estimada: '2026-06-10',
+        cupo_maximo: 1,
+      });
+
+    expect(creacion.status).toBe(201);
+    expect(creacion.body.codigo_grupo).toMatch(/^PRY-[A-F0-9]{10}$/);
+    proyecto = creacion.body;
+
+    const segundoRegistro = await registrarAprendiz();
+    segundo = segundoRegistro;
+
+    const lleno = await api
+      .post('/api/aprendiz/proyectos/unirse')
+      .set('Authorization', `Bearer ${segundo.token}`)
+      .send({ codigo_grupo: proyecto.codigo_grupo });
+    expect(lleno.status).toBe(400);
+
+    const cambiaCupo = await api
+      .put('/api/aprendiz/proyectos/mio/cupo')
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ cupo_maximo: 2 });
+    expect(cambiaCupo.status).toBe(200);
+    expect(cambiaCupo.body.cupo_maximo).toBe(2);
+
+    const unido = await api
+      .post('/api/aprendiz/proyectos/unirse')
+      .set('Authorization', `Bearer ${segundo.token}`)
+      .send({ codigo_grupo: proyecto.codigo_grupo });
+    expect(unido.status).toBe(200);
+
+    ajeno = await registrarAprendiz({ ficha: '2724310' });
+    const otraFicha = await api
+      .post('/api/aprendiz/proyectos/unirse')
+      .set('Authorization', `Bearer ${ajeno.token}`)
+      .send({ codigo_grupo: proyecto.codigo_grupo });
+    expect(otraFicha.status).toBe(403);
+  });
+
+  it('HU-023/HU-024/HU-025: cascada, aprobación en bloque, historial y progreso', async () => {
+    const mio = await api
+      .get('/api/aprendiz/proyectos/mio')
+      .set('Authorization', `Bearer ${lider.token}`);
+    expect(mio.status).toBe(200);
+    fase = mio.body.fases.find((f) => f.numero_fase === 1);
+    expect(fase).toBeTruthy();
+
+    const carpeta = await api
+      .post(`/api/aprendiz/proyectos/fases/${fase.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ nombre_carpeta: 'Carpeta de integración' });
+    expect(carpeta.status).toBe(201);
+    carpetaId = carpeta.body.carpeta_id;
+
+    evidenciaIds = [];
+    for (let i = 1; i <= 2; i += 1) {
+      const evidencia = await api
+        .post(`/api/aprendiz/proyectos/carpetas/${carpetaId}/evidencias`)
+        .set('Authorization', `Bearer ${segundo.token}`)
+        .send({
+          nombre_evidencia: `Evidencia ${i}`,
+          tipo_evidencia: 'Enlace',
+          ubicacion: `https://example.com/evidencia-${i}`,
+        });
+      expect(evidencia.status).toBe(201);
+      evidenciaIds.push(evidencia.body.evidencia_id);
+    }
+
+    const listadoInicial = await api
+      .get(`/api/instructor/fases/${fase.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${instructor.token}`);
+    expect(listadoInicial.status).toBe(200);
+    expect(listadoInicial.body.estado_fase).toBe('En revisión');
+    expect(listadoInicial.body.progreso.total).toBe(2);
+    expect(listadoInicial.body.progreso.aprobadas).toBe(0);
+    expect(listadoInicial.body.progreso.carpetas_total).toBe(1);
+
+    const aprobacion = await api
+      .post(`/api/instructor/carpetas/${carpetaId}/aprobar`)
+      .set('Authorization', `Bearer ${instructor.token}`)
+      .send({});
+    expect(aprobacion.status).toBe(200);
+    expect(aprobacion.body.evidencias_aprobadas).toBe(2);
+    expect(aprobacion.body.estado_carpeta).toBe('Aprobada');
+    expect(aprobacion.body.estado_fase).toBe('Aprobada');
+
+    const reprobacion = await api
+      .post(`/api/instructor/evidencias/${evidenciaIds[0]}/evaluar`)
+      .set('Authorization', `Bearer ${instructor.token}`)
+      .send({ resultado: 'REPROBADO' });
+    expect(reprobacion.status).toBe(200);
+    expect(reprobacion.body.estado_carpeta).toBe('Desaprobada');
+    expect(reprobacion.body.estado_fase).toBe('Desaprobada');
+
+    const reAprobacion = await api
+      .post(`/api/instructor/carpetas/${carpetaId}/aprobar`)
+      .set('Authorization', `Bearer ${instructor.token}`)
+      .send({});
+    expect(reAprobacion.status).toBe(200);
+    expect(reAprobacion.body.evidencias_aprobadas).toBe(1);
+    expect(reAprobacion.body.estado_carpeta).toBe('Aprobada');
+
+    // Se conserva todo el historial: 2 de la primera aprobación, 1 reprobado
+    // y 1 de la re-aprobación.
+    const historial = await pool.query(
+      `SELECT count(*)::int AS total
+       FROM evaluaciones
+       WHERE evidencia_id = ANY($1::int[])`,
+      [evidenciaIds]
+    );
+    expect(historial.rows[0].total).toBe(4);
+
+    const listadoFinal = await api
+      .get(`/api/aprendiz/proyectos/fases/${fase.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${segundo.token}`);
+    expect(listadoFinal.status).toBe(200);
+    expect(listadoFinal.body.estado_fase).toBe('Aprobada');
+    expect(listadoFinal.body.progreso.porcentaje).toBe(100);
+    expect(listadoFinal.body.progreso.carpetas_aprobadas).toBe(1);
+    expect(listadoFinal.body.progreso.carpetas_total).toBe(1);
+  });
+
+  it('HU-026: una observación puede asociarse a una evidencia del proyecto', async () => {
+    const creacion = await api
+      .post(`/api/instructor/proyectos/${proyecto.proyecto_id}/observaciones`)
+      .set('Authorization', `Bearer ${instructor.token}`)
+      .send({
+        titulo: 'Revisar esta evidencia',
+        descripcion: 'La evidencia requiere un ajuste antes de la entrega final.',
+        evidencia_id: evidenciaIds[0],
+      });
+    expect(creacion.status).toBe(201);
+
+    const consulta = await api
+      .get('/api/aprendiz/proyectos/observaciones')
+      .set('Authorization', `Bearer ${segundo.token}`);
+    expect(consulta.status).toBe(200);
+    const observacion = consulta.body.find(
+      (o) => o.observacion_id === creacion.body.observacion_id
+    );
+    expect(observacion).toBeTruthy();
+    expect(observacion.evidencia_id).toBe(evidenciaIds[0]);
+    expect(observacion.nombre_evidencia).toBe('Evidencia 1');
+  });
+
+  it('HU-011: reasignar fichas conserva el historial del instructor', async () => {
+    contador += 1;
+    const correo = `instructor${sufijo}@zenda.com`;
+    const creado = await api
+      .post('/api/users')
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({
+        nombre: 'Instructor',
+        apellido: 'Integración',
+        correo,
+        tipo_documento: 'CC',
+        numero_documento: String(3000000000 + contador),
+        rol: 'INSTRUCTOR',
+        fichas: ['2724285', '2724310'],
+        userPassword: 'Instructor123!',
+        password: 'Admin123!',
+      });
+    expect(creado.status).toBe(201);
+    const instructorId = creado.body.user.usuario_id;
+
+    const cambio = await api
+      .put(`/api/users/${instructorId}/fichas`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ fichas: ['2724285'], password: 'Admin123!' });
+    expect(cambio.status).toBe(200);
+
+    const historial = await pool.query(
+      `SELECT ficha_id, fecha_fin, estado
+       FROM instructor_ficha
+       WHERE instructor_id = $1
+       ORDER BY instructor_ficha_id`,
+      [instructorId]
+    );
+    expect(historial.rows).toHaveLength(2);
+    expect(historial.rows.filter((fila) => fila.fecha_fin === null)).toHaveLength(1);
+    expect(historial.rows.filter((fila) => fila.estado === 'Inactivo')).toHaveLength(1);
+  });
+
+  it('C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso', async () => {
+    const sessionToken = segundo.token;
+    const usuarioId = segundo.user.usuario_id;
+
+    const intentoConSesion = await api.post('/api/auth/reset-password').send({
+      token: sessionToken,
+      contrasena: 'NuevaClave123!',
+    });
+    expect(intentoConSesion.status).toBe(400);
+
+    const resetToken = jwt.sign(
+      {
+        usuario_id: usuarioId,
+        correo: segundo.user.correo,
+        purpose: 'reset',
+      },
+      env.jwtSecret,
+      { expiresIn: '15m' }
+    );
+
+    await pool.query(
+      `INSERT INTO recuperacion_contrasena (usuario_id, token_hash, expira_en, creado_en)
+       VALUES ($1, $2, now() + interval '15 minutes', now())`,
+      [usuarioId, hashToken(resetToken)]
+    );
+
+    const primero = await api.post('/api/auth/reset-password').send({
+      token: resetToken,
+      contrasena: 'NuevaClave123!',
+    });
+    expect(primero.status).toBe(200);
+
+    const segundoIntento = await api.post('/api/auth/reset-password').send({
+      token: resetToken,
+      contrasena: 'OtraClave123!',
+    });
+    expect(segundoIntento.status).toBe(400);
+
+    // La sesión anterior queda invalidada por token_version.
+    const sesionVieja = await api
+      .get('/api/aprendiz/proyectos/mi-ficha')
+      .set('Authorization', `Bearer ${sessionToken}`);
+    expect(sesionVieja.status).toBe(401);
+
+    const loginNuevo = await api.post('/api/auth/login').send({
+      correo: segundo.user.correo,
+      password: 'NuevaClave123!',
+    });
+    expect(loginNuevo.status).toBe(200);
+  });
+});
