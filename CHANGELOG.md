@@ -63,7 +63,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - `pnpm lint` en backend y frontend.
 - 9 pruebas unitarias de reglas puras.
-- 6 pruebas de integración con Supertest (se omiten sin PostgreSQL; se ejecutan en CI).
+- 7 pruebas de integración con Supertest (se omiten sin PostgreSQL; se ejecutan en CI).
 - `pnpm build` del frontend.
 
 ### Limitaciones conocidas

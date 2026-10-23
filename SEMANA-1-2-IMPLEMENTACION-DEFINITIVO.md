@@ -37,7 +37,7 @@ Se aplicaron los siete hallazgos críticos de la auditoría, se completaron las 
 | Verificación | Resultado |
 |---|---|
 | Pruebas unitarias | **9/9 aprobadas** |
-| Pruebas de integración | **6/6 aprobadas** contra PostgreSQL 18.6 |
+| Pruebas de integración | **7/7 aprobadas** contra PostgreSQL 18.6 |
 | Migración `002_semana2.sql` | Aplicada **dos veces** sin errores; también sobre una copia del esquema previo (`HEAD`) |
 | Lint backend | Pasa |
 | Lint frontend | Pasa; solo advertencias preexistentes en archivos no tocados |
@@ -357,15 +357,15 @@ docker compose config --quiet
 | Prueba | Resultado |
 |---|---|
 | `tests/reglas.test.js` | 9 aprobadas |
-| `tests/integracion.test.js` | 6 aprobadas |
-| Total | **15/15** |
+| `tests/integracion.test.js` | 7 aprobadas |
+| Total | **16/16** |
 | Migración dos veces | Sin errores |
 | General por ficha tras migrar | Exactamente 1 |
 | Lint backend | Sin errores |
 | Lint frontend | Sin errores; advertencias preexistentes |
 | Build frontend | Correcto |
 
-### 10.3 Cobertura de los 6 escenarios de integración
+### 10.3 Cobertura de los 7 escenarios de integración
 
 1. HU-001: registro con correo institucional, documento y cuatro aceptaciones.
 2. HU-014/HU-015: cupo, unión por código y validación de la ficha del aprendiz.
