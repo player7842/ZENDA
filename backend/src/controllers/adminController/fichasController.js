@@ -29,7 +29,10 @@ const leerFichas = async () => {
             FROM integrantes_grupo ig
             JOIN grupos g ON g.grupo_id = ig.grupo_id
             WHERE g.ficha_id = f.ficha_id AND ig.estado_integrante = 'Activo') AS cantidad_aprendices,
-           (SELECT count(*)::int FROM instructor_ficha inf WHERE inf.ficha_id = f.ficha_id) AS cantidad_instructores
+           (SELECT count(*)::int FROM instructor_ficha inf
+             WHERE inf.ficha_id = f.ficha_id
+               AND inf.fecha_fin IS NULL
+               AND inf.estado = 'Activo') AS cantidad_instructores
     FROM fichas f
     JOIN programas p ON p.programa_id = f.programa_id
     ORDER BY f.numero_ficha
@@ -51,8 +54,8 @@ const obtenerGrupoGeneral = async (db, fichaId, liderId) => {
   if (existente.rows.length > 0) return existente.rows[0].grupo_id;
 
   const nuevo = await db.query(
-    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, estado_grupo, fecha_creacion)
-     VALUES ('General', $1, $2, $3, 'Activo', now())
+    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, cupo_maximo, estado_grupo, fecha_creacion)
+     VALUES ('General', $1, $2, $3, 50, 'Activo', now())
      RETURNING grupo_id`,
     [`GRP-GENERAL-${fichaId}`, fichaId, liderId]
   );
@@ -267,8 +270,8 @@ export const addAprendizAFicha = async (req, res) => {
       );
     } else {
       await client.query(
-        `INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, fecha_ingreso, estado_integrante)
-         VALUES ($1, $2, 'Integrante', now(), 'Activo')`,
+        `INSERT INTO integrantes_grupo (grupo_id, usuario_id, fecha_ingreso, estado_integrante)
+         VALUES ($1, $2, now(), 'Activo')`,
         [grupoId, usuario_id]
       );
     }

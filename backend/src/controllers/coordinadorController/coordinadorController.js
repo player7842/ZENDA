@@ -8,6 +8,7 @@
 
 import pool from '../../config/db.js';
 import { verificarPassword } from '../../utils/confirmarAdmin.js';
+import { sincronizarFichasInstructor } from '../../services/asignaciones.js';
 
 const CODIGO_PROGRAMA_ADSO = 2338;
 
@@ -50,7 +51,10 @@ export const getFichasCoordinador = async (req, res) => {
                FROM integrantes_grupo ig
                JOIN grupos g ON g.grupo_id = ig.grupo_id
                WHERE g.ficha_id = f.ficha_id AND ig.estado_integrante = 'Activo') AS cantidad_aprendices,
-              (SELECT count(*)::int FROM instructor_ficha inf WHERE inf.ficha_id = f.ficha_id) AS cantidad_instructores
+              (SELECT count(*)::int FROM instructor_ficha inf
+                WHERE inf.ficha_id = f.ficha_id
+                  AND inf.fecha_fin IS NULL
+                  AND inf.estado = 'Activo') AS cantidad_instructores
        FROM fichas f
        JOIN programas p ON p.programa_id = f.programa_id
        WHERE p.codigo_programa = $1
@@ -76,7 +80,10 @@ export const getInstructoresCoordinador = async (req, res) => {
                 FROM instructor_ficha inf
                 JOIN fichas f ON f.ficha_id = inf.ficha_id
                 JOIN programas p ON p.programa_id = f.programa_id
-                WHERE inf.instructor_id = u.usuario_id AND p.codigo_programa = $1
+                WHERE inf.instructor_id = u.usuario_id
+                  AND inf.fecha_fin IS NULL
+                  AND inf.estado = 'Activo'
+                  AND p.codigo_programa = $1
               ), ARRAY[]::int[]) AS fichas
        FROM usuarios u
        WHERE u.rol = 'INSTRUCTOR'
@@ -116,22 +123,11 @@ export const updateFichasInstructorCoordinador = async (req, res) => {
       return res.status(400).json({ message: 'El usuario indicado no es instructor' });
     }
 
-    await client.query(
-      `DELETE FROM instructor_ficha
-       WHERE instructor_id = $1
-         AND ficha_id IN (
-           SELECT f.ficha_id FROM fichas f
-           JOIN programas p ON p.programa_id = f.programa_id
-           WHERE p.codigo_programa = $2
-         )`,
-      [id, CODIGO_PROGRAMA_ADSO]
-    );
-    for (const fichaId of fichaIdsADSO) {
-      await client.query(
-        'INSERT INTO instructor_ficha (instructor_id, ficha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [id, fichaId]
-      );
-    }
+    // Solo se cierran/crean asignaciones del programa ADSO; las de otros
+    // programas quedan intactas. Nunca se borra el historial (H-07).
+    await sincronizarFichasInstructor(client, id, fichaIdsADSO, {
+      soloPrograma: CODIGO_PROGRAMA_ADSO,
+    });
 
     await client.query('COMMIT');
     res.json({ message: 'Fichas ADSO vinculadas actualizadas', fichas: fichaIdsADSO });
@@ -158,7 +154,9 @@ export const getDashboardCoordinador = async (req, res) => {
         (SELECT count(DISTINCT inf.instructor_id)::int FROM instructor_ficha inf
            JOIN fichas f ON f.ficha_id = inf.ficha_id
            JOIN programas p ON p.programa_id = f.programa_id
-           WHERE p.codigo_programa = $1) AS total_instructores,
+           WHERE p.codigo_programa = $1
+             AND inf.fecha_fin IS NULL
+             AND inf.estado = 'Activo') AS total_instructores,
         (SELECT count(*)::int FROM grupos g
            JOIN fichas f ON f.ficha_id = g.ficha_id
            JOIN programas p ON p.programa_id = f.programa_id
@@ -193,7 +191,7 @@ export const getDashboardCoordinador = async (req, res) => {
 export const getGruposCoordinador = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT g.grupo_id, g.nombre_grupo, g.codigo_grupo, g.estado_grupo,
+      `SELECT g.grupo_id, g.nombre_grupo, g.codigo_grupo, g.estado_grupo, g.cupo_maximo,
               f.numero_ficha,
               p.proyecto_id, p.nombre_proyecto, p.estado_proyecto,
               lu.nombre AS lider_nombre, lu.apellido AS lider_apellido,
@@ -252,7 +250,8 @@ export const getSeguimientoProyecto = async (req, res) => {
     const { id } = req.params;
 
     const proyectoResult = await pool.query(
-      `SELECT p.*, g.grupo_id, g.nombre_grupo, g.codigo_grupo, f.numero_ficha
+      `SELECT p.*, g.grupo_id, g.nombre_grupo, g.codigo_grupo, g.lider_id, g.cupo_maximo,
+              f.numero_ficha
        FROM proyectos p
        JOIN grupos g ON g.grupo_id = p.grupo_id
        JOIN fichas f ON f.ficha_id = g.ficha_id
@@ -266,10 +265,13 @@ export const getSeguimientoProyecto = async (req, res) => {
     const proyecto = proyectoResult.rows[0];
 
     const integrantes = await pool.query(
-      `SELECT u.nombre, u.apellido, u.correo, ig.rol_scrum
+      `SELECT u.usuario_id, u.nombre, u.apellido, u.correo,
+              (ig.usuario_id = g.lider_id) AS es_lider
        FROM integrantes_grupo ig
        JOIN usuarios u ON u.usuario_id = ig.usuario_id
-       WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'`,
+       JOIN grupos g ON g.grupo_id = ig.grupo_id
+       WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'
+       ORDER BY (ig.usuario_id = g.lider_id) DESC, u.nombre`,
       [proyecto.grupo_id]
     );
 
@@ -281,15 +283,26 @@ export const getSeguimientoProyecto = async (req, res) => {
 
     for (const fase of fases.rows) {
       const carpetas = await pool.query(
-        `SELECT carpeta_id, nombre_carpeta FROM carpetas WHERE fase_id = $1 ORDER BY carpeta_id`,
+        `SELECT carpeta_id, nombre_carpeta, estado_carpeta
+         FROM carpetas WHERE fase_id = $1 ORDER BY carpeta_id`,
         [fase.fase_id]
       );
       for (const carpeta of carpetas.rows) {
         const evidencias = await pool.query(
-          `SELECT e.evidencia_id, e.nombre_evidencia, e.tipo_evidencia, e.ubicacion, ev.resultado
+          `SELECT e.evidencia_id, e.nombre_evidencia, e.tipo_evidencia, e.ubicacion,
+                  au.nombre AS autor_nombre, au.apellido AS autor_apellido,
+                  ult.resultado, ult.fecha_evaluacion
            FROM evidencias e
-           LEFT JOIN evaluaciones ev ON ev.evidencia_id = e.evidencia_id
-           WHERE e.carpeta_id = $1 ORDER BY e.evidencia_id`,
+           JOIN usuarios au ON au.usuario_id = e.usuario_id
+           LEFT JOIN LATERAL (
+             SELECT e2.resultado, e2.fecha_evaluacion
+             FROM evaluaciones e2
+             WHERE e2.evidencia_id = e.evidencia_id
+             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             LIMIT 1
+           ) ult ON true
+           WHERE e.carpeta_id = $1
+           ORDER BY e.evidencia_id`,
           [carpeta.carpeta_id]
         );
         carpeta.evidencias = evidencias.rows;

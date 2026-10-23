@@ -1,22 +1,28 @@
 /*
   Controller de proyectos de grupo para el rol APRENDIZ.
-  Cubre la Fase 1 del documento de idea de proyecto:
     - crearProyecto: el aprendiz crea su grupo de trabajo + el "README" del
       proyecto (nombre, descripción, problema, objetivo, alcance, tecnologías,
-      fechas). Queda como Scrum Master (líder) automáticamente. Al crearse,
-      se generan las 5 fases fijas (Análisis, Diseño, Desarrollo, Pruebas,
-      Cierre/Entrega) y un código de invitación único.
+      cupo y fechas). Queda como líder del grupo (grupos.lider_id). Al
+      crearse se generan las 5 fases fijas y un código de invitación único.
     - unirseAProyecto: otro aprendiz entra a un grupo existente usando el
-      código de invitación, eligiendo su rol Scrum (Product Owner o Developer).
-    - getMiProyecto: devuelve el proyecto activo del aprendiz logueado
-      (el "README" + integrantes + fases), para que lo consulten tanto el
-      líder como el resto del equipo.
+      código de invitación, respetando el cupo máximo (RN-009).
+    - getMiProyecto: devuelve el proyecto activo del aprendiz logueado.
+    - Carpetas y evidencias: cualquier integrante activo del grupo puede
+      crearlas y subir evidencias, con el autor registrado (RN-012).
   Regla de negocio clave: un aprendiz solo puede estar en UN proyecto
   activo a la vez (grupo con nombre_grupo distinto de "General" — el grupo
   "General" es solo de inscripción a la ficha y no cuenta para esta regla).
 */
 
 import pool from '../../config/db.js';
+import {
+  CUPO_POR_DEFECTO,
+  calcularEstadoFase,
+  calcularProgreso,
+  puedeUnirse,
+  validarCupo,
+} from '../../domain/reglas.js';
+import { recalcularCarpetaYFase, resultadosDeFase } from '../../services/cascada.js';
 
 const FASES_FIJAS = [
   { numero: 1, nombre: 'FASE 1 - ANALISIS' },
@@ -66,10 +72,17 @@ export async function crearProyecto(req, res) {
     const {
       nombre_grupo, nombre_proyecto, descripcion, problema,
       objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada,
+      cupo_maximo, cupo_integrantes,
     } = req.body;
 
     if (!nombre_grupo || !nombre_proyecto || !descripcion || !problema || !objetivo || !alcance || !fecha_inicio || !fecha_fin_estimada) {
       return res.status(400).json({ message: 'Faltan campos obligatorios del proyecto' });
+    }
+
+    const cupoRecibido = cupo_maximo ?? cupo_integrantes ?? CUPO_POR_DEFECTO;
+    const cupo = validarCupo(cupoRecibido);
+    if (!cupo.valido) {
+      return res.status(400).json({ message: cupo.mensaje });
     }
 
     await client.query('BEGIN');
@@ -89,16 +102,16 @@ export async function crearProyecto(req, res) {
     const codigoGrupo = generarCodigoProyecto();
 
     const grupoResult = await client.query(
-      `INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, estado_grupo, fecha_creacion)
-       VALUES ($1, $2, $3, $4, 'Activo', now())
+      `INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, cupo_maximo, estado_grupo, fecha_creacion)
+       VALUES ($1, $2, $3, $4, $5, 'Activo', now())
        RETURNING grupo_id`,
-      [fichaId, usuarioId, nombre_grupo, codigoGrupo]
+      [fichaId, usuarioId, nombre_grupo, codigoGrupo, cupo.cupo]
     );
     const grupoId = grupoResult.rows[0].grupo_id;
 
     await client.query(
-      `INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-       VALUES ($1, $2, 'Scrum Master', 'Activo', now())`,
+      `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
+       VALUES ($1, $2, 'Activo', now())`,
       [grupoId, usuarioId]
     );
 
@@ -119,7 +132,12 @@ export async function crearProyecto(req, res) {
     }
 
     await client.query('COMMIT');
-    res.status(201).json({ grupo_id: grupoId, proyecto_id: proyectoId, codigo_grupo: codigoGrupo });
+    res.status(201).json({
+      grupo_id: grupoId,
+      proyecto_id: proyectoId,
+      codigo_grupo: codigoGrupo,
+      cupo_maximo: cupo.cupo,
+    });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ message: 'Error al crear el proyecto' });
@@ -133,13 +151,10 @@ export async function unirseAProyecto(req, res) {
   const client = await pool.connect();
   try {
     const usuarioId = req.user.usuario_id;
-    const { codigo_grupo, rol_scrum } = req.body;
+    const { codigo_grupo } = req.body;
 
-    if (!codigo_grupo || !rol_scrum) {
-      return res.status(400).json({ message: 'Falta el código o el rol Scrum' });
-    }
-    if (!['Product Owner', 'Developer'].includes(rol_scrum)) {
-      return res.status(400).json({ message: 'Rol Scrum inválido' });
+    if (!codigo_grupo) {
+      return res.status(400).json({ message: 'Falta el código de grupo' });
     }
 
     await client.query('BEGIN');
@@ -150,31 +165,43 @@ export async function unirseAProyecto(req, res) {
       return res.status(400).json({ message: 'Ya perteneces a un proyecto activo' });
     }
 
+    // FOR UPDATE serializa las solicitudes concurrentes al mismo grupo: el
+    // conteo del cupo y la inserción ocurren bajo el mismo bloqueo.
     const grupoResult = await client.query(
-      `SELECT grupo_id FROM grupos WHERE codigo_grupo = $1 AND estado_grupo = 'Activo'`,
+      `SELECT grupo_id, cupo_maximo
+       FROM grupos
+       WHERE codigo_grupo = $1
+         AND estado_grupo = 'Activo'
+         AND nombre_grupo <> 'General'
+       FOR UPDATE`,
       [codigo_grupo]
     );
     if (grupoResult.rowCount === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Código de grupo no encontrado' });
     }
-    const grupoId = grupoResult.rows[0].grupo_id;
+    const grupo = grupoResult.rows[0];
 
-    if (rol_scrum === 'Product Owner') {
-      const poExistente = await client.query(
-        `SELECT 1 FROM integrantes_grupo WHERE grupo_id = $1 AND rol_scrum = 'Product Owner' AND estado_integrante = 'Activo'`,
-        [grupoId]
-      );
-      if (poExistente.rowCount > 0) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ message: 'Este grupo ya tiene un Product Owner' });
-      }
+    const conteo = await client.query(
+      `SELECT count(*)::int AS total
+       FROM integrantes_grupo
+       WHERE grupo_id = $1 AND estado_integrante = 'Activo'`,
+      [grupo.grupo_id]
+    );
+
+    if (!puedeUnirse(grupo.cupo_maximo, conteo.rows[0].total)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        message: `El grupo está completo (cupo máximo: ${grupo.cupo_maximo})`,
+      });
     }
 
     await client.query(
-      `INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-       VALUES ($1, $2, $3, 'Activo', now())`,
-      [grupoId, usuarioId, rol_scrum]
+      `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
+       VALUES ($1, $2, 'Activo', now())
+       ON CONFLICT (grupo_id, usuario_id)
+       DO UPDATE SET estado_integrante = 'Activo', fecha_salida = NULL, fecha_ingreso = now()`,
+      [grupo.grupo_id, usuarioId]
     );
 
     await client.query('COMMIT');
@@ -193,7 +220,11 @@ export async function getMiProyecto(req, res) {
     const usuarioId = req.user.usuario_id;
 
     const grupoResult = await pool.query(
-      `SELECT g.grupo_id, g.nombre_grupo, g.codigo_grupo, g.lider_id
+      `SELECT g.grupo_id, g.nombre_grupo, g.codigo_grupo, g.lider_id, g.cupo_maximo,
+              (SELECT count(*)::int
+                 FROM integrantes_grupo ig2
+                WHERE ig2.grupo_id = g.grupo_id
+                  AND ig2.estado_integrante = 'Activo') AS total_integrantes
        FROM integrantes_grupo ig
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        WHERE ig.usuario_id = $1 AND ig.estado_integrante = 'Activo' AND g.nombre_grupo <> 'General'
@@ -212,15 +243,46 @@ export async function getMiProyecto(req, res) {
     const proyecto = proyectoResult.rows[0] || null;
 
     const integrantesResult = await pool.query(
-      `SELECT u.usuario_id, u.nombre, u.apellido, u.correo, ig.rol_scrum
+      `SELECT u.usuario_id, u.nombre, u.apellido, u.correo,
+              (ig.usuario_id = g.lider_id) AS es_lider
        FROM integrantes_grupo ig
        JOIN usuarios u ON u.usuario_id = ig.usuario_id
-       WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'`,
+       JOIN grupos g ON g.grupo_id = ig.grupo_id
+       WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'
+       ORDER BY (ig.usuario_id = g.lider_id) DESC, u.nombre`,
       [grupo.grupo_id]
     );
 
+    // Progreso por fase con la evaluación vigente de cada evidencia.
     const fasesResult = proyecto
-      ? await pool.query(`SELECT * FROM fases WHERE proyecto_id = $1 ORDER BY numero_fase`, [proyecto.proyecto_id])
+      ? await pool.query(
+          `SELECT f.fase_id, f.numero_fase, f.nombre_fase, f.estado_fase,
+                  count(DISTINCT c.carpeta_id)::int AS carpetas_total,
+                  count(DISTINCT c.carpeta_id) FILTER (WHERE c.estado_carpeta = 'Aprobada')::int AS carpetas_aprobadas,
+                  count(ev.evidencia_id)::int AS evidencias_total,
+                  count(ev.evidencia_id) FILTER (WHERE ult.resultado = 'APROBADO')::int AS evidencias_aprobadas,
+                  CASE
+                    WHEN count(ev.evidencia_id) = 0 THEN 0
+                    ELSE round(
+                      100.0 * count(ev.evidencia_id) FILTER (WHERE ult.resultado = 'APROBADO')
+                      / count(ev.evidencia_id)
+                    )::int
+                  END AS porcentaje
+           FROM fases f
+           LEFT JOIN carpetas c ON c.fase_id = f.fase_id
+           LEFT JOIN evidencias ev ON ev.carpeta_id = c.carpeta_id
+           LEFT JOIN LATERAL (
+             SELECT e2.resultado
+             FROM evaluaciones e2
+             WHERE e2.evidencia_id = ev.evidencia_id
+             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             LIMIT 1
+           ) ult ON true
+           WHERE f.proyecto_id = $1
+           GROUP BY f.fase_id
+           ORDER BY f.numero_fase`,
+          [proyecto.proyecto_id]
+        )
       : { rows: [] };
 
     res.json({
@@ -236,41 +298,43 @@ export async function getMiProyecto(req, res) {
 
 
 
-// Verifica que el usuario sea el líder del proyecto dueño de esa fase, y devuelve el proyecto
-async function verificarLiderDeFase(client, usuarioId, faseId) {
+// Verifica que el usuario sea integrante ACTIVO del grupo dueño de la fase
+// (RN-012: cualquier integrante puede crear carpetas y subir evidencias).
+async function verificarIntegranteDeFase(client, usuarioId, faseId) {
   const { rows } = await client.query(
-    `SELECT p.proyecto_id, g.lider_id
+    `SELECT p.proyecto_id, g.grupo_id, g.lider_id
      FROM fases f
      JOIN proyectos p ON p.proyecto_id = f.proyecto_id
      JOIN grupos g ON g.grupo_id = p.grupo_id
-     WHERE f.fase_id = $1`,
-    [faseId]
+     JOIN integrantes_grupo ig ON ig.grupo_id = g.grupo_id
+     WHERE f.fase_id = $1 AND ig.usuario_id = $2 AND ig.estado_integrante = 'Activo'`,
+    [faseId, usuarioId]
   );
-  if (rows.length === 0) return null;
-  if (rows[0].lider_id !== usuarioId) return 'NO_LIDER';
-  return rows[0];
+  return rows[0] || null;
 }
 
-// POST /api/aprendiz/proyectos/fases/:faseId/carpetas — el líder crea una carpeta dentro de una fase
+// POST /api/aprendiz/proyectos/fases/:faseId/carpetas
+// Cualquier integrante activo crea una carpeta dentro de una fase.
 export async function crearCarpeta(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
     const { faseId } = req.params;
     const { nombre_carpeta } = req.body;
 
-    if (!nombre_carpeta) {
+    if (!nombre_carpeta || !String(nombre_carpeta).trim()) {
       return res.status(400).json({ message: 'El nombre de la carpeta es obligatorio' });
     }
 
-    const check = await verificarLiderDeFase(pool, usuarioId, faseId);
-    if (check === null) return res.status(404).json({ message: 'Fase no encontrada' });
-    if (check === 'NO_LIDER') return res.status(403).json({ message: 'Solo el líder del grupo puede crear carpetas' });
+    const check = await verificarIntegranteDeFase(pool, usuarioId, faseId);
+    if (!check) {
+      return res.status(403).json({ message: 'No perteneces al grupo dueño de esta fase' });
+    }
 
     const { rows } = await pool.query(
       `INSERT INTO carpetas (fase_id, nombre_carpeta, fecha_creacion)
        VALUES ($1, $2, now())
-       RETURNING carpeta_id, nombre_carpeta`,
-      [faseId, nombre_carpeta]
+       RETURNING carpeta_id, nombre_carpeta, estado_carpeta`,
+      [faseId, String(nombre_carpeta).trim()]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -278,8 +342,10 @@ export async function crearCarpeta(req, res) {
   }
 }
 
-// POST /api/aprendiz/proyectos/carpetas/:carpetaId/evidencias — el líder sube una evidencia (link/documento)
+// POST /api/aprendiz/proyectos/carpetas/:carpetaId/evidencias
+// Cualquier integrante sube una evidencia; el autor sale del token.
 export async function subirEvidencia(req, res) {
+  const client = await pool.connect();
   try {
     const usuarioId = req.user.usuario_id;
     const { carpetaId } = req.params;
@@ -289,82 +355,107 @@ export async function subirEvidencia(req, res) {
       return res.status(400).json({ message: 'Faltan datos de la evidencia' });
     }
 
-    const { rows: carpetaRows } = await pool.query(
-      `SELECT g.lider_id
+    const { rows: carpetaRows } = await client.query(
+      `SELECT c.carpeta_id
        FROM carpetas c
        JOIN fases f ON f.fase_id = c.fase_id
        JOIN proyectos p ON p.proyecto_id = f.proyecto_id
        JOIN grupos g ON g.grupo_id = p.grupo_id
-       WHERE c.carpeta_id = $1`,
-      [carpetaId]
+       JOIN integrantes_grupo ig ON ig.grupo_id = g.grupo_id
+       WHERE c.carpeta_id = $1
+         AND ig.usuario_id = $2
+         AND ig.estado_integrante = 'Activo'`,
+      [carpetaId, usuarioId]
     );
-    if (carpetaRows.length === 0) return res.status(404).json({ message: 'Carpeta no encontrada' });
-    if (carpetaRows[0].lider_id !== usuarioId) {
-      return res.status(403).json({ message: 'Solo el líder del grupo puede subir evidencias' });
+    if (carpetaRows.length === 0) {
+      return res.status(403).json({ message: 'No perteneces al grupo dueño de esta carpeta' });
     }
 
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
       `INSERT INTO evidencias (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion, fecha_subida)
        VALUES ($1, $2, $3, $4, $5, now())
        RETURNING evidencia_id`,
-      [carpetaId, usuarioId, nombre_evidencia, tipo_evidencia, ubicacion]
+      [carpetaId, usuarioId, String(nombre_evidencia).trim(), tipo_evidencia, ubicacion]
     );
+
+    // Una evidencia nueva sin evaluar devuelve la carpeta/fase a "En revisión".
+    await recalcularCarpetaYFase(client, carpetaId);
+
+    await client.query('COMMIT');
     res.status(201).json({ evidencia_id: rows[0].evidencia_id });
   } catch (err) {
+    await client.query('ROLLBACK');
     res.status(500).json({ message: 'Error al subir la evidencia' });
+  } finally {
+    client.release();
   }
-}
-
-// ==================================================================
-// Verifica que el usuario sea integrante ACTIVO del grupo dueño de la fase
-// (a diferencia de verificarLiderDeFase, aquí cualquier rol_scrum sirve,
-// no solo el líder — esto es para las vistas de solo lectura)
-// ===========================================================================================================
-async function verificarIntegranteDeFase(usuarioId, faseId) {
-  const { rows } = await pool.query(
-    `SELECT g.grupo_id
-     FROM fases f
-     JOIN proyectos p ON p.proyecto_id = f.proyecto_id
-     JOIN grupos g ON g.grupo_id = p.grupo_id
-     JOIN integrantes_grupo ig ON ig.grupo_id = g.grupo_id
-     WHERE f.fase_id = $1 AND ig.usuario_id = $2 AND ig.estado_integrante = 'Activo'`,
-    [faseId, usuarioId]
-  );
-  return rows.length > 0;
 }
 
 // GET /api/aprendiz/proyectos/fases/:faseId/carpetas
 // Cualquier integrante activo del grupo (líder o no) puede ver la lista de
-// chequeo de su fase: carpetas, evidencias y el resultado de evaluación.
+// chequeo de su fase: carpetas, evidencias y el resultado de evaluación
+// vigente (la más reciente), además del progreso de la fase.
 export async function getCarpetasDeFaseAprendiz(req, res) {
   try {
     const usuarioId = req.user.usuario_id;
     const { faseId } = req.params;
 
-    const esIntegrante = await verificarIntegranteDeFase(usuarioId, faseId);
+    const esIntegrante = await verificarIntegranteDeFase(pool, usuarioId, faseId);
     if (!esIntegrante) {
       return res.status(403).json({ message: 'No perteneces al grupo dueño de esta fase' });
     }
 
     const { rows: carpetas } = await pool.query(
-      `SELECT carpeta_id, nombre_carpeta FROM carpetas WHERE fase_id = $1 ORDER BY carpeta_id`,
+      `SELECT carpeta_id, nombre_carpeta, estado_carpeta
+       FROM carpetas
+       WHERE fase_id = $1
+       ORDER BY carpeta_id`,
       [faseId]
     );
 
     for (const carpeta of carpetas) {
       const { rows: evidencias } = await pool.query(
-        `SELECT e.evidencia_id, e.nombre_evidencia, e.tipo_evidencia, e.ubicacion, e.fecha_subida,
-                ev.resultado
-         FROM evidencias e
-         LEFT JOIN evaluaciones ev ON ev.evidencia_id = e.evidencia_id
-         WHERE e.carpeta_id = $1
-         ORDER BY e.evidencia_id`,
+        `SELECT ev.evidencia_id, ev.nombre_evidencia, ev.tipo_evidencia, ev.ubicacion,
+                ev.fecha_subida,
+                au.nombre AS autor_nombre, au.apellido AS autor_apellido,
+                ult.resultado, ult.fecha_evaluacion,
+                inst.nombre AS evaluador_nombre, inst.apellido AS evaluador_apellido
+         FROM evidencias ev
+         JOIN usuarios au ON au.usuario_id = ev.usuario_id
+         LEFT JOIN LATERAL (
+           SELECT e2.resultado, e2.fecha_evaluacion, e2.instructor_id
+           FROM evaluaciones e2
+           WHERE e2.evidencia_id = ev.evidencia_id
+           ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+           LIMIT 1
+         ) ult ON true
+         LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
+         WHERE ev.carpeta_id = $1
+         ORDER BY ev.evidencia_id`,
         [carpeta.carpeta_id]
       );
       carpeta.evidencias = evidencias;
     }
 
-    res.json(carpetas);
+    const filas = await resultadosDeFase(pool, faseId);
+    const resultados = filas.map((fila) => fila.resultado);
+    const { rows: faseRows } = await pool.query(
+      `SELECT fase_id, nombre_fase, estado_fase FROM fases WHERE fase_id = $1`,
+      [faseId]
+    );
+
+    res.json({
+      fase: faseRows[0] || null,
+      estado_fase: calcularEstadoFase(resultados),
+      progreso: {
+        ...calcularProgreso(resultados),
+        carpetas_total: carpetas.length,
+        carpetas_aprobadas: carpetas.filter((c) => c.estado_carpeta === 'Aprobada').length,
+      },
+      carpetas,
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener la lista de chequeo' });
   }
@@ -462,8 +553,8 @@ export async function cambiarMiFicha(req, res) {
       );
     } else {
       await client.query(
-        `INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-         VALUES ($1, $2, 'Integrante', 'Activo', now())`,
+        `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
+         VALUES ($1, $2, 'Activo', now())`,
         [grupoId, usuarioId]
       );
     }
@@ -488,8 +579,8 @@ async function obtenerGrupoGeneralAprendiz(client, fichaId, usuarioId) {
   if (existente.rows.length > 0) return existente.rows[0].grupo_id;
 
   const nuevo = await client.query(
-    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, estado_grupo, fecha_creacion)
-     VALUES ('General', $1, $2, $3, 'Activo', now())
+    `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, cupo_maximo, estado_grupo, fecha_creacion)
+     VALUES ('General', $1, $2, $3, 50, 'Activo', now())
      RETURNING grupo_id`,
     [`GRP-GENERAL-${fichaId}`, fichaId, usuarioId]
   );
@@ -531,8 +622,26 @@ export async function getResumenAprendiz(req, res) {
            FROM evidencias e
            JOIN carpetas c ON c.carpeta_id = e.carpeta_id
            JOIN fases f ON f.fase_id = c.fase_id
-           JOIN evaluaciones ev ON ev.evidencia_id = e.evidencia_id
-           WHERE f.proyecto_id = $1) AS evidencias_evaluadas
+           LEFT JOIN LATERAL (
+             SELECT e2.resultado
+             FROM evaluaciones e2
+             WHERE e2.evidencia_id = e.evidencia_id
+             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             LIMIT 1
+           ) ult ON true
+           WHERE f.proyecto_id = $1 AND ult.resultado IS NOT NULL) AS evidencias_evaluadas,
+        (SELECT count(*)::int
+           FROM evidencias e
+           JOIN carpetas c ON c.carpeta_id = e.carpeta_id
+           JOIN fases f ON f.fase_id = c.fase_id
+           LEFT JOIN LATERAL (
+             SELECT e2.resultado
+             FROM evaluaciones e2
+             WHERE e2.evidencia_id = e.evidencia_id
+             ORDER BY e2.fecha_evaluacion DESC, e2.evaluacion_id DESC
+             LIMIT 1
+           ) ult ON true
+           WHERE f.proyecto_id = $1 AND ult.resultado = 'APROBADO') AS evidencias_aprobadas
       `,
       [proyectoId]
     );
@@ -545,7 +654,11 @@ export async function getResumenAprendiz(req, res) {
     res.json({
       progreso: { total, confirmadas, porcentaje },
       proxima_fecha_limite: r.proxima_fecha_limite,
-      evidencias: { total: r.evidencias_total, evaluadas: r.evidencias_evaluadas },
+      evidencias: {
+        total: r.evidencias_total,
+        evaluadas: r.evidencias_evaluadas,
+        aprobadas: r.evidencias_aprobadas,
+      },
     });
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener el resumen' });

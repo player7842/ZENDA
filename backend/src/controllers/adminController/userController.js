@@ -24,6 +24,10 @@
 import bcrypt from 'bcryptjs';
 import pool from '../../config/db.js';
 import verificarPasswordAdmin from '../../utils/confirmarAdmin.js';
+import {
+  cerrarAsignacionesInstructor,
+  sincronizarFichasInstructor,
+} from '../../services/asignaciones.js';
 
 // Roles permitidos (ENUM en mayúsculas, igual que la BD). Si agregan un rol
 // nuevo, tienen que agregarlo aquí también o el backend lo rechazará.
@@ -56,28 +60,12 @@ const resolverFichas = async (db, numeros) => {
 };
 
 // ==================================================================
-// Helper 3: sincronizarFichasInstructor(client, instructorId, fichaIds)
-// ==================================================================
-// Borra los vínculos actuales del instructor en instructor_ficha y
-// reinserta la lista final de fichaIds. Simple y sin estados raros.
-// Cuidado: el código SÍNCRONO mira números, pero acá ya llegan ficha_id.
-const sincronizarFichasInstructor = async (client, instructorId, fichaIds) => {
-  await client.query('DELETE FROM instructor_ficha WHERE instructor_id = $1', [instructorId]);
-  for (const fichaId of fichaIds) {
-    await client.query(
-      'INSERT INTO instructor_ficha (instructor_id, ficha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [instructorId, fichaId]
-    );
-  }
-};
-
-// ==================================================================
 // SELECT_USUARIOS: el template que usan getUsers/getUserById
 // ==================================================================
 // Field derivados clave (por eso las subconsultas):
-//   - fichas: array de CÓDIGOS de ficha (instructor_ficha JOIN fichas).
-//     Para simplificarle la vida al frontend guardamos y devolvemos el
-//     numero_ficha (no el ficha_id interno). COALESCE => siempre array.
+//   - fichas: array de CÓDIGOS de ficha con asignación VIGENTE
+//     (instructor_ficha JOIN fichas). Las asignaciones cerradas quedan en el
+//     historial, pero no se muestran como fichas actuales.
 //   - ficha (singular): la ficha de un APRENDIZ, calculada por su grupo.
 //     Un aprendiz pasó por integrantes_grupo -> grupos -> fichas; tomamos la
 //     más reciente con estado Activo. A instructores/admins esto les da NULL.
@@ -90,6 +78,8 @@ const SELECT_USUARIOS = `
            FROM instructor_ficha inf
            JOIN fichas f ON f.ficha_id = inf.ficha_id
            WHERE inf.instructor_id = u.usuario_id
+             AND inf.fecha_fin IS NULL
+             AND inf.estado = 'Activo'
          ), ARRAY[]::int[]) AS fichas,
          (
            SELECT f.numero_ficha
@@ -251,7 +241,7 @@ export const updateUser = async (req, res) => {
     if (rolFinal === 'INSTRUCTOR') {
       await sincronizarFichasInstructor(client, id, fichaIds);
     } else {
-      await client.query('DELETE FROM instructor_ficha WHERE instructor_id = $1', [id]);
+      await cerrarAsignacionesInstructor(client, id);
     }
 
     await client.query('COMMIT');
@@ -335,7 +325,8 @@ export const deleteUser = async (req, res) => {
     // 2) Si era lider de algún grupo, limpiamos ese grupo entero (y sus anuncios)
     await client.query('DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE lider_id = $1)', [id]);
     await client.query('DELETE FROM grupos WHERE lider_id = $1', [id]);
-    // 3) Vínculos de instructor
+    // 3) Vínculos de instructor: al eliminar la CUENTA sí se borran (la FK
+    //    lo exige). Al reasignar fichas se conserva el historial.
     await client.query('DELETE FROM instructor_ficha WHERE instructor_id = $1', [id]);
     // 4) Referencias en el resto de tablas del esquema
     await client.query('DELETE FROM tareas WHERE responsable_id = $1', [id]);
@@ -385,7 +376,7 @@ export const updateUserRol = async (req, res) => {
     await client.query('BEGIN');
 
     if (rol !== 'INSTRUCTOR') {
-      await client.query('DELETE FROM instructor_ficha WHERE instructor_id = $1', [id]);
+      await cerrarAsignacionesInstructor(client, id);
     }
 
     const result = await client.query(
