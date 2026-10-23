@@ -1,32 +1,65 @@
-# Esquema de base de datos — ZENDA v12
+# Esquema de base de datos — ZENDA Semana 2
 
-<!--
-  ¿Qué? Descripción del modelo relacional de ZENDA: tablas, columnas, restricciones e índices.
-  ¿Para qué? Ser la referencia única del esquema para backend, pruebas y documentación.
-  ¿Impacto? Todas las consultas SQL del backend dependen de estos nombres; no hay ORM que absorba un cambio.
--->
+> **Base oficial**: `Database/zenda_bd.sql`. **Migración idempotente**: `Database/migrations/2026-10-22-semana2.sql`.  
+> **Aplicación**: crear base desde `zenda_bd.sql` o aplicar la migración sobre una instalación existente. Las pruebas de CI ejecutan `psql -f Database/zenda_bd.sql` antes de `pnpm test`.  
+> **Cambios Semana 2**: sin sub-roles Scrum, liderazgo por `grupos.lider_id`, `grupos.cupo_maximo`, `carpetas.estado_carpeta`, historial de `instructor_ficha` (única asignación vigente por índice único parcial), estados derivados por cascada con evaluación vigente mediante `LATERAL`.
 
----
+## 1. Diccionario resumido (cambios relevantes)
 
-## Identificación
+### 1.1 `usuarios`
+Sin `sub_rol_intencion`. Campos: `usuario_id`, `rol` (`APRENDIZ|INSTRUCTOR|COORDINADOR|ADMINISTRADOR`), `nombre`, `apellido`, `correo` (UNIQUE), `contrasena`, `tipo_documento`, `numero_documento`, `estado`, `fecha_creacion`, `fecha_actualizacion`.
 
-| Campo | Valor |
-| --- | --- |
-| **Motor** | PostgreSQL 14 o superior |
-| **Tablas** | 20 (3 sin cambios, 10 modificadas, 7 nuevas) |
-| **Base** | `Database/zenda_bd.sql` (v11) + `Database/migraciones/001_v12.sql` |
-| **Convención** | Tablas y columnas en español, `snake_case`; claves primarias `<tabla>_id` generadas por identidad |
-| **Fecha** | Octubre 2026 |
+### 1.2 `instructor_ficha` (historial)
+| Columna | Tipo | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `instructor_ficha_id` | INT | PK, identidad | Identificador |
+| `instructor_id` | INT | FK → usuarios | Instructor |
+| `ficha_id` | INT | FK → fichas | Ficha |
+| `fecha_inicio` | DATE | NOT NULL, DEFAULT CURRENT_DATE | Inicio de asignación |
+| `fecha_fin` | DATE | NULL = vigente | Cierre; al reasignar se cierra, **nunca se borra** |
+| `estado` | VARCHAR(20) | NOT NULL, DEFAULT 'Activo' | `Activo` ⇔ `fecha_fin IS NULL`; `Inactivo` ⇔ `fecha_fin NOT NULL` |
 
-> **Orden de aplicación:** `zenda_bd.sql` crea la base v11 y `001_v12.sql` la lleva a v12 sin borrar datos. La migración elimina `rol_scrum` y `sub_rol_intencion`, por lo que **el código del backend debe actualizarse en el mismo despliegue** ([RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md), [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md)).
+Índices/constraints: `CHECK` coherencia fechas/estado; **índice único parcial** `uq_instructor_ficha_vigente` (`instructor_id`, `ficha_id`) `WHERE fecha_fin IS NULL`.
 
----
+### 1.3 `grupos`
+| Columna | Tipo | Restricciones | Descripción |
+| --- | --- | --- | --- |
+| `grupo_id` | INT | PK, identidad | Identificador |
+| `ficha_id` | INT | FK → fichas | Ficha |
+| `lider_id` | INT | FK → usuarios, NOT NULL | Líder del grupo de trabajo (sin sub-rol) |
+| `nombre_grupo` | VARCHAR(50) | NOT NULL | Nombre (grupo `General` o nombre del proyecto) |
+| `codigo_grupo` | VARCHAR(30) | UNIQUE, NOT NULL | Código de invitación |
+| `cupo_maximo` | INT | NOT NULL, DEFAULT 6, `CHECK BETWEEN 1 AND 50` | Cupo máximo (RN-009) |
+| `estado_grupo` | VARCHAR(20) | NOT NULL, DEFAULT 'Activo' | Estado |
+| `fecha_creacion` | TIMESTAMP | NOT NULL, DEFAULT now() | Creación |
 
-## 1. Diagramas
+### 1.4 `integrantes_grupo`
+Sin `rol_scrum`. `UNIQUE(grupo_id, usuario_id)`. Campos: `integrante_id`, `grupo_id`, `usuario_id`, `estado_integrante` (`Activo`/`Inactivo`), `fecha_ingreso`, `fecha_salida`.
 
-El modelo conceptual (**MER**) y el modelo relacional (**MR**, con tipos de datos, claves y nulabilidad) están en [`diagramas/mer-mr.md`](../diagramas/mer-mr.md). Este documento conserva el diccionario de datos, las restricciones y las notas de migración.
+### 1.5 `fases`, `carpetas`, `evidencias`, `evaluaciones`
+- `fases.estado_fase`: `CHECK IN ('Pendiente','En revisión','Aprobada','Desaprobada')`.
+- `carpetas.estado_carpeta`: `CHECK IN ('Pendiente','En revisión','Aprobada','Desaprobada')` (añadido en Semana 2).
+- `evaluaciones.resultado`: `CHECK IN ('APROBADO','REPROBADO')`.
+- **Evaluación vigente**: la más reciente por `fecha_evaluacion DESC, evaluacion_id DESC` (RN-017). Seleccionada con `LATERAL` en consultas y en servicios.
+- **Cascada**: tras insertar evidencia o evaluación se recalcula `carpetas.estado_carpeta` y `fases.estado_fase` con las reglas puras (`backend/src/domain/reglas.js`), persistidas en BD.
 
----
+### 1.6 Índices relevantes
+`idx_fichas_programa`, `idx_grupos_ficha`, `idx_integrantes_grupo_usuario`, `idx_integrantes_grupo_grupo`, `idx_fases_proyecto`, `idx_carpetas_fase`, `idx_evidencias_carpeta`, `idx_evaluaciones_evidencia_fecha` (soporte a la selección de evaluación vigente).
+
+## 2. Reglas aplicadas
+- **RN-007**: un aprendiz, un proyecto activo (grupo distinto de `General`).
+- **RN-008**: líder = `grupos.lider_id`.
+- **RN-009**: cupo validado al crear/unirse; bloqueo `FOR UPDATE` al unirse.
+- **RN-012**: cualquier integrante activo crea carpetas/sube evidencias, autor desde token.
+- **RN-017/RN-018/RN-019**: historial de evaluaciones, cascada y aprobación en bloque.
+- **H-07/HU-011**: historial de `instructor_ficha` sin borrados.
+
+## 3. Notas de despliegue
+1. Aplicar `Database/zenda_bd.sql` o `Database/migrations/2026-10-22-semana2.sql`.
+2. Actualizar backend y frontend con el mismo *release* (los controladores exigen el nuevo esquema).
+3. No ejecutar sin revisar asignaciones activas de instructores (la migración preserva historial).
+
+Ver [`docs/gestion/plan-de-implantacion.md`](../gestion/plan-de-implantacion.md) para el plan completo.
 
 ## 2. Diccionario de datos
 
