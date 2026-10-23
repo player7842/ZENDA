@@ -410,14 +410,14 @@ export async function getObservacionesProyecto(proyectoId) {
 }
 
 // Crear una observación hacia un proyecto/grupo
-export async function crearObservacion(proyectoId, titulo, descripcion) {
+export async function crearObservacion(proyectoId, titulo, descripcion, evidenciaId = null) {
   const res = await fetch(`${API_URL}/api/instructor/proyectos/${proyectoId}/observaciones`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
     },
-    body: JSON.stringify({ titulo, descripcion }),
+    body: JSON.stringify({ titulo, descripcion, evidencia_id: evidenciaId }),
   });
 
   const json = await res.json();
@@ -474,6 +474,22 @@ export async function getMiProyectoAprendiz() {
   const json = await res.json();
   if (!res.ok)
     throw new Error(json.message || "Error al obtener el proyecto");
+  return json;
+}
+
+// Actualizar el cupo del grupo (solo el líder)
+export async function actualizarCupoAprendiz(cupoMaximo) {
+  const res = await fetch(`${API_URL}/api/aprendiz/proyectos/mio/cupo`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ cupo_maximo: cupoMaximo }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Error al actualizar el cupo");
   return json;
 }
 

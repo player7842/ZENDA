@@ -38,6 +38,7 @@ import {
   crearObservacion,
   getEvidenciasFicha
 } from "../../api";
+import { esUrlSegura } from "../../utils/urlSegura";
 
 function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
   const [grupos, setGrupos] = useState([]);
@@ -50,6 +51,7 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
   const [observaciones, setObservaciones] = useState([]);
   const [tituloObs, setTituloObs] = useState("");
   const [descripcionObs, setDescripcionObs] = useState("");
+  const [evidenciaObservacion, setEvidenciaObservacion] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingProyecto, setLoadingProyecto] = useState(false);
@@ -98,14 +100,29 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
     e.preventDefault();
     if (!tituloObs.trim() || !descripcionObs.trim()) return;
     try {
-      await crearObservacion(grupoSeleccionado.proyecto_id, tituloObs, descripcionObs);
+      await crearObservacion(
+        grupoSeleccionado.proyecto_id,
+        tituloObs,
+        descripcionObs,
+        evidenciaObservacion?.evidencia_id || null
+      );
       const obs = await getObservacionesProyecto(grupoSeleccionado.proyecto_id);
       setObservaciones(obs || []);
       setTituloObs("");
       setDescripcionObs("");
+      setEvidenciaObservacion(null);
     } catch (err) {
       setError(err?.message || "Error al publicar la observación");
     }
+  };
+
+  const observarEvidencia = (evidencia) => {
+    setEvidenciaObservacion(evidencia);
+    setTituloObs(`Observación sobre ${evidencia.nombre_evidencia}`);
+    setDescripcionObs("");
+    document
+      .querySelector(".bloque-separado textarea.modal-input")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const verListaDeChequeo = async (fase) => {
@@ -144,6 +161,14 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
   };
 
   const aprobarCarpeta = async (carpetaId) => {
+    const carpeta = carpetas.find((c) => c.carpeta_id === carpetaId);
+    const reprobadas = carpeta?.evidencias?.filter((e) => e.resultado === "REPROBADO").length || 0;
+    const mensaje =
+      reprobadas > 0
+        ? `Esta carpeta tiene ${reprobadas} evidencia(s) reprobada(s). Al aprobarla en bloque se registrará una nueva evaluación APROBADO para cada una. ¿Continuar?`
+        : "¿Aprobar en bloque todas las evidencias pendientes de esta carpeta? Se conservará el historial de evaluaciones.";
+    if (!window.confirm(mensaje)) return;
+
     try {
       const data = await aprobarCarpetaInstructor(carpetaId);
       if (readme && faseSeleccionada) {
@@ -334,15 +359,21 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                   <p style={{ margin: "0 0 12px", fontSize: "0.84rem", color: "var(--color-text-muted)" }}>
                     Fase: <strong>{evidenciasPendientes[indiceModal]?.nombre_fase}</strong>
                   </p>
-                  <a
-                    href={evidenciasPendientes[indiceModal]?.ubicacion}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="evidencia-link"
-                    style={{ fontSize: "0.9rem" }}
-                  >
-                    <FileText size={16} /> Abrir recurso enviado <ExternalLink size={14} />
-                  </a>
+                  {esUrlSegura(evidenciasPendientes[indiceModal]?.ubicacion) ? (
+                    <a
+                      href={evidenciasPendientes[indiceModal].ubicacion}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="evidencia-link"
+                      style={{ fontSize: "0.9rem" }}
+                    >
+                      <FileText size={16} /> Abrir recurso enviado <ExternalLink size={14} />
+                    </a>
+                  ) : (
+                    <span className="evidencia-link" style={{ fontSize: "0.9rem", opacity: 0.7 }}>
+                      <FileText size={16} /> Recurso con enlace no válido
+                    </span>
+                  )}
                 </div>
 
                 <div className="modal-actions" style={{ marginTop: 10 }}>
@@ -493,7 +524,7 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                       <tr>
                         <th>Nombre</th>
                         <th>Correo</th>
-                        <th>Rol Scrum</th>
+                        <th>Rol en el grupo</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -597,11 +628,18 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                               {c.evidencias.map((e) => (
                                 <tr key={e.evidencia_id}>
                                   <td>
-                                    <a href={e.ubicacion} target="_blank" rel="noreferrer" className="evidencia-link">
-                                      <FileText size={14} />
-                                      <span>{e.nombre_evidencia}</span>
-                                      <ExternalLink size={12} />
-                                    </a>
+                                    {esUrlSegura(e.ubicacion) ? (
+                                      <a href={e.ubicacion} target="_blank" rel="noopener noreferrer" className="evidencia-link">
+                                        <FileText size={14} />
+                                        <span>{e.nombre_evidencia}</span>
+                                        <ExternalLink size={12} />
+                                      </a>
+                                    ) : (
+                                      <span className="evidencia-link" style={{ opacity: 0.75 }}>
+                                        <FileText size={14} />
+                                        <span>{e.nombre_evidencia} (enlace no válido)</span>
+                                      </span>
+                                    )}
                                   </td>
                                   <td style={{ fontSize: "0.82rem" }}>{e.autor_nombre} {e.autor_apellido}</td>
                                   <td>{e.tipo_evidencia}</td>
@@ -621,6 +659,13 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                                         onClick={() => calificar(e.evidencia_id, "REPROBADO")}
                                       >
                                         <XCircle size={12} /> Reprobar
+                                      </button>
+                                      <button
+                                        className="btn-accion"
+                                        style={{ padding: "4px 8px", fontSize: "0.72rem", display: "inline-flex", alignItems: "center", gap: 4 }}
+                                        onClick={() => observarEvidencia(e)}
+                                      >
+                                        <MessageSquare size={12} /> Observar
                                       </button>
                                     </div>
                                   </td>
@@ -642,6 +687,31 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                 </p>
 
                 <form onSubmit={publicarObservacion} style={{ marginBottom: 20 }}>
+                  {evidenciaObservacion && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        marginBottom: 10,
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                        background: "rgba(34, 197, 94, 0.1)",
+                        fontSize: "0.78rem",
+                      }}
+                    >
+                      <span>Observación asociada a: {evidenciaObservacion.nombre_evidencia}</span>
+                      <button
+                        type="button"
+                        className="btn-accion"
+                        style={{ padding: "2px 6px" }}
+                        onClick={() => setEvidenciaObservacion(null)}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
                   <input
                     className="modal-input"
                     placeholder="Título de la observación"
@@ -673,6 +743,11 @@ function Proyectos({ fichas = [], fichaSeleccionada, setFichaSeleccionada }) {
                     {observaciones.map((o) => (
                       <div key={o.observacion_id} className="observacion-card" style={{ padding: 12, background: "var(--surface, rgba(128,128,128,0.06))", borderRadius: 8 }}>
                         <h4 style={{ margin: "0 0 4px", fontSize: "0.9rem" }}>{o.titulo}</h4>
+                        {o.nombre_evidencia && (
+                          <p className="admin-user-email" style={{ margin: "0 0 4px" }}>
+                            Evidencia: {o.nombre_evidencia}
+                          </p>
+                        )}
                         <p style={{ margin: 0, fontSize: "0.84rem", opacity: 0.9 }}>{o.descripcion}</p>
                         <p className="admin-user-email" style={{ marginTop: 6, marginBottom: 0 }}>
                           {o.nombre} {o.apellido} — {new Date(o.fecha_observacion).toLocaleString()}

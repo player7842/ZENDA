@@ -3,6 +3,7 @@
   UI/UX Avanzado: Timeline/Gantt simplificado, chips de tecnologías,
   secciones estructuradas del README y Exportador a PDF del Reporte Oficial.
 */
+import { useEffect, useState } from "react";
 import { 
   FileText, 
   Target, 
@@ -11,16 +12,38 @@ import {
   Cpu, 
   Hash,
   Printer,
-  Download
+  Users
 } from "lucide-react";
 import TimelineGantt from "../../components/ui/TimelineGantt";
+import { actualizarCupoAprendiz } from "../../api";
 
-function MiProyecto({ datos }) {
-  const { proyecto, grupo } = datos;
+function MiProyecto({ datos, esLider = false, onCupoActualizado }) {
+  const { proyecto, grupo, integrantes = [] } = datos;
+  const [cupo, setCupo] = useState(grupo.cupo_maximo);
+  const [guardandoCupo, setGuardandoCupo] = useState(false);
+  const [errorCupo, setErrorCupo] = useState("");
+
+  // Mantiene el input sincronizado cuando el padre recarga el proyecto.
+  useEffect(() => {
+    setCupo(grupo.cupo_maximo);
+  }, [grupo.cupo_maximo]);
 
   const listaTecnologias = proyecto.tecnologias
     ? proyecto.tecnologias.split(",").map((t) => t.trim()).filter(Boolean)
     : [];
+
+  const guardarCupo = async () => {
+    setErrorCupo("");
+    setGuardandoCupo(true);
+    try {
+      await actualizarCupoAprendiz(Number(cupo));
+      if (onCupoActualizado) await onCupoActualizado();
+    } catch (err) {
+      setErrorCupo(err?.message || "No se pudo actualizar el cupo");
+    } finally {
+      setGuardandoCupo(false);
+    }
+  };
 
   const handleExportarPDF = () => {
     window.print();
@@ -54,6 +77,40 @@ function MiProyecto({ datos }) {
             Grupo: {grupo.codigo_grupo}
           </span>
         </div>
+      </div>
+
+      {/* Cupo del grupo (RN-009): el líder puede ajustarlo sin bajar del total actual */}
+      <div className="bloque-separado" style={{ margin: "0 0 20px" }}>
+        <p className="dash-section-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Users size={16} /> Equipo y cupo
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.86rem" }}>
+            {integrantes.length} de {grupo.cupo_maximo} integrantes
+          </span>
+          {esLider && (
+            <>
+              <input
+                type="number"
+                min={Math.max(1, integrantes.length)}
+                max={50}
+                value={cupo}
+                onChange={(e) => setCupo(e.target.value)}
+                style={{ width: 84, padding: "6px 8px", borderRadius: 8 }}
+                aria-label="Cupo máximo del grupo"
+              />
+              <button
+                className="btn-rol"
+                onClick={guardarCupo}
+                disabled={guardandoCupo}
+                style={{ padding: "6px 12px" }}
+              >
+                {guardandoCupo ? "Guardando..." : "Actualizar cupo"}
+              </button>
+            </>
+          )}
+        </div>
+        {errorCupo && <p style={{ margin: "8px 0 0", color: "#ef4444", fontSize: "0.8rem" }}>{errorCupo}</p>}
       </div>
 
       {/* COMPONENTE GANTT / TIMELINE SIMPLIFICADO */}

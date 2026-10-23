@@ -22,6 +22,20 @@ import { useTheme } from "../../context/ThemeContext";
 import { register, getFichasPublicas } from "../../api";
 import "../../styles/Register.css";
 
+const CORREO_INSTITUCIONAL = /^[^\s@]+@soy\.sena\.edu\.co$/i;
+
+function calcularFuerzaPassword(password) {
+  let puntaje = 0;
+  if (password.length >= 8) puntaje += 1;
+  if (password.length >= 12) puntaje += 1;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) puntaje += 1;
+  if (/\d/.test(password)) puntaje += 1;
+  if (/[^A-Za-z0-9]/.test(password)) puntaje += 1;
+  return Math.min(puntaje, 5);
+}
+
+const ETIQUETAS_FUERZA = ["Muy débil", "Débil", "Aceptable", "Buena", "Fuerte", "Muy fuerte"];
+
 function Register() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -36,6 +50,9 @@ function Register() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [aceptaPrivacidad, setAceptaPrivacidad] = useState(false);
+  const [aceptaCookies, setAceptaCookies] = useState(false);
   const [aceptaTratamientoDatos, setAceptaTratamientoDatos] = useState(false);
   const [mostrarModalLey, setMostrarModalLey] = useState(false);
 
@@ -43,6 +60,7 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const fuerzaPassword = calcularFuerzaPassword(formData.password);
   
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -90,8 +108,8 @@ function Register() {
     
     if (!formData.email.trim()) {
       newErrors.email = "El correo es requerido";
-    } else if (!formData.email.includes("@")) {
-      newErrors.email = "Ingresa un correo electrónico válido";
+    } else if (!CORREO_INSTITUCIONAL.test(formData.email.trim().toLowerCase())) {
+      newErrors.email = "Usa tu correo institucional usuario@soy.sena.edu.co";
     }
 
     if (!formData.tipoDocumento) newErrors.tipoDocumento = "Seleccione un tipo";
@@ -110,6 +128,8 @@ function Register() {
       newErrors.password = "La contraseña es requerida";
     } else if (formData.password.length < 8) {
       newErrors.password = "Mínimo 8 caracteres";
+    } else if (fuerzaPassword < 2) {
+      newErrors.password = "Usa una contraseña más segura (letras y números)";
     }
 
     if (!formData.confirmPassword) {
@@ -121,6 +141,9 @@ function Register() {
     if (!aceptaTratamientoDatos) {
       newErrors.habeasData = "Debes autorizar el tratamiento de datos (Ley 1581 de 2012)";
     }
+    if (!aceptaTerminos) newErrors.terminos = "Debes aceptar los términos de uso";
+    if (!aceptaPrivacidad) newErrors.privacidad = "Debes aceptar la política de privacidad";
+    if (!aceptaCookies) newErrors.cookies = "Debes aceptar el uso de cookies";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -141,6 +164,10 @@ function Register() {
         numero_documento: formData.numeroDocumento,
         password: formData.password,
         numero_ficha: formData.numeroFicha,
+        acepta_terminos: aceptaTerminos,
+        acepta_privacidad: aceptaPrivacidad,
+        acepta_cookies: aceptaCookies,
+        acepta_tratamiento_datos: aceptaTratamientoDatos,
       });
 
       alert("Registro exitoso. Por favor inicia sesión.");
@@ -240,6 +267,7 @@ function Register() {
                   <option value="TI">Tarjeta de Identidad</option>
                   <option value="CE">Cédula de Extranjería</option>
                   <option value="PA">Pasaporte</option>
+                  <option value="PPT">Permiso por Protección Temporal (PPT)</option>
                 </select>
               </div>
               {errors.tipoDocumento && <span className="field-error" style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: 4, display: "block" }}>{errors.tipoDocumento}</span>}
@@ -302,6 +330,13 @@ function Register() {
                 onChange={handleChange} 
                 onKeyDown={handleKeyDown(refs.confirmPassword)}
                 placeholder="Mínimo 8 caracteres"
+                onPaste={(e) => {
+                  e.preventDefault();
+                  setErrors((prev) => ({
+                    ...prev,
+                    password: "Por seguridad, escribe la contraseña manualmente",
+                  }));
+                }}
                 style={{ width: "100%", paddingLeft: 38, paddingRight: 40, height: 42, borderRadius: 8 }}
               />
               <button
@@ -313,6 +348,29 @@ function Register() {
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+            <div style={{ marginTop: 6 }}>
+              <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
+                {[1, 2, 3, 4, 5].map((nivel) => (
+                  <span
+                    key={nivel}
+                    style={{
+                      height: 5,
+                      flex: 1,
+                      borderRadius: 999,
+                      backgroundColor:
+                        formData.password && fuerzaPassword >= nivel
+                          ? ["#ef4444", "#f97316", "#eab308", "#22c55e", "#15803d"][fuerzaPassword - 1]
+                          : "rgba(148, 163, 184, 0.25)",
+                    }}
+                  />
+                ))}
+              </div>
+              {formData.password && (
+                <span style={{ fontSize: "0.72rem", opacity: 0.8 }}>
+                  Seguridad: {ETIQUETAS_FUERZA[fuerzaPassword]}
+                </span>
+              )}
             </div>
             {errors.password && <span className="field-error" style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: 4, display: "block" }}>{errors.password}</span>}
           </div>
@@ -328,6 +386,13 @@ function Register() {
                 name="confirmPassword" 
                 value={formData.confirmPassword}
                 onChange={handleChange} 
+                onPaste={(e) => {
+                  e.preventDefault();
+                  setErrors((prev) => ({
+                    ...prev,
+                    confirmPassword: "Por seguridad, escribe la contraseña manualmente",
+                  }));
+                }}
                 placeholder="Repita su contraseña"
                 style={{ width: "100%", paddingLeft: 38, paddingRight: 40, height: 42, borderRadius: 8 }}
               />
@@ -342,6 +407,51 @@ function Register() {
               </button>
             </div>
             {errors.confirmPassword && <span className="field-error" style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: 4, display: "block" }}>{errors.confirmPassword}</span>}
+          </div>
+
+          {/* Aceptaciones legales obligatorias (RN-004) */}
+          <div style={{ margin: "18px 0 4px", fontSize: "0.8rem", display: "grid", gap: 8 }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={aceptaTerminos}
+                onChange={(e) => {
+                  setAceptaTerminos(e.target.checked);
+                  if (errors.terminos) setErrors((prev) => ({ ...prev, terminos: "" }));
+                }}
+                style={{ marginTop: 3, width: "auto", cursor: "pointer" }}
+              />
+              <span style={{ opacity: 0.9, lineHeight: 1.4 }}>Acepto los términos de uso de ZENDA.</span>
+            </label>
+            {errors.terminos && <span style={{ fontSize: "0.75rem", color: "#ef4444" }}>{errors.terminos}</span>}
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={aceptaPrivacidad}
+                onChange={(e) => {
+                  setAceptaPrivacidad(e.target.checked);
+                  if (errors.privacidad) setErrors((prev) => ({ ...prev, privacidad: "" }));
+                }}
+                style={{ marginTop: 3, width: "auto", cursor: "pointer" }}
+              />
+              <span style={{ opacity: 0.9, lineHeight: 1.4 }}>Acepto la política de privacidad.</span>
+            </label>
+            {errors.privacidad && <span style={{ fontSize: "0.75rem", color: "#ef4444" }}>{errors.privacidad}</span>}
+
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={aceptaCookies}
+                onChange={(e) => {
+                  setAceptaCookies(e.target.checked);
+                  if (errors.cookies) setErrors((prev) => ({ ...prev, cookies: "" }));
+                }}
+                style={{ marginTop: 3, width: "auto", cursor: "pointer" }}
+              />
+              <span style={{ opacity: 0.9, lineHeight: 1.4 }}>Acepto el uso de cookies necesarias para la sesión.</span>
+            </label>
+            {errors.cookies && <span style={{ fontSize: "0.75rem", color: "#ef4444" }}>{errors.cookies}</span>}
           </div>
 
           {/* Casilla de Habeas Data Ley 1581 */}
@@ -395,7 +505,7 @@ function Register() {
               <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>Protección de Datos (Ley 1581)</h3>
             </div>
             <p style={{ fontSize: "0.85rem", lineHeight: "1.5", opacity: 0.88, marginBottom: 20 }}>
-              De conformidad con la Ley 1581 de 2012 de Habeas Data en Colombia, la plataforma **ZENDA (SENA)** garantiza que la información recolectada se utiliza exclusivamente para fines académicos, gestión de fichas y seguimiento pedagógico de las células de proyecto.
+              De conformidad con la Ley 1581 de 2012 de Habeas Data en Colombia, la plataforma <strong>ZENDA (SENA)</strong> garantiza que la información recolectada se utiliza exclusivamente para fines académicos, gestión de fichas y seguimiento pedagógico de los grupos de proyecto.
             </p>
             <button className="btn-primary" style={{ width: "100%", height: 40, borderRadius: 8, fontWeight: 600, cursor: "pointer" }} onClick={() => setMostrarModalLey(false)}>
               Entendido

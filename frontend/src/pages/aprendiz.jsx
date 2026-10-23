@@ -214,7 +214,7 @@ function Aprendiz() {
             <div className="skeleton-box" style={{ height: 300, width: "100%" }} />
           ) : datos ? (
             pestana === "resumen" ? <Resumen fases={datos.fases} /> :
-            pestana === "proyecto" ? <MiProyecto datos={datos} /> :
+            pestana === "proyecto" ? <MiProyecto datos={datos} esLider={esLider} onCupoActualizado={fetchMiProyecto} /> :
             pestana === "equipo" ? <Equipo integrantes={datos.integrantes} grupo={datos.grupo} /> :
             pestana === "fases" ? <Fases fases={datos.fases} /> :
             pestana === "tareas" ? <Tareas esLider={esLider} integrantes={datos.integrantes} usuarioId={aprendiz?.usuario_id} /> :
@@ -347,7 +347,7 @@ function Aprendiz() {
                         required
                         value={codigo}
                         onChange={(e) => setCodigo(e.target.value)}
-                        placeholder="PRY-XXXXXX-XX"
+                        placeholder="PRY-XXXXXXXXXX"
                         style={{ marginBottom: 14, textTransform: "uppercase" }}
                       />
 

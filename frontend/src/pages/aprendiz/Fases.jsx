@@ -22,6 +22,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { getCarpetasDeFaseAprendiz, crearCarpetaAprendiz, subirEvidenciaAprendiz } from "../../api";
+import { esUrlSegura } from "../../utils/urlSegura";
 
 function Fases({ fases }) {
   const [faseSeleccionada, setFaseSeleccionada] = useState(null);
@@ -83,6 +84,10 @@ function Fases({ fases }) {
   const handleSubirEvidencia = async (e) => {
     e.preventDefault();
     if (!formEvidencia.nombre_evidencia || !formEvidencia.ubicacion) return;
+    if (!esUrlSegura(formEvidencia.ubicacion)) {
+      setError("La ubicación debe ser una URL http(s) válida");
+      return;
+    }
     setError("");
     setExito("");
     try {
@@ -188,6 +193,42 @@ function Fases({ fases }) {
                 </div>
               </div>
 
+              {/* HU-025: porcentaje de evidencias y carpetas aprobadas */}
+              {infoFase?.progreso && (
+                <div style={{ margin: "8px 0 14px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      fontSize: "0.78rem",
+                      marginBottom: 5,
+                      opacity: 0.9,
+                    }}
+                  >
+                    <span>
+                      {infoFase.progreso.aprobadas} de {infoFase.progreso.total} evidencias aprobadas
+                    </span>
+                    <span>
+                      {infoFase.progreso.carpetas_aprobadas} de {infoFase.progreso.carpetas_total} carpetas aprobadas
+                    </span>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 999, background: "rgba(148,163,184,0.25)", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: `${infoFase.progreso.porcentaje}%`,
+                        height: "100%",
+                        background: "var(--color-primary, #1e7e22)",
+                        transition: "width 0.3s ease",
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontSize: "0.72rem", opacity: 0.75 }}>
+                    Avance de la fase: {infoFase.progreso.porcentaje}%
+                  </span>
+                </div>
+              )}
+
               {/* Banner contextual de Re-entrega si la fase fue desaprobada */}
               {(infoFase?.estado_fase || faseSeleccionada.estado_fase) === "Desaprobada" && (
                 <div className="fase-alert-banner">
@@ -262,7 +303,6 @@ function Fases({ fases }) {
                             </tr>
                           ) : (
                             c.evidencias.map((e, idx) => {
-                              const esUltima = idx === c.evidencias.length - 1;
                               const esReentrega = idx > 0;
 
                               return (
@@ -274,16 +314,23 @@ function Fases({ fases }) {
                                     </span>
                                   </td>
                                   <td>
-                                    <a
-                                      href={e.ubicacion}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="evidencia-link"
-                                    >
-                                      <FileText size={14} />
-                                      <span>{e.nombre_evidencia}</span>
-                                      <ExternalLink size={12} opacity={0.7} />
-                                    </a>
+                                    {esUrlSegura(e.ubicacion) ? (
+                                      <a
+                                        href={e.ubicacion}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="evidencia-link"
+                                      >
+                                        <FileText size={14} />
+                                        <span>{e.nombre_evidencia}</span>
+                                        <ExternalLink size={12} opacity={0.7} />
+                                      </a>
+                                    ) : (
+                                      <span className="evidencia-link" style={{ opacity: 0.75 }}>
+                                        <FileText size={14} />
+                                        <span>{e.nombre_evidencia} (enlace no válido)</span>
+                                      </span>
+                                    )}
                                   </td>
                                   <td style={{ opacity: 0.85 }}>{e.tipo_evidencia}</td>
                                   <td>{renderBadgeResultado(e.resultado)}</td>

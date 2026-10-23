@@ -88,6 +88,12 @@ function Observaciones() {
                 {o.descripcion}
               </p>
 
+              {o.nombre_evidencia && (
+                <p className="admin-count" style={{ margin: "8px 0 0 30px" }}>
+                  Evidencia: {o.nombre_evidencia}
+                </p>
+              )}
+
               <div className="observacion-meta" style={{ marginLeft: 30 }}>
                 <div className="observacion-meta-item">
                   <UserCheck size={14} style={{ color: "var(--color-primary)" }} />
