@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+# pnpm 12 lee esta configuración desde el workspace, no desde package.json.
+# Solo se permite ejecutar el script de instalación de esbuild, que Vitest
+# necesita para funcionar. El resto de dependencias no ejecuta scripts.

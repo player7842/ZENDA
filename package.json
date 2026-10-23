@@ -1,0 +1,18 @@
+{
+  "name": "zenda",
+  "private": true,
+  "description": "ZENDA — sistema de gestión de proyectos formativos ADSO",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "pnpm --dir backend lint && pnpm --dir frontend lint",
+    "build": "pnpm --dir frontend build",
+    "test": "pnpm --dir backend test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

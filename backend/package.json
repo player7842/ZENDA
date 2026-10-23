@@ -2,9 +2,16 @@
   "name": "zenda-backend",
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,6 +23,16 @@
     "pg": "^8.13.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  backend:
+    name: Backend (lint + pruebas)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zenda_user
+          POSTGRES_PASSWORD: zenda_ci
+          POSTGRES_DB: zenda
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U zenda_user -d zenda"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: zenda_user
+      DB_PASSWORD: zenda_ci
+      DB_NAME: zenda
+      DB_SSL: 'false'
+      JWT_SECRET: secreto_de_ci_suficientemente_largo_para_pruebas
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_USER: ''
+      EMAIL_PASS: ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: backend
+        run: pnpm lint
+
+      - name: Cargar esquema y datos de prueba
+        env:
+          PGPASSWORD: zenda_ci
+        run: psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/zenda_bd.sql
+
+      - name: Pruebas
+        working-directory: backend
+        run: pnpm test
+
+  frontend:
+    name: Frontend (lint + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: frontend
+        run: pnpm lint
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm build
+        env:
+          VITE_API_URL: http://localhost:4000
