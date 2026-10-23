@@ -9,7 +9,12 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../../config/db.js';
+import env from '../../config/env.js';
 import { enviarCorreoRecuperacion } from '../../utils/mailer.js';
+
+// Longitud mínima de contraseña, alineada con el restablecimiento y con la
+// creación de usuarios desde el panel de administración.
+const LONGITUD_MINIMA_PASSWORD = 8;
 
 // Campos que se devuelven SIEMPRE en un login/registro (nunca la contraseña)
 const CAMPOS_PUBLICOS = `
@@ -54,11 +59,17 @@ export const register = async (req, res) => {
     const correo = obtenerCorreo(req.body);
 
     if (!nombre || !apellido || !correo || !password) {
-      return res.status(400).json({ message: 'Faltan datos del usuario, pon el formulario completo' });
+      return res.status(400).json({ message: 'Faltan datos obligatorios del usuario' });
     }
 
     if (!correo.endsWith(DOMINIO_PERMITIDO)) {
       return res.status(400).json({ message: `El correo debe ser institucional (${DOMINIO_PERMITIDO})` });
+    }
+
+    if (password.length < LONGITUD_MINIMA_PASSWORD) {
+      return res.status(400).json({
+        message: `La contraseña debe tener mínimo ${LONGITUD_MINIMA_PASSWORD} caracteres`,
+      });
     }
 
     if (!numero_ficha) {
@@ -106,7 +117,7 @@ export const register = async (req, res) => {
 
     const token = jwt.sign(
       { usuario_id: user.usuario_id, correo: user.correo, rol: user.rol },
-      process.env.JWT_SECRET,
+      env.jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -148,7 +159,7 @@ export const login = async (req, res) => {
     // Generar token JWT con el rol en mayúsculas (ENUM de la BD)
     const token = jwt.sign(
       { usuario_id: user.usuario_id, correo: user.correo, rol: user.rol },
-      process.env.JWT_SECRET,
+      env.jwtSecret,
       { expiresIn: '24h' }
     );
 
@@ -164,8 +175,13 @@ export const login = async (req, res) => {
 
 
 
-// Solicitar recuperación de contraseña (envía email real)
+// Solicitar recuperación de contraseña (envía email real).
+// La respuesta es SIEMPRE la misma exista o no el correo, para no revelar
+// qué cuentas están registradas (H-01).
 export const forgotPassword = async (req, res) => {
+  const RESPUESTA_UNIFORME =
+    'Si el correo está registrado, recibirás un enlace de recuperación en unos minutos.';
+
   try {
     const correo = obtenerCorreo(req.body);
     if (!correo) {
@@ -174,7 +190,8 @@ export const forgotPassword = async (req, res) => {
 
     const result = await pool.query('SELECT usuario_id, correo FROM usuarios WHERE correo = $1', [correo]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'El correo no se encuentra registrado' });
+      // No se revela la ausencia del correo.
+      return res.json({ message: RESPUESTA_UNIFORME });
     }
 
     const user = result.rows[0];
@@ -182,14 +199,18 @@ export const forgotPassword = async (req, res) => {
     // Generar token temporal de 15 minutos
     const token = jwt.sign(
       { usuario_id: user.usuario_id, correo: user.correo },
-      process.env.JWT_SECRET || 'zenda_secret_key',
+      env.jwtSecret,
       { expiresIn: '15m' }
     );
 
-    // Enviar el correo electrónico
-    await enviarCorreoRecuperacion(correo, token);
+    try {
+      await enviarCorreoRecuperacion(correo, token);
+    } catch (error) {
+      // Un fallo del SMTP no debe delatar si el correo existía.
+      console.error('Error al enviar el correo de recuperación:', error.message);
+    }
 
-    res.json({ message: 'Se ha enviado un enlace de recuperación a tu correo electrónico' });
+    res.json({ message: RESPUESTA_UNIFORME });
   } catch (error) {
     console.error('Error en forgotPassword:', error);
     res.status(500).json({ message: 'Error del servidor al procesar la solicitud de correo' });
@@ -205,12 +226,14 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Token y nueva contraseña son obligatorios' });
     }
 
-    if (contrasena.length < 8) {
-      return res.status(400).json({ message: 'La contraseña debe tener mínimo 8 caracteres' });
+    if (contrasena.length < LONGITUD_MINIMA_PASSWORD) {
+      return res.status(400).json({
+        message: `La contraseña debe tener mínimo ${LONGITUD_MINIMA_PASSWORD} caracteres`,
+      });
     }
 
     // Verificar firma del token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'zenda_secret_key');
+    const decoded = jwt.verify(token, env.jwtSecret);
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(contrasena, salt);
