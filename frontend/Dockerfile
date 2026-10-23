@@ -5,6 +5,7 @@
 FROM node:22-alpine AS build
 
 RUN corepack enable
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 WORKDIR /app
 

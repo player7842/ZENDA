@@ -37,12 +37,14 @@ jobs:
       FRONTEND_URL: http://localhost:5173
       EMAIL_USER: ''
       EMAIL_PASS: ''
+      JWT_SESSION_EXPIRES: 24h
+      CODIGO_PROGRAMA_COORDINADOR: 2338
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.24.0
 
       - uses: actions/setup-node@v4
         with:
@@ -63,6 +65,13 @@ jobs:
           PGPASSWORD: zenda_ci
         run: psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/zenda_bd.sql
 
+      - name: Probar migración idempotente
+        env:
+          PGPASSWORD: zenda_ci
+        run: |
+          psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+          psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+
       - name: Pruebas
         working-directory: backend
         run: pnpm test
@@ -75,7 +84,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11.24.0
 
       - uses: actions/setup-node@v4
         with:

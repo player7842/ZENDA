@@ -24,13 +24,31 @@ services:
       timeout: 5s
       retries: 10
 
-  backend:
-    build:
-      context: ./backend
-    restart: unless-stopped
+  # Aplica la migración incremental sobre una base ya existente. En una base
+  # nueva, zenda_bd.sql ya incluye el esquema y esta migración no hace nada.
+  migrate:
+    image: postgres:16-alpine
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${DB_USER}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME}
+    volumes:
+      - ./Database/migrations:/migrations:ro
+    entrypoint: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/migrations/002_semana2.sql"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       PORT: 4000
@@ -40,7 +58,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       DB_SSL: "false"
+      DB_SSL_REJECT_UNAUTHORIZED: "false"
       JWT_SECRET: ${JWT_SECRET}
+      JWT_SESSION_EXPIRES: ${JWT_SESSION_EXPIRES:-24h}
+      CODIGO_PROGRAMA_COORDINADOR: ${CODIGO_PROGRAMA_COORDINADOR:-2338}
       # Origen(es) del frontend separados por coma para CORS y para el
       # enlace de recuperación de contraseña.
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}

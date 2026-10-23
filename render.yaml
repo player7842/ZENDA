@@ -11,9 +11,13 @@ services:
     runtime: docker
     plan: free
     region: oregon
-    dockerContext: ./backend
+    # El contexto es la raíz para incluir Database/migrations en la imagen.
+    dockerContext: .
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /api/health
+    # Render ejecuta el script antes de arrancar la versión nueva. La migración
+    # es idempotente y falla con código distinto de cero si PostgreSQL la rechaza.
+    preDeployCommand: node scripts/migrar.js
     autoDeploy: true
     envVars:
       - key: NODE_ENV
@@ -22,13 +26,21 @@ services:
         value: 4000
       - key: DB_SSL
         value: "true"
+      # Neon usa certificados válidos; no desactivar esta validación.
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "true"
       # Cadena de conexión de Neon, por ejemplo:
       # postgresql://usuario:clave@ep-xxx.us-east-2.aws.neon.tech/zenda?sslmode=require
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      # Dominio público del frontend en Vercel. Si hay varios, sepáralos con coma.
+      # Sesión actual de 24 h (HU-004 la reducirá a 15 min + refresh).
+      - key: JWT_SESSION_EXPIRES
+        value: 24h
+      - key: CODIGO_PROGRAMA_COORDINADOR
+        value: "2338"
+      # Dominio público del frontend en Vercel. Si hay varios, séparalos con coma.
       - key: FRONTEND_URL
         sync: false
       - key: EMAIL_USER
