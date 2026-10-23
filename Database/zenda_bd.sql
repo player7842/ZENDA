@@ -173,7 +173,17 @@ CREATE TABLE "tareas" (
 );
 
 -- =====================================================================
+-- =====================================================================
 -- 3. SEED local (datos de prueba)
+-- =====================================================================
+-- Reglas que respeta este seed (H-11):
+--   * El grupo "General" solo sirve para inscribir aprendices a la ficha:
+--     NO tiene proyecto ni fases.
+--   * Cada proyecto cuelga de un grupo de trabajo real y usa exactamente
+--     las cinco fases fijas que genera crearProyecto().
+--   * Los estados de fase son los que produce el sistema:
+--     Pendiente | En revisión | Aprobada | Desaprobada.
+--   * Cada evidencia registra su autor (usuario_id).
 -- =====================================================================
 
 -- Programas
@@ -194,6 +204,9 @@ JOIN (VALUES
 ) AS v(cod, numero, di, df, jornada) ON v.cod = p.codigo_programa;
 
 -- Usuarios
+-- Contraseñas:
+--   admin@zenda.com  -> Admin123!
+--   resto            -> Prueba123!
 INSERT INTO usuarios (rol, sub_rol_intencion, nombre, apellido, correo, contrasena, estado, fecha_creacion, fecha_actualizacion, tipo_documento, numero_documento) VALUES
   ('ADMINISTRADOR', NULL,           'Admin',     'Zenda',     'admin@zenda.com',     '$2a$10$KTij7coUz/NPRQwD5KUovO3GebSej8gXw3IJdzIq.UlSD4nYRqmuS', 'Activo', now(), now(), 'CC', '1000000001'),
   ('INSTRUCTOR',    NULL,           'Felipe',    'Castro',    'felipe@zenda.com',    '$2a$10$g5ohsmihJ4Aikk7xGQl9DOnr76qhVp3IYd4377ItCIJgw3BiaLgB6', 'Activo', now(), now(), 'CC', '1000000002'),
@@ -214,7 +227,7 @@ INSERT INTO usuarios (rol, sub_rol_intencion, nombre, apellido, correo, contrase
   ('APRENDIZ',      'Developer',    'Valentina', 'Cruz',      'valentina@zenda.com', '$2a$10$g5ohsmihJ4Aikk7xGQl9DOnr76qhVp3IYd4377ItCIJgw3BiaLgB6', 'Activo', now(), now(), 'CC', '1000000017'),
   ('APRENDIZ',      'Developer',    'Sara',      'Vega',      'sara@zenda.com',      '$2a$10$g5ohsmihJ4Aikk7xGQl9DOnr76qhVp3IYd4377ItCIJgw3BiaLgB6', 'Activo', now(), now(), 'CC', '1000000018');
 
--- Instructor ↔ fichas
+-- Instructor ↔ fichas (asignaciones vigentes)
 INSERT INTO instructor_ficha (instructor_id, ficha_id)
 SELECT u.usuario_id, f.ficha_id
 FROM usuarios u, fichas f
@@ -230,197 +243,212 @@ SELECT u.usuario_id, f.ficha_id
 FROM usuarios u, fichas f
 WHERE u.correo = 'pedro@zenda.com' AND f.numero_ficha IN (2724290, 2724315);
 
--- Grupos "General" (uno por ficha, lider = un aprendiz de esa ficha)
+-- ---------------------------------------------------------------------
+-- Grupo "General" por ficha: solo inscripción, SIN proyecto
+-- ---------------------------------------------------------------------
 INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, estado_grupo, fecha_creacion)
 SELECT f.ficha_id,
-       (SELECT u.usuario_id FROM usuarios u WHERE u.correo = g.leader),
+       (SELECT u.usuario_id FROM usuarios u WHERE u.correo = g.lider),
        'General', g.codigo, 'Activo', now()
 FROM fichas f
 JOIN (VALUES
-  (2724285, 'GEN-2724285', 'carlos@zenda.com'),
-  (2724310, 'GEN-2724310', 'laura@zenda.com'),
-  (2724290, 'GEN-2724290', 'sofia@zenda.com'),
-  (2724315, 'GEN-2724315', 'diego@zenda.com')
-) AS g(numero, codigo, leader) ON g.numero = f.numero_ficha;
+  (2724285, 'GRP-GENERAL-2724285', 'carlos@zenda.com'),
+  (2724310, 'GRP-GENERAL-2724310', 'laura@zenda.com'),
+  (2724290, 'GRP-GENERAL-2724290', 'sofia@zenda.com'),
+  (2724315, 'GRP-GENERAL-2724315', 'diego@zenda.com')
+) AS g(numero, codigo, lider) ON g.numero = f.numero_ficha;
 
--- Aprendices dentro de su ficha
+-- Todos los aprendices quedan inscritos en el General de su ficha
 INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Scrum Master', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724285' AND f.numero_ficha = 2724285 AND u.correo = 'carlos@zenda.com';
+SELECT gr.grupo_id, u.usuario_id, 'Integrante', 'Activo', now()
+FROM grupos gr
+JOIN fichas f ON f.ficha_id = gr.ficha_id
+JOIN usuarios u ON u.correo IN (
+  'carlos@zenda.com', 'juan@zenda.com', 'marta@zenda.com',
+  'laura@zenda.com', 'luis@zenda.com', 'ana@zenda.com',
+  'sofia@zenda.com', 'camila@zenda.com', 'jose@zenda.com',
+  'diego@zenda.com', 'valentina@zenda.com', 'sara@zenda.com'
+)
+WHERE gr.nombre_grupo = 'General'
+  AND (
+    (f.numero_ficha = 2724285 AND u.correo IN ('carlos@zenda.com', 'juan@zenda.com', 'marta@zenda.com'))
+    OR (f.numero_ficha = 2724310 AND u.correo IN ('laura@zenda.com', 'luis@zenda.com', 'ana@zenda.com'))
+    OR (f.numero_ficha = 2724290 AND u.correo IN ('sofia@zenda.com', 'camila@zenda.com', 'jose@zenda.com'))
+    OR (f.numero_ficha = 2724315 AND u.correo IN ('diego@zenda.com', 'valentina@zenda.com', 'sara@zenda.com'))
+  );
 
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Developer', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724285' AND f.numero_ficha = 2724285 AND u.correo IN ('juan@zenda.com', 'marta@zenda.com');
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Scrum Master', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724310' AND f.numero_ficha = 2724310 AND u.correo = 'laura@zenda.com';
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Developer', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724310' AND f.numero_ficha = 2724310 AND u.correo IN ('luis@zenda.com', 'ana@zenda.com');
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Scrum Master', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724290' AND f.numero_ficha = 2724290 AND u.correo = 'sofia@zenda.com';
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Developer', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724290' AND f.numero_ficha = 2724290 AND u.correo IN ('camila@zenda.com', 'jose@zenda.com');
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Scrum Master', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724315' AND f.numero_ficha = 2724315 AND u.correo = 'diego@zenda.com';
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
-SELECT gr.grupo_id, u.usuario_id, 'Developer', 'Activo', now()
-FROM grupos gr, usuarios u, fichas f
-WHERE gr.codigo_grupo = 'GEN-2724315' AND f.numero_ficha = 2724315 AND u.correo IN ('valentina@zenda.com', 'sara@zenda.com');
-
--- ---------------------------------------------------------------
--- DATA DE PRUEBA COMPLEMENTARIA (Proyectos, Fases, Evidencias, Tareas)
--- ---------------------------------------------------------------
-
--- Proyecto de prueba para la ficha 2724285
-INSERT INTO proyectos (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto)
-SELECT g.grupo_id,
-       'ZENDA - Sistema de Gestión de Proyectos',
-       'Plataforma integral para el control de evidencias académicas y seguimiento de fichas ADSO.',
-       'Falta de centralización en el seguimiento de entregables entre aprendices e instructores.',
-       'Digitalizar y automatizar el flujo de revisión metodológica por fases.',
-       'Módulos para Administrador, Coordinador, Instructor y Aprendiz.',
-       'React, Node.js, Express, PostgreSQL',
-       '2024-03-01', '2026-05-15', 'Activo'
-FROM grupos g WHERE g.codigo_grupo = 'GEN-2724285';
-
--- Fases para el proyecto
-INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase)
-SELECT p.proyecto_id, f.num, f.nombre, f.estado
-FROM proyectos p
+-- ---------------------------------------------------------------------
+-- Grupos de trabajo (proyectos reales)
+-- ---------------------------------------------------------------------
+INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, estado_grupo, fecha_creacion)
+SELECT f.ficha_id,
+       (SELECT u.usuario_id FROM usuarios u WHERE u.correo = g.lider),
+       g.nombre, g.codigo, 'Activo', now()
+FROM fichas f
 JOIN (VALUES
-  (1, 'Fase 1: Análisis', 'Aprobada'),
-  (2, 'Fase 2: Planeación', 'Aprobada'),
-  (3, 'Fase 3: Diseño', 'En proceso'),
-  (4, 'Fase 4: Desarrollo', 'Pendiente'),
-  (5, 'Fase 5: Cierre', 'Pendiente')
-) AS f(num, nombre, estado) ON p.nombre_proyecto LIKE 'ZENDA%';
+  (2724285, 'Célula Alfa ADSO',   'PRY-2724285-01', 'carlos@zenda.com'),
+  (2724310, 'Célula Beta ADSO',   'PRY-2724310-01', 'laura@zenda.com'),
+  (2724290, 'Indie Game Studio',  'PRY-2724290-01', 'sofia@zenda.com'),
+  (2724315, 'Equipo Mantenimiento','PRY-2724315-01', 'diego@zenda.com')
+) AS g(numero, nombre, codigo, lider) ON g.numero = f.numero_ficha;
 
--- Carpetas de entrega
+-- Integrantes de cada grupo de trabajo
+INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante, fecha_ingreso)
+SELECT gr.grupo_id, u.usuario_id, m.rol, 'Activo', now()
+FROM grupos gr
+JOIN (VALUES
+  ('PRY-2724285-01', 'carlos@zenda.com',    'Scrum Master'),
+  ('PRY-2724285-01', 'juan@zenda.com',      'Developer'),
+  ('PRY-2724285-01', 'marta@zenda.com',     'Developer'),
+  ('PRY-2724310-01', 'laura@zenda.com',     'Scrum Master'),
+  ('PRY-2724310-01', 'luis@zenda.com',      'Developer'),
+  ('PRY-2724310-01', 'ana@zenda.com',       'Developer'),
+  ('PRY-2724290-01', 'sofia@zenda.com',     'Scrum Master'),
+  ('PRY-2724290-01', 'camila@zenda.com',    'Developer'),
+  ('PRY-2724290-01', 'jose@zenda.com',      'Developer'),
+  ('PRY-2724315-01', 'diego@zenda.com',     'Scrum Master'),
+  ('PRY-2724315-01', 'valentina@zenda.com', 'Developer'),
+  ('PRY-2724315-01', 'sara@zenda.com',      'Developer')
+) AS m(codigo, correo, rol) ON m.codigo = gr.codigo_grupo
+JOIN usuarios u ON u.correo = m.correo;
+
+-- Proyectos
+INSERT INTO proyectos (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto)
+SELECT g.grupo_id, p.nombre, p.descripcion, p.problema, p.objetivo, p.alcance, p.tecnologias, p.inicio::date, p.fin::date, p.estado
+FROM grupos g
+JOIN (VALUES
+  ('PRY-2724285-01', 'ZENDA - Sistema de Gestión de Proyectos',
+   'Plataforma integral para el control de evidencias académicas y seguimiento de fichas ADSO.',
+   'Falta de centralización en el seguimiento de entregables entre aprendices e instructores.',
+   'Digitalizar y automatizar el flujo de revisión metodológica por fases.',
+   'Módulos para Administrador, Coordinador, Instructor y Aprendiz.',
+   'React, Node.js, Express, PostgreSQL', '2024-03-01', '2026-05-15', 'Activo'),
+  ('PRY-2724310-01', 'App Móvil Inventario SENA',
+   'Aplicación móvil para captura de activos en sedes.',
+   'Pérdida de inventario en laboratorios.',
+   'Automatizar el registro por código QR.',
+   'Módulo Android e iOS.', 'Flutter, Firebase', '2024-01-15', '2025-11-30', 'Finalizado'),
+  ('PRY-2724290-01', 'Pixel Quest 2D',
+   'Videojuego educativo sobre historia de Colombia.',
+   'Poca adopción pedagógica en aulas escolares.',
+   'Enseñar historia mediante mecánicas RPG.',
+   'Nivel 1 y 2 jugables.', 'Unity, C#', '2024-07-20', '2026-08-15', 'Pausado'),
+  ('PRY-2724315-01', 'Sistema de Mantenimiento Preventivo',
+   'Registro y programación de mantenimientos de equipos.',
+   'Equipos sin historial de mantenimiento.',
+   'Programar mantenimientos y reducir fallas.',
+   'Inventario, órdenes y reportes.', 'Java, Spring Boot, PostgreSQL', '2024-02-20', '2026-06-30', 'Activo')
+) AS p(codigo, nombre, descripcion, problema, objetivo, alcance, tecnologias, inicio, fin, estado) ON p.codigo = g.codigo_grupo;
+
+-- ---------------------------------------------------------------------
+-- Fases fijas (mismos nombres que genera crearProyecto)
+-- ---------------------------------------------------------------------
+INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase)
+SELECT p.proyecto_id, f.numero, f.nombre, 'Pendiente'
+FROM proyectos p
+CROSS JOIN (VALUES
+  (1, 'FASE 1 - ANALISIS'),
+  (2, 'FASE 2 - DISEÑO'),
+  (3, 'FASE 3 - DESARROLLO'),
+  (4, 'FASE 4 - PRUEBAS'),
+  (5, 'FASE 5 - CIERRE/ENTREGA')
+) AS f(numero, nombre);
+
+-- Estados alcanzables por el flujo real del sistema
+UPDATE fases f
+SET estado_fase = v.estado
+FROM (
+  SELECT p.proyecto_id, x.numero_fase, x.estado
+  FROM proyectos p
+  JOIN (VALUES
+    ('ZENDA - Sistema de Gestión de Proyectos', 1, 'Aprobada'),
+    ('ZENDA - Sistema de Gestión de Proyectos', 2, 'Aprobada'),
+    ('ZENDA - Sistema de Gestión de Proyectos', 3, 'En revisión'),
+    ('App Móvil Inventario SENA', 1, 'Aprobada'),
+    ('App Móvil Inventario SENA', 2, 'Aprobada'),
+    ('App Móvil Inventario SENA', 3, 'Aprobada'),
+    ('App Móvil Inventario SENA', 4, 'Aprobada'),
+    ('App Móvil Inventario SENA', 5, 'Aprobada'),
+    ('Pixel Quest 2D', 1, 'Aprobada')
+  ) AS x(proyecto, numero_fase, estado) ON x.proyecto = p.nombre_proyecto
+) AS v
+WHERE f.proyecto_id = v.proyecto_id
+  AND f.numero_fase = v.numero_fase;
+
+-- ---------------------------------------------------------------------
+-- Carpetas y evidencias de ejemplo (con autor registrado)
+-- ---------------------------------------------------------------------
 INSERT INTO carpetas (fase_id, nombre_carpeta, fecha_creacion)
-SELECT fase_id, 'Documentación de Requisitos y Diagramas UML', now()
-FROM fases WHERE numero_fase = 1;
+SELECT f.fase_id, c.nombre, now()
+FROM fases f
+JOIN proyectos p ON p.proyecto_id = f.proyecto_id
+JOIN (VALUES
+  ('ZENDA - Sistema de Gestión de Proyectos', 1, 'Documentación de requisitos'),
+  ('ZENDA - Sistema de Gestión de Proyectos', 1, 'Diagramas UML'),
+  ('ZENDA - Sistema de Gestión de Proyectos', 2, 'Casos de uso'),
+  ('App Móvil Inventario SENA', 1, 'Análisis inicial'),
+  ('Pixel Quest 2D', 1, 'Documento de análisis')
+) AS c(proyecto, numero_fase, nombre)
+  ON c.proyecto = p.nombre_proyecto
+ AND c.numero_fase = f.numero_fase;
 
--- Evidencias de entregas
 INSERT INTO evidencias (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion, fecha_subida)
-SELECT c.carpeta_id, u.usuario_id, 'Especificación_SRS_ZENDA.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/srs.pdf', now()
-FROM carpetas c, usuarios u WHERE u.correo = 'carlos@zenda.com' LIMIT 1;
+SELECT c.carpeta_id, u.usuario_id, e.nombre, e.tipo, e.ubicacion, now()
+FROM carpetas c
+JOIN (VALUES
+  ('Documentación de requisitos', 'carlos@zenda.com', 'Especificación_SRS_ZENDA.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/srs.pdf'),
+  ('Diagramas UML', 'juan@zenda.com', 'Diagrama_Componentes.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/componentes.pdf'),
+  ('Casos de uso', 'marta@zenda.com', 'Diagrama_Casos_Uso.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/casos_uso.pdf'),
+  ('Análisis inicial', 'laura@zenda.com', 'Analisis_Requerimientos.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/analisis.pdf'),
+  ('Documento de análisis', 'sofia@zenda.com', 'Analisis_PixelQuest.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/pixel.pdf')
+) AS e(carpeta, correo, nombre, tipo, ubicacion) ON e.carpeta = c.nombre_carpeta
+JOIN usuarios u ON u.correo = e.correo;
 
--- Evaluaciones de evidencias
+-- Evaluaciones: la de Casos de Uso tiene dos registros para demostrar el
+-- historial (H-06). La vigente es siempre la más reciente.
 INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
-SELECT e.evidencia_id, u.usuario_id, 'APROBADO', now()
-FROM evidencias e, usuarios u WHERE u.correo = 'felipe@zenda.com' LIMIT 1;
+SELECT e.evidencia_id, u.usuario_id, v.resultado, now() - (v.dias || ' days')::interval
+FROM evidencias e
+JOIN (VALUES
+  ('Especificación_SRS_ZENDA.pdf', 'felipe@zenda.com', 'APROBADO', 40),
+  ('Diagrama_Componentes.pdf',     'felipe@zenda.com', 'APROBADO', 20),
+  ('Diagrama_Casos_Uso.pdf',       'felipe@zenda.com', 'REPROBADO', 15),
+  ('Diagrama_Casos_Uso.pdf',       'rosa@zenda.com',   'APROBADO', 5),
+  ('Analisis_Requerimientos.pdf',  'felipe@zenda.com', 'APROBADO', 30)
+) AS v(evidencia, correo, resultado, dias) ON v.evidencia = e.nombre_evidencia
+JOIN usuarios u ON u.correo = v.correo;
 
 -- Observaciones del instructor
 INSERT INTO observaciones (evidencia_id, proyecto_id, instructor_id, titulo, descripcion, fecha_observacion)
-SELECT e.evidencia_id, p.proyecto_id, u.usuario_id,
-       'Aprobación de Arquitectura de Software',
-       'El diagrama de entidades cumple con las restricciones requeridas para la cohorte ADSO.',
-       now()
-FROM evidencias e, proyectos p, usuarios u WHERE u.correo = 'felipe@zenda.com' LIMIT 1;
+SELECT e.evidencia_id, p.proyecto_id, u.usuario_id, o.titulo, o.descripcion, now() - (o.dias || ' days')::interval
+FROM evidencias e
+JOIN proyectos p ON p.nombre_proyecto = 'ZENDA - Sistema de Gestión de Proyectos'
+JOIN (VALUES
+  ('Diagrama_Casos_Uso.pdf', 'felipe@zenda.com', 'Ajustar actores del caso de uso',
+   'El diagrama debe separar los actores administrativos de los académicos.', 10),
+  ('Especificación_SRS_ZENDA.pdf', 'felipe@zenda.com', 'Requisitos no funcionales incompletos',
+   'Falta medir el rendimiento esperado y definir la disponibilidad.', 35)
+) AS o(evidencia, correo, titulo, descripcion, dias) ON o.evidencia = e.nombre_evidencia
+JOIN usuarios u ON u.correo = o.correo;
 
--- Tareas de la célula de proyecto
+-- Tareas del proyecto ZENDA (estados válidos del flujo)
 INSERT INTO tareas (proyecto_id, responsable_id, titulo, descripcion, prioridad, estado, fecha_inicio, fecha_limite)
+SELECT p.proyecto_id, u.usuario_id, t.titulo, t.descripcion, t.prioridad, t.estado, t.inicio::date, t.limite::date
+FROM proyectos p
+JOIN (VALUES
+  ('carlos@zenda.com', 'Modelado de Base de Datos PostgreSQL', 'Crear el script SQL con restricciones e índices', 'Alta', 'Finalizada', '2024-03-02', '2024-03-15'),
+  ('marta@zenda.com',  'Creación de Componentes UI en React', 'Layout del Panel de Coordinador y Admin', 'Media', 'Confirmada', '2024-03-10', '2024-03-28'),
+  ('juan@zenda.com',   'Integración de Autenticación JWT', 'Conectar el Login con el Backend en Node.js', 'Alta', 'Pendiente', '2024-04-01', '2024-04-15'),
+  ('juan@zenda.com',   'Pruebas de la API de proyectos', 'Casos positivos y negativos con Supertest', 'Media', 'En proceso', '2024-04-05', '2024-04-20')
+) AS t(correo, titulo, descripcion, prioridad, estado, inicio, limite) ON true
+JOIN usuarios u ON u.correo = t.correo
+WHERE p.nombre_proyecto = 'ZENDA - Sistema de Gestión de Proyectos';
+
+-- Observación pedagógica de coordinación sobre otro proyecto
+INSERT INTO observaciones (proyecto_id, instructor_id, titulo, descripcion, fecha_observacion)
 SELECT p.proyecto_id, u.usuario_id,
-       'Diseño de Interfaces en Figma',
-       'Maquetación responsiva con palette de colores institucional.',
-       'Alta', 'En proceso', '2024-03-10', '2026-04-01'
-FROM proyectos p, usuarios u WHERE u.correo = 'juan@zenda.com' LIMIT 1;
-
-
--- =====================================================================
--- SEED AMPLIADO PARA GRÁFICAS Y MÉTRICAS (TODOS LOS RÓLES)
--- =====================================================================
-
--- 1. PROYECTOS ADICIONALES (Para Donut de Estados en Admin y Coordinador)
--- ---------------------------------------------------------------------
--- Proyecto 2 (Finalizado)
-INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, estado_grupo) VALUES
-  (2, (SELECT usuario_id FROM usuarios WHERE correo = 'laura@zenda.com'), 'Célula Beta ADSO', 'PRY-2724310-01', 'Activo');
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante) VALUES
-  ((SELECT grupo_id FROM grupos WHERE codigo_grupo = 'PRY-2724310-01'), (SELECT usuario_id FROM usuarios WHERE correo = 'laura@zenda.com'), 'Scrum Master', 'Activo'),
-  ((SELECT grupo_id FROM grupos WHERE codigo_grupo = 'PRY-2724310-01'), (SELECT usuario_id FROM usuarios WHERE correo = 'luis@zenda.com'), 'Developer', 'Activo');
-
-INSERT INTO proyectos (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto) VALUES
-  ((SELECT grupo_id FROM grupos WHERE codigo_grupo = 'PRY-2724310-01'), 'App Móvil Inventario SENA', 'Aplicación móvil para captura de activos en sedes', 'Pérdida de inventario en laboratorios', 'Automatizar el registro por código QR', 'Módulo Android e iOS', 'Flutter, Firebase', '2024-01-15', '2025-11-30', 'Finalizado');
-
--- Proyecto 3 (Pausado)
-INSERT INTO grupos (ficha_id, lider_id, nombre_grupo, codigo_grupo, estado_grupo) VALUES
-  (3, (SELECT usuario_id FROM usuarios WHERE correo = 'sofia@zenda.com'), 'Indie Game Studio', 'PRY-2724290-01', 'Activo');
-
-INSERT INTO integrantes_grupo (grupo_id, usuario_id, rol_scrum, estado_integrante) VALUES
-  ((SELECT grupo_id FROM grupos WHERE codigo_grupo = 'PRY-2724290-01'), (SELECT usuario_id FROM usuarios WHERE correo = 'sofia@zenda.com'), 'Scrum Master', 'Activo');
-
-INSERT INTO proyectos (grupo_id, nombre_proyecto, descripcion, problema, objetivo, alcance, tecnologias, fecha_inicio, fecha_fin_estimada, estado_proyecto) VALUES
-  ((SELECT grupo_id FROM grupos WHERE codigo_grupo = 'PRY-2724290-01'), 'Pixel Quest 2D', 'Videojuego educativo sobre historia de Colombia', 'Poca adopción pedagógica en aulas escolares', 'Enseñar historia mediante mecánicas RPG', 'Nivel 1 y 2 jugables', 'Unity, C#', '2024-07-20', '2026-08-15', 'Pausado');
-
-
--- 2. FASES Y EVIDENCIAS COMPLETA (Para Resumen de Aprendiz e Instructor)
--- ---------------------------------------------------------------------
--- Fases del Proyecto 2 (Todas aprobadas para gráfica 100%)
-INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase) VALUES
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'App Móvil%'), 1, 'Fase 1: Análisis', 'Aprobada'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'App Móvil%'), 2, 'Fase 2: Planeación', 'Aprobada'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'App Móvil%'), 3, 'Fase 3: Diseño', 'Aprobada'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'App Móvil%'), 4, 'Fase 4: Desarrollo', 'Aprobada'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'App Móvil%'), 5, 'Fase 5: Cierre', 'Aprobada');
-
--- Fases del Proyecto 3
-INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase) VALUES
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'), 1, 'Fase 1: Análisis', 'Aprobada'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'), 2, 'Fase 2: Planeación', 'Pendiente'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'), 3, 'Fase 3: Diseño', 'Pendiente'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'), 4, 'Fase 4: Desarrollo', 'Pendiente'),
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'), 5, 'Fase 5: Cierre', 'Pendiente');
-
--- Carpetas y Evidencias para Instructor (Gráficas de Aprobados vs Reprobados)
-INSERT INTO carpetas (fase_id, nombre_carpeta) VALUES
-  ((SELECT fase_id FROM fases WHERE proyecto_id = (SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE '%ZENDA%') AND numero_fase = 2), 'Diagramas de Secuencia y Casos de Uso');
-
-INSERT INTO evidencias (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion) VALUES
-  ((SELECT carpeta_id FROM carpetas WHERE nombre_carpeta LIKE 'Diagramas%'), (SELECT usuario_id FROM usuarios WHERE correo = 'carlos@zenda.com'), 'Diagrama_Casos_Uso.pdf', 'Documento', 'https://zenda-storage.sena.edu.co/evidencias/casos_uso.pdf');
-
-INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado) VALUES
-  ((SELECT evidencia_id FROM evidencias WHERE nombre_evidencia = 'Diagrama_Casos_Uso.pdf'), (SELECT usuario_id FROM usuarios WHERE correo = 'felipe@zenda.com'), 'REPROBADO');
-
-
--- 3. TAREAS EN DIVERSOS ESTADOS (Para Kanban y Donut de Tareas en Aprendiz)
--- ---------------------------------------------------------------------
-INSERT INTO tareas (proyecto_id, responsable_id, titulo, descripcion, prioridad, estado, fecha_inicio, fecha_limite) VALUES
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE '%ZENDA%'), 
-   (SELECT usuario_id FROM usuarios WHERE correo = 'carlos@zenda.com'), 
-   'Modelado de Base de Datos PostgreSQL', 'Crear el script SQL con restricciones e índices', 'Alta', 'Finalizada', '2024-03-02', '2024-03-15'),
-
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE '%ZENDA%'), 
-   (SELECT usuario_id FROM usuarios WHERE correo = 'marta@zenda.com'), 
-   'Creación de Componentes UI en React', 'Layout del Panel de Coordinador y Admin', 'Media', 'Confirmada', '2024-03-10', '2024-03-28'),
-
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE '%ZENDA%'), 
-   (SELECT usuario_id FROM usuarios WHERE correo = 'juan@zenda.com'), 
-   'Integración de Autenticación JWT', 'Conectar el Login con el Backend en Node.js', 'Alta', 'Pendiente', '2024-04-01', '2024-04-15');
-
-
--- 4. OBSERVACIONES DE ADVERTENCIA (Para Alertas Pedagógicas de Coordinación)
--- ---------------------------------------------------------------------
-INSERT INTO observaciones (proyecto_id, instructor_id, titulo, descripcion) VALUES
-  ((SELECT proyecto_id FROM proyectos WHERE nombre_proyecto LIKE 'Pixel Quest%'),
-   (SELECT usuario_id FROM usuarios WHERE correo = 'pedro@zenda.com'),
-   'Revisión Pedagógica Pendiente',
-   'El grupo registra más de 15 días sin subir evidencias en la Fase de Planeación.');
+       'Revisión pedagógica pendiente',
+       'El grupo registra más de 15 días sin subir evidencias en la fase de planeación.',
+       now() - interval '8 days'
+FROM proyectos p, usuarios u
+WHERE p.nombre_proyecto = 'Pixel Quest 2D' AND u.correo = 'pedro@zenda.com';
