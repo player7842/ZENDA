@@ -1,0 +1,37 @@
+# =====================================================================
+# ZENDA — Blueprint de Render para el backend (API Express)
+# ---------------------------------------------------------------------
+# Despliega el backend desde el Dockerfile del repositorio.
+# La base de datos vive en Neon (PostgreSQL) y se conecta con DATABASE_URL.
+# Los valores marcados con "sync: false" se cargan a mano en el panel.
+# =====================================================================
+services:
+  - type: web
+    name: zenda-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DB_SSL
+        value: "true"
+      # Cadena de conexión de Neon, por ejemplo:
+      # postgresql://usuario:clave@ep-xxx.us-east-2.aws.neon.tech/zenda?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      # Dominio público del frontend en Vercel. Si hay varios, sepáralos con coma.
+      - key: FRONTEND_URL
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false

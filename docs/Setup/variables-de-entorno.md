@@ -51,11 +51,12 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `DB_USER` | ✅ | Sí | `postgres` | Usuario de la base de datos. |
 | `DB_PASSWORD` | ✅ | Sí | *(secreto)* | Contraseña del usuario. |
 | `DB_NAME` | ✅ | Sí | `zenda` | Nombre de la base de datos. |
-| `JWT_SECRET` | ✅ | **Sí** | *(secreto largo)* | Clave con la que se firman los tokens. |
+| `JWT_SECRET` | ✅ | **Sí** | *(secreto largo)* | Clave con la que se firman los tokens. Si falta, el servidor **no arranca** (H-02). |
+| `DB_SSL` | ✅ | No | `false` | Fuerza SSL en la conexión a PostgreSQL. En Neon debe ser `true`. |
+| `DATABASE_URL` | ✅ | No | `postgresql://...` | Cadena completa de conexión; si existe, tiene prioridad sobre `DB_*` y fuerza SSL. |
 | `EMAIL_USER` | ✅ | Sí | `cuenta@gmail.com` | Cuenta de Gmail que envía los correos. |
 | `EMAIL_PASS` | ✅ | Sí | *(16 caracteres)* | **Contraseña de aplicación** de Gmail. |
-| `FRONTEND_URL` | 🆕 | Sí | `https://zenda.ejemplo.com` | URL base del enlace de recuperación. Hoy está fija en `http://localhost:5173`. |
-| `CORS_ORIGIN` | 🆕 | Sí en producción | `https://zenda.ejemplo.com` | Origen permitido por CORS. Hoy `cors()` acepta cualquiera. |
+| `FRONTEND_URL` | ✅ | Sí | `https://zenda.vercel.app` | URL base del frontend. Se usa para CORS y para el enlace de recuperación. Admite varios orígenes separados por coma. |
 | `JWT_ACCESS_EXPIRES` | 🆕 | No | `15m` | Duración del token de acceso ([RT-004](../requisitos/restricciones.md#rt-004--método-de-autenticación)). |
 | `JWT_REFRESH_EXPIRES_DAYS` | 🆕 | No | `7` | Duración del token de refresco. |
 | `S3_ENDPOINT` | 🆕 | Sí (archivos) | `http://minio:9000` | Servicio compatible con S3 ([RT-006](../requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). |
@@ -64,7 +65,7 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `MAX_UPLOAD_MB` | 🆕 | No | `10` | Tamaño máximo por archivo ([RNF-012.1](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md)). |
 | `PROJECT_QUOTA_MB` | 🆕 | No | `200` | Cuota de almacenamiento por proyecto (por confirmar). |
 
-> **Atención:** en v11 el código tiene un valor de respaldo para `JWT_SECRET` (`zenda_secret_key`) y credenciales de ejemplo para el correo. Hay que eliminarlos para que el servidor falle al iniciar si faltan ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)).
+> **Corregido en v12:** ya no existe el respaldo `zenda_secret_key`; `JWT_SECRET` es obligatorio y el servidor falla al iniciar si falta ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)). `FRONTEND_URL` también alimenta CORS, por lo que `CORS_ORIGIN` dejó de ser necesaria.
 
 ---
 
@@ -87,9 +88,10 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `DB_NAME` | Sí | `db`, `backend` | Base de datos que se crea. |
 | `JWT_SECRET` | Sí | `backend` | Clave de firma de tokens. |
 | `EMAIL_USER`, `EMAIL_PASS` | Sí | `backend` | Cuenta de Gmail y contraseña de aplicación. |
+| `FRONTEND_URL` | No | `backend` | Origen del frontend para CORS y para el enlace de recuperación. Por defecto, `http://localhost:8080`. |
 | `VITE_API_URL` | No | `frontend` (build) | URL pública del backend. Por defecto, `http://localhost:4000`. |
 
-El `docker-compose.yml` fija por su cuenta `DB_HOST=db`, `DB_PORT=5432` y `PORT=4000`, así que **no** debes ponerlos en el `.env`.
+El `docker-compose.yml` fija por su cuenta `DB_HOST=db`, `DB_PORT=5432`, `DB_SSL=false` y `PORT=4000`, así que **no** debes ponerlos en el `.env`.
 
 > **Cuidado:** `POSTGRES_PASSWORD` solo se aplica la **primera vez** que se crea el volumen `pgdata`. Si cambias `DB_PASSWORD` después, la base seguirá con la contraseña anterior. Para reiniciar desde cero: `docker compose down -v` (borra los datos).
 
@@ -143,7 +145,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | El frontend llama a `localhost:4000` en producción | `VITE_API_URL` no estaba definida al compilar. | Defínela y vuelve a compilar. |
 | "Token inválido" tras reiniciar | `JWT_SECRET` cambió. | Es lo esperado: inicia sesión de nuevo. |
 | No llegan los correos de recuperación | Contraseña normal en lugar de contraseña de aplicación, o verificación en dos pasos desactivada. | Genera una contraseña de aplicación (sección 5.2). |
-| El enlace del correo abre `localhost:5173` | URL fija en el código (v11). | Se corrige con `FRONTEND_URL` 🆕. |
+| El enlace del correo abre `localhost:5173` | `FRONTEND_URL` sin definir o mal definida. | Define `FRONTEND_URL` con el dominio real y vuelve a desplegar el backend (H-03). |
 | `.env` aparece en `git status` | Falta el `.gitignore` en la raíz. | Copia el `.gitignore` entregado y ejecuta `git rm --cached .env`. |
 
 ---
