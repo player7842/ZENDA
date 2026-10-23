@@ -52,9 +52,9 @@ const obtenerGrupoGeneral = async (db, fichaId, liderId) => {
 
   const nuevo = await db.query(
     `INSERT INTO grupos (nombre_grupo, codigo_grupo, ficha_id, lider_id, estado_grupo, fecha_creacion)
-     VALUES ('General', 'GRP-GENERAL', $1, $2, 'Activo', now())
+     VALUES ('General', $1, $2, $3, 'Activo', now())
      RETURNING grupo_id`,
-    [fichaId, liderId]
+    [`GRP-GENERAL-${fichaId}`, fichaId, liderId]
   );
   return nuevo.rows[0].grupo_id;
 };
@@ -118,7 +118,7 @@ export const createFicha = async (req, res) => {
     const existe = await client.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [numero_ficha]);
     if (existe.rows.length > 0) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ message: 'Ese número de ficha ya existe, no dupliques' });
+      return res.status(400).json({ message: 'Ese número de ficha ya está registrado' });
     }
 
     const nueva = await client.query(
@@ -164,7 +164,7 @@ export const updateFicha = async (req, res) => {
 
     const result = await pool.query(
       `UPDATE fichas
-       SET numero_ficha = $1, fecha_inicio = $2, fecha_fin = $3, jornada = $4, fecha_actualizacion = now()
+       SET numero_ficha = $1, fecha_inicio = $2, fecha_fin = $3, jornada = $4
        WHERE ficha_id = $5
        RETURNING ficha_id`,
       [numero_ficha, fecha_inicio, fecha_fin, jornada, id]

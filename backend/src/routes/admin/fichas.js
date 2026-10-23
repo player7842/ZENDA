@@ -21,6 +21,5 @@ router.delete('/:id/aprendiz/:usuario_id', auth, isAdmin, removeAprendizDeFicha)
 router.put('/:id', auth, isAdmin, updateFicha);                        // editar ficha
 router.delete('/:id', auth, isAdmin, deleteFicha);                     // eliminar ficha
 router.get('/publicas', getFichasPublicas); // pública, sin auth — para el registro
-router.get('/programas', auth, isAdmin, getProgramas);
 
 export default router;

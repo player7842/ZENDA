@@ -113,7 +113,7 @@ export const updateFichasInstructorCoordinador = async (req, res) => {
     }
     if (target.rows[0].rol !== 'INSTRUCTOR') {
       await client.query('ROLLBACK');
-      return res.status(400).json({ message: 'Ese usuario no es instructor, no le vincules fichas' });
+      return res.status(400).json({ message: 'El usuario indicado no es instructor' });
     }
 
     await client.query(

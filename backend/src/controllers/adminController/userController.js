@@ -122,12 +122,12 @@ export const createUser = async (req, res) => {
 
     const emailFinal = (correo || '').trim().toLowerCase();
     if (!nombre || !apellido || !emailFinal || !numero_documento) {
-      return res.status(400).json({ message: 'Faltan datos del usuario, pon el formulario completo' });
+      return res.status(400).json({ message: 'Faltan datos obligatorios del usuario' });
     }
 
     const rolFinal = rol || 'APRENDIZ';
     if (!ROLES_VALIDOS.includes(rolFinal)) {
-      return res.status(400).json({ message: 'Ese rol no existe, pon uno de verdad' });
+      return res.status(400).json({ message: 'El rol indicado no es válido' });
     }
 
     await verificarPasswordAdmin(req.user.usuario_id, password);
@@ -198,7 +198,7 @@ export const getUserById = async (req, res) => {
     const { id } = req.params;
     const result = await pool.query(`${SELECT_USUARIOS} WHERE u.usuario_id = $1`, [id]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado, ese güey no existe' });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
     res.json(result.rows[0]);
   } catch (error) {
@@ -291,7 +291,7 @@ export const updateInstructorFichas = async (req, res) => {
     }
     if (target.rows[0].rol !== 'INSTRUCTOR') {
       await client.query('ROLLBACK');
-      return res.status(400).json({ message: 'Ese güey no es instructor, no le vincules fichas' });
+      return res.status(400).json({ message: 'El usuario indicado no es instructor' });
     }
 
     await sincronizarFichasInstructor(client, id, fichaIds);
@@ -379,7 +379,7 @@ export const updateUserRol = async (req, res) => {
     const admin = await verificarPasswordAdmin(req.user.usuario_id, password);
 
     if (admin.usuario_id === parseInt(id, 10) && rol !== 'ADMINISTRADOR') {
-      return res.status(400).json({ message: 'No puedes quitarte tu propio rol de admin, desconfianza' });
+      return res.status(400).json({ message: 'No puedes quitarte tu propio rol de administrador' });
     }
 
     await client.query('BEGIN');
