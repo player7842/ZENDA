@@ -89,29 +89,31 @@ Agrega `-d` para dejarlo en segundo plano.
 |---|---|---|
 | Aplicación | http://localhost:8080 | Página de inicio de ZENDA. |
 | API | http://localhost:4000/api/health | `{"status":"OK", ...}` |
-| Estado de los servicios | `docker compose ps` | `db` en estado *healthy*; los tres en ejecución. |
+| Estado de los servicios | `docker compose ps` | `db` en estado *healthy*; `migrate` terminó con código 0; `backend` y `frontend` en ejecución. |
 
 Los usuarios de prueba están en [Instalación sin Docker, sección 6](sin-docker.md#6-usuarios-de-prueba).
 
 ---
 
-## 5. Aplicar la migración v12
+## 5. Migración automática
 
-`zenda_bd.sql` crea la base v11 solo cuando el volumen está vacío. Para llevarla a v12 con el backend ya actualizado:
+`zenda_bd.sql` crea el esquema completo solo cuando el volumen está vacío. En cada `docker compose up`, el servicio `migrate` aplica `Database/migrations/002_semana2.sql` sobre la base existente y termina; el backend solo arranca si la migración salió con código 0 (`service_completed_successfully`).
+
+La migración es idempotente, así que también se puede ejecutar a mano si hace falta:
 
 **Linux / macOS / Git Bash**
 
 ```bash
-docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < Database/migraciones/001_v12.sql
+docker compose run --rm migrate
 ```
 
 **PowerShell**
 
 ```powershell
-Get-Content Database/migraciones/001_v12.sql | docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose run --rm migrate
 ```
 
-> Haz antes una copia (sección 6). La migración elimina `rol_scrum` y `sub_rol_intencion`, por lo que solo debe aplicarse junto con el backend v12 ([esquema](../referencia-tecnica/esquema-bd.md#6-notas-de-migración)).
+> Haz antes una copia (sección 6). La migración elimina `rol_scrum` y `sub_rol_intencion`; solo debe aplicarse junto con el backend v12 ([esquema](../referencia-tecnica/esquema-bd.md#6-notas-de-migración)).
 
 ---
 

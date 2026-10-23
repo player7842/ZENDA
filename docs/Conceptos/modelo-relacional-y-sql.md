@@ -101,7 +101,7 @@ El aislamiento por defecto de PostgreSQL (*Read Committed*) no impide que dos tr
 
 ```sql
 BEGIN;
-SELECT cupo_integrantes FROM grupos WHERE grupo_id = $1 FOR UPDATE;   -- la otra transacción espera aquí
+SELECT cupo_maximo FROM grupos WHERE grupo_id = $1 FOR UPDATE;   -- la otra transacción espera aquí
 SELECT count(*) FROM integrantes_grupo WHERE grupo_id = $1 AND estado_integrante = 'Activo';
 -- si hay cupo: INSERT INTO integrantes_grupo ...
 COMMIT;
@@ -118,9 +118,15 @@ Prueba: [IT-12](../testing/pruebas-de-integracion.md#it-12--concurrencia-del-úl
 ```sql
 SELECT e.evidencia_id, e.nombre_evidencia, ev.resultado
   FROM evidencias e
-  LEFT JOIN evaluaciones ev ON ev.evidencia_id = e.evidencia_id AND ev.vigente
+  LEFT JOIN LATERAL (
+    SELECT resultado
+      FROM evaluaciones
+     WHERE evidencia_id = e.evidencia_id
+     ORDER BY evaluacion_id DESC
+     LIMIT 1
+  ) ev ON true
  WHERE e.carpeta_id = $1
-   AND NOT e.eliminada;
+   AND e.eliminada = false;
 ```
 
 `LEFT JOIN` conserva las evidencias **sin evaluar** (`resultado` queda en `NULL`). Con `INNER JOIN` desaparecerían, y la carpeta parecería completa.
@@ -131,8 +137,14 @@ SELECT e.evidencia_id, e.nombre_evidencia, ev.resultado
 SELECT count(*) FILTER (WHERE ev.resultado = 'APROBADO') AS aprobadas,
        count(*)                                         AS total
   FROM carpetas c
-  JOIN evidencias e       ON e.carpeta_id = c.carpeta_id AND NOT e.eliminada
-  LEFT JOIN evaluaciones ev ON ev.evidencia_id = e.evidencia_id AND ev.vigente
+  JOIN evidencias e ON e.carpeta_id = c.carpeta_id AND e.eliminada = false
+  LEFT JOIN LATERAL (
+    SELECT resultado
+      FROM evaluaciones
+     WHERE evidencia_id = e.evidencia_id
+     ORDER BY evaluacion_id DESC
+     LIMIT 1
+  ) ev ON true
  WHERE c.fase_id = $1;
 ```
 
@@ -149,7 +161,7 @@ SELECT 1
 ```sql
 SELECT 1
   FROM integrantes_grupo i
-  JOIN grupos g    ON g.grupo_id = i.grupo_id AND g.tipo_grupo = 'PROYECTO'
+  JOIN grupos g    ON g.grupo_id = i.grupo_id AND NOT g.es_general
   JOIN proyectos p ON p.grupo_id = g.grupo_id AND p.estado_proyecto = 'Activo'
  WHERE i.usuario_id = $1 AND i.estado_integrante = 'Activo';
 ```
@@ -157,11 +169,11 @@ SELECT 1
 ### Recalificar sin perder la evaluación anterior (en una transacción)
 
 ```sql
-UPDATE evaluaciones SET vigente = false WHERE evidencia_id = $1 AND vigente;
-INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado) VALUES ($1, $2, $3);
+INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
+VALUES ($1, $2, $3, clock_timestamp());
 ```
 
-El índice único parcial `uq_evaluaciones_vigente` garantiza que, aunque el código falle, **nunca haya dos vigentes**.
+No se actualiza ninguna fila: la vigente es la de mayor `evaluacion_id`. Así se conserva el historial y dos evaluaciones concurrentes no se pisan.
 
 ---
 
@@ -171,7 +183,7 @@ Un índice acelera la búsqueda a costa de algo de espacio y de escritura. Postg
 
 | Tipo | Para qué | En ZENDA |
 |---|---|---|
-| **Sobre clave foránea** | Acelerar `JOIN` y `WHERE` por esa columna | `evidencias(carpeta_id)`, `tareas(proyecto_id)` ([migración](../../Database/migraciones/001_v12.sql)) |
+| **Sobre clave foránea** | Acelerar `JOIN` y `WHERE` por esa columna | `evidencias(carpeta_id)`, `tareas(proyecto_id)` ([migración](../../Database/migrations/002_semana2.sql)) |
 | **Único** | Impedir repetidos | `usuarios(correo)` |
 | **Único parcial** | Impedir repetidos **solo entre las filas que cumplen una condición** | Una evaluación `vigente` por evidencia; una vinculación con `fecha_fin IS NULL` por instructor y ficha |
 
@@ -193,7 +205,7 @@ Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
 | **Historial por fechas** | Se cierra con `fecha_fin` en lugar de borrar | `instructor_ficha` |
 | **Borrado lógico** | `eliminada = true`; las consultas filtran | `evidencias` |
 | **Auditoría** | Tabla `auditoria` con `detalle` en `JSONB` | Acciones críticas |
-| **Migraciones** | Scripts numerados que llevan el esquema de una versión a otra sin borrar datos | `001_v12.sql` |
+| **Migraciones** | Scripts numerados que llevan el esquema de una versión a otra sin borrar datos | `002_semana2.sql` |
 
 **Reglas de migración:** corren en una transacción; usan `IF [NOT] EXISTS`; **nunca se edita una ya fusionada**; se prueban sobre una copia ([IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)).
 

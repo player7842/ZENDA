@@ -345,7 +345,7 @@ classDiagram
 | `AvanceService` | Cálculos dispersos en los resúmenes | Se unifican. |
 | `AlmacenamientoService` | No existe (solo enlaces) | 🆕 |
 | `AuditoriaService`, `SesionService` | No existen | 🆕 |
-| `Carpeta.estadoCarpeta`, `Version`, `ListaChequeo`, `EvaluacionItem` | No existen | 🆕 ([migración](../../Database/migraciones/001_v12.sql)) |
+| `Carpeta.estadoCarpeta`, `Version`, `ListaChequeo`, `EvaluacionItem` | No existen | 🆕 ([migración](../../Database/migrations/002_semana2.sql)) |
 
 ---
 

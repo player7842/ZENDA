@@ -33,8 +33,8 @@ El sistema debe permitir que cualquier integrante activo suba evidencias como ar
 | Campo | Tipo | Obligatorio | Validaciones |
 | --- | --- | --- | --- |
 | `nombre_evidencia` | Texto | Sí | Máximo 200 caracteres |
-| `tipo_evidencia` | Opción | Sí | `ARCHIVO` o `ENLACE` |
-| `ubicacion` / archivo | URL o archivo | Sí | URL válida, o archivo de un tipo permitido y dentro del tamaño máximo |
+| `tipo_evidencia` | Opción | Sí | `Documento`, `Imagen`, `Video` o `Enlace` |
+| `ubicacion` / archivo | URL o archivo | Sí | URL `http/https` de máximo 500 caracteres, o archivo de un tipo permitido y dentro del tamaño máximo |
 
 ---
 
@@ -73,6 +73,12 @@ El sistema debe permitir que cualquier integrante activo suba evidencias como ar
 - **RN-015** — Sin bloqueo por fase.
 
 Detalle en [`reglas-de-negocio.md`](../reglas-de-negocio.md).
+
+---
+
+## Alcance de las Semanas 1 y 2
+
+Solo se implementan enlaces (`tipo_evidencia = 'Enlace'`) con validación `http/https` y máximo 500 caracteres. Los archivos reales, la lista blanca de tipos, el tamaño máximo y la compresión se trasladan a la **Semana 4** (HU-020). Cualquier integrante activo puede subir la evidencia.
 
 ---
 

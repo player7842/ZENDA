@@ -137,7 +137,7 @@ Basadas en [RNF-008](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md).
 | PNF-D07 | [RNF-008.8](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) | Copia antes de desplegar | Ejecutar el procedimiento de despliegue. | Genera un archivo de copia no vacío antes de aplicar cambios. | Manual | Media | v12 |
 | PNF-D08 | [RNF-008.6](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) | HTTPS | Pedir la URL por HTTP en producción. | Redirige a HTTPS con certificado válido. | curl | Alta | v12 |
 | PNF-D09 | [RNF-008.5](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) | Diagnóstico del administrador | Abrir la sección Sistema. | Muestra estado del servidor, base de datos y última copia. | Playwright | Baja | v12 |
-| PNF-D10 | [RNF-008.1](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) | Migración con respaldo | Aplicar `001_v12.sql`, restaurar el respaldo y repetir. | Ambos caminos terminan sin pérdida de datos ([IT-13](pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)). | psql | Alta | v12 |
+| PNF-D10 | [RNF-008.1](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) | Migración con respaldo | Aplicar `002_semana2.sql`, restaurar el respaldo y repetir. | Ambos caminos terminan sin pérdida de datos ([IT-13](pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)). | psql | Alta | v12 |
 
 ### Integridad y concurrencia
 

@@ -56,7 +56,9 @@ primer despliegue.
    `Database/zenda_bd.sql`. Ese script crea el esquema y los datos de prueba.
    - Es destructivo (`DROP TABLE ... CASCADE`): úsalo solo en una base nueva.
    - Para una base que ya tiene datos, aplicar solo las migraciones de
-     `Database/migrations/` en orden.
+     `Database/migrations/` en orden. En Render, `preDeployCommand` ejecuta
+     `backend/scripts/migrar.js` antes de arrancar y aplica `002_semana2.sql`
+     de forma idempotente.
 5. Verificar que existan datos:
 
    ```sql

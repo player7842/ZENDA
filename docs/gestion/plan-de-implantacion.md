@@ -1,85 +1,128 @@
-# Plan de Implantación — ZENDA Semana 1 y 2
+# Plan de Implantación — ZENDA Semanas 1 y 2
+
+> **Alcance:** únicamente las semanas 1 y 2. No se adelantan funcionalidades de las semanas 3–6.
+> **Rama de trabajo:** `develop` local. En esta entrega **no se hace `push`**; los commits previos ya publicados en `origin/develop` no se reescriben.
+> **Fecha de cierre:** 22 de octubre de 2026.
 
 ## Objetivo
-Implementar únicamente las **semanas 1 y 2** del roadmap de ZENDA sin adelantar las semanas 3–6. Los cambios se integran en `develop` con *Conventional Commits* y **sin hacer `push`** a menos que exista autorización explícita.
+
+Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_auditoria_semanas_1_y_2.md` y dejar una base verificable para que el equipo continúe con las semanas 3–6.
 
 ## Alcance cubierto
 
 ### Semana 1 (cerrada)
-- **Infraestructura**: Docker (Node 22, puerto 4000), `docker-compose.yml` con *healthchecks*, `frontend/nginx.conf`, `.env.example`, `render.yaml` (Render backend) y `frontend/vercel.json` (Vercel).
-- **Seguridad/Backend base**: `src/config/env.js` con `JWT_SECRET` obligatorio, `src/app.js`, CORS restringido por entorno, cabeceras de seguridad, *rate-limit* básico, `/health`, seed `H-11`.
-- **Calidad**: ESLint/Prettier, CI de validación.
-- **Gestión**: `docs/gestion/backlog.csv` (42 HU), guía GitHub Projects, `.mailmap`, script `scripts/gestion/crear-issues.ps1`.
 
-### Semana 2 (implementada)
-- **Sin sub-roles Scrum**: se elimina `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`. El liderazgo del grupo de trabajo es `grupos.lider_id`. Cualquier integrante activo puede crear carpetas y subir evidencias (autor registrado desde `req.user`).
-- **Cupo del grupo (RN-009)**: `grupos.cupo_maximo` (`CHECK 1..50`, por defecto 6). Al crear o al unirse se valida; al unirse se bloquea con `SELECT ... FOR UPDATE` y se rechaza si está completo.
-- **Historial de asignación instructor–ficha (H-07)**: `instructor_ficha` pasa a tener historial (`fecha_inicio`, `fecha_fin`, `estado`). Se cierra con `fecha_fin`/`estado = 'Inactivo'` en reasignaciones o cambio de rol; nunca se borra la fila. Única asignación vigente por par mediante índice único parcial.
-- **Estados por cascada (RN-017/RN-018)**: `carpetas.estado_carpeta` y recálculo de `fases.estado_fase`. La **evaluación vigente** es la más reciente por `fecha_evaluacion, evaluacion_id` con `LATERAL`. Todo nuevo envío (evidencia o evaluación) recalcula carpeta y fase. La aprobación en bloque (`POST /api/instructor/carpetas/:carpetaId/aprobar`) crea evaluaciones `APROBADO` para las evidencias no aprobadas.
-- **Migración idempotente**: `Database/migrations/2026-10-22-semana2.sql` (envolver en `BEGIN/COMMIT`).
-- **Reglas puras y servicios**: `backend/src/domain/reglas.js`, `backend/src/services/cascada.js`, `backend/src/services/asignaciones.js`.
+- **Infraestructura:** Docker con Node 22 y puerto 4000, `docker-compose.yml` con *healthchecks* y servicio de migración, Nginx para el frontend, `.env.example`, `render.yaml` y `frontend/vercel.json`.
+- **Seguridad/backend base:** `JWT_SECRET` obligatorio (falla al arrancar si falta), CORS con lista blanca, `helmet`, `express-rate-limit`, `trust proxy`, `/health` y `/api/health`.
+- **Calidad:** ESLint en backend, oxlint en frontend, Vitest y CI con PostgreSQL 16.
+- **Gestión:** backlog de 42 HU, reparto del equipo, guía de GitHub Projects, `.mailmap` y script de issues.
+
+### Semana 2 (implementada y auditada)
+
+- **Sin sub-roles Scrum:** se eliminan `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`. El liderazgo es `grupos.lider_id`; cualquier integrante activo crea carpetas y sube evidencias con autor tomado de `req.user`.
+- **Cupo del grupo (RN-009):** `grupos.cupo_maximo` con rango **1–50** y valor por defecto **6** (General: 50). Se valida al crear y al unirse, con bloqueo `SELECT ... FOR UPDATE`. El líder puede modificarlo con `PUT /api/aprendiz/proyectos/mio/cupo` sin bajarlo del número actual de integrantes. La UI está en `MiProyecto.jsx`.
+- **Grupo General (RN-006):** se identifica con `grupos.es_general`, no por el nombre. Índice único parcial por ficha; código `GEN-<número_ficha>`; helper único `backend/src/services/grupos.js`.
+- **Un proyecto por aprendiz (RN-007):** se bloquea al usuario con `pg_advisory_xact_lock` antes de crear o unirse. Un aprendiz solo puede unirse a grupos de su ficha.
+- **Historial instructor–ficha (RN-024):** `instructor_ficha` conserva `fecha_inicio`, `fecha_fin` y `estado`; las reasignaciones cierran la fila vigente sin `DELETE`. Índice único parcial de asignaciones vigentes.
+- **Evaluaciones e historial (RN-017/RN-018):** toda evaluación es un `INSERT`; la vigente se elige por `evaluacion_id DESC` y se registra con `clock_timestamp()`. La cascada evidencia → carpeta → fase usa funciones SQL únicas (`zenda_recalcular_carpeta`, `zenda_recalcular_fase`) y bloqueos por usuario, carpeta y fase.
+- **Aprobación en bloque:** `POST /api/instructor/carpetas/:carpetaId/aprobar` usa `INSERT ... SELECT` y devuelve cuántas evidencias aprobó realmente. La UI pide confirmación y advierte si hay reprobadas.
+- **Progreso:** porcentaje y “N de M carpetas aprobadas” visibles en `Fases.jsx`.
+- **Observaciones:** `crearObservacion` acepta y valida `evidencia_id`; las consultas devuelven el nombre de la evidencia.
+- **Registro (HU-001):** cuatro aceptaciones legales, medidor de fuerza de 5 niveles, bloqueo de pegado, tipo de documento `CC/TI/CE/PA/PPT`, correo institucional estricto y documento de 6–11 dígitos, validados en backend y frontend.
+- **Recuperación de contraseña (C-01):** token con `purpose: 'reset'`, hash SHA-256 de un solo uso en `recuperacion_contrasena`, expiración de 15 min y `token_version` para invalidar sesiones anteriores. Un token de sesión no sirve para resetear y uno de reset no sirve como sesión.
+- **URLs de evidencias (C-07):** solo `http://` o `https://`, máximo 500 caracteres, validadas en backend y con `urlSegura` en frontend.
+- **Migración idempotente:** `Database/migrations/002_semana2.sql` (recalcula antes de añadir `CHECK`, normaliza datos y puede ejecutarse dos veces).
+
+## Fuera de alcance y traslados
+
+| Tema | Decisión |
+|---|---|
+| **HU-020, archivos reales** (CA-020.1, .3 y .4) | **Fuera de las Semanas 1–2.** Se traslada a la **Semana 4** con S3/MinIO, lista blanca, tamaño máximo y compresión. En Semana 2 solo quedan enlaces validados (CA-020.2) y autoría de cualquier integrante (CA-020.5). |
+| **HU-004, sesión de 15 min + refresh** | Semana 4. Hoy la sesión dura 24 h (`JWT_SESSION_EXPIRES=24h`); no se cambia el contrato del frontend todavía. |
+| **HU-022, versiones y eliminación** | Semana 3. |
+| **H-13, token en `localStorage`** | Sigue abierto. Se mitiga con Helmet, CORS, rate-limit y validación de URLs; la solución completa depende de HU-004. |
+| **HU-003, recuperación completa** | La base de C-01 queda corregida; el pulido de correo y experiencia pertenece a Semana 5. |
 
 ## Cambios en esquema
 
-- **`Database/zenda_bd.sql`**: esquema actualizado (sin sub-roles, historial instructor–ficha, `grupos.cupo_maximo`, `carpetas.estado_carpeta`, *checks* e índices). El *seed* usa estados derivados por SQL.
-- **Migración**: `Database/migrations/2026-10-22-semana2.sql`.
+- **`Database/zenda_bd.sql`**: base completa actualizada (sin sub-roles, historial de instructor–ficha, cupo, `es_general`, `token_version`, tabla de recuperación, checks, funciones e índices).
+- **`Database/migrations/002_semana2.sql`**: migración incremental e idempotente para bases existentes. Convención: la base inicial es `zenda_bd.sql`; las migraciones incrementales van numeradas en `Database/migrations/`.
+- El *seed* usa el grupo `GEN-2724285` y no cuelga proyectos del grupo General.
 
 ## Backend
 
 | Archivo | Cambio |
 | --- | --- |
-| `backend/src/domain/reglas.js` | Reglas puras (cupo, cascada, progreso, normalización). |
-| `backend/src/services/cascada.js` | Obtención de evaluación vigente con `LATERAL` y recálculo carpeta/fase. |
-| `backend/src/services/asignaciones.js` | Sincronización/cierre con historial; cierre parcial por programa. |
-| `backend/src/controllers/aprendizController/proyectoController.js` | Cupo, unirse sin rol, cualquier integrante crea carpetas/sube evidencias, recálculo en cascada, respuestas con progreso/evaluación vigente. |
-| `backend/src/controllers/instructorController/instructorController.js` | Solo asignaciones vigentes, evaluación siempre `INSERT`, aprobación en bloque, carpetas con autor/estado/progreso. |
-| `backend/src/routes/instructor/instructor.js` | Añade `POST /carpetas/:carpetaId/aprobar`. |
-| `backend/src/controllers/adminController/authController.js` | Registro sin `sub_rol`. Grupo General con `cupo_maximo`. |
-| `backend/src/controllers/adminController/userController.js` | Historial de fichas de instructor; cierre en cambio de rol. |
-| `backend/src/controllers/adminController/fichasController.js` | Conteo de instructores vigentes; sin `rol_scrum`. |
-| `backend/src/controllers/coordinadorController/coordinadorController.js` | Sincronización con historial; conteos vigentes; seguimiento con líder/cupo/estados. |
+| `backend/src/config/env.js` | `JWT_SECRET` obligatorio (mínimo 32 en producción), `JWT_SESSION_EXPIRES`, `CODIGO_PROGRAMA_COORDINADOR`. |
+| `backend/src/config/db.js` | SSL con `DB_SSL_REJECT_UNAUTHORIZED=true` por defecto. |
+| `backend/src/app.js` | Helmet, rate-limit general y de autenticación, `trust proxy`, `/health` y `/api/health`. |
+| `backend/src/domain/reglas.js` | Reglas puras de cupo, cascada, progreso y normalización. |
+| `backend/src/services/grupos.js` | Única función para obtener o crear el grupo General. |
+| `backend/src/services/cascada.js` | Bloqueos, evaluación vigente y recálculo con funciones SQL. |
+| `backend/src/services/asignaciones.js` | Cierre con historial y unicidad de asignaciones vigentes. |
+| `backend/src/controllers/adminController/authController.js` | Registro completo, sesión con `purpose`, reset de un solo uso y `token_version`. |
+| `backend/src/middleware/auth.js` | Rechaza tokens de reset, valida estado/rol y `token_version` contra la BD. |
+| `backend/src/controllers/aprendizController/proyectoController.js` | Cupo, RN-007, ficha, General, URLs, N+1, progreso y cupo editable. |
+| `backend/src/controllers/instructorController/instructorController.js` | Evaluación con historial, aprobación en bloque y observaciones con evidencia. |
+| `backend/src/controllers/adminController/fichasController.js` | Helper General y cierre de membresías al mover aprendiz. |
+| `backend/src/controllers/adminController/userController.js` | Asignaciones de instructor con historial. |
+| `backend/src/controllers/coordinadorController/coordinadorController.js` | Programa por entorno, asignaciones vigentes y `es_general`. |
+| `backend/src/routes/aprendiz/proyecto.js` | Ruta de actualización de cupo. |
 
 ## Frontend
 
 | Archivo | Cambio |
 | --- | --- |
-| `frontend/src/api.js` | `unirseProyectoAprendiz(codigo_grupo)` sin rol; `aprobarCarpetaInstructor`; comentarios actualizados. |
-| `frontend/src/components/Auth/Register.jsx` | Eliminado campo Rol Scrum, refs/imports asociados. |
-| `frontend/src/pages/aprendiz.jsx` | Selector crear/unirse, cupo, sin dependencia de `sub_rol_intencion`. |
-| `frontend/src/pages/aprendiz/Equipo.jsx` | Sin badges Scrum; indicador `Líder` por `es_lider`. |
-| `frontend/src/pages/aprendiz/Fases.jsx` | Nuevo shape `{fase, estado_fase, progreso, carpetas}`, cualquier integrante crea/sube. |
-| `frontend/src/pages/aprendiz/Tareas.tsx` | Sin `rol_scrum` en selectores. |
-| `frontend/src/pages/instructor/Proyectos.jsx` | Nuevo shape, mostrar autor, botón "Aprobar carpeta", progreso. |
-| `frontend/src/pages/coordinador/Seguimiento.jsx` | `es_lider` en lugar de `rol_scrum`. |
-| `frontend/src/pages/coordinador/Grupos.jsx` | Muestra cupo e indica líder. |
+| `frontend/src/api.js` | Cupo, aprobación en bloque, observación con `evidencia_id` y errores legibles. |
+| `frontend/src/components/Auth/Register.jsx` | Cuatro casillas legales, medidor, anti-pegado, documento y correo institucional. |
+| `frontend/src/pages/aprendiz/Fases.jsx` | Porcentaje, carpetas aprobadas, enlaces seguros y estado de fase. |
+| `frontend/src/pages/aprendiz/MiProyecto.jsx` | Integrantes/cupo y edición por el líder. |
+| `frontend/src/pages/aprendiz/Observaciones.jsx` | Nombre de la evidencia asociada. |
+| `frontend/src/pages/instructor/Proyectos.jsx` | Confirmación de aprobación en bloque, advertencia de reprobadas, observación con evidencia y enlaces seguros. |
+| `frontend/src/utils/urlSegura.js` | Solo `http/https`, longitud máxima 500. |
 
 ## Pruebas
 
-- **Unitarias**: `backend/tests/reglas.test.js` con Vitest (cupo, cascada, progreso, normalización).
-- **Configuración**: `backend/vitest.config.js`.
+- **Unitarias:** `backend/tests/reglas.test.js` (9 pruebas de reglas puras).
+- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, HU-026, HU-011 y C-01. Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan.
+- **CI:** carga `Database/zenda_bd.sql`, aplica `002_semana2.sql` dos veces, ejecuta lint, pruebas y build del frontend.
+- **Ejecución local verificada (22-oct-2026):** PostgreSQL 18.6, base `zenda_audit_test` cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **15 pruebas aprobadas** (9 unitarias + 6 de integración). También se probó la migración sobre una copia del esquema anterior (`HEAD`) y se verificó un único General por ficha.
+- **No ejecutado:** Docker/Compose y el build de la imagen, porque el daemon de Docker no está disponible. El archivo `docker-compose.yml` sí pasa `docker compose config`.
 
 ## Verificación
 
 ```bash
 # Backend
 cd backend
+pnpm install --frozen-lockfile
 pnpm lint
-pnpm test        # pruebas unitarias posibles sin PostgreSQL
+pnpm test
 
 # Frontend
 cd frontend
+pnpm install --frozen-lockfile
 pnpm lint
 pnpm build
 ```
 
-> Las pruebas de integración con PostgreSQL deben ejecutarse en CI (PostgreSQL 16, `psql -f Database/zenda_bd.sql` antes de `pnpm test`). El entorno local puede no tener Docker/`psql` disponible.
-
 ## Despliegue
 
-- **Backend**: Render (`render.yaml`).
-- **Frontend**: Vercel (`frontend/vercel.json`, Root Directory `frontend`, configurar `VITE_API_URL`).
-- **BD**: Neon (PostgreSQL).
+- **Backend:** Render (`render.yaml`) con `preDeployCommand` que ejecuta `backend/scripts/migrar.js` antes de arrancar.
+- **Migración local:** el servicio `migrate` de Compose aplica `002_semana2.sql` cuando la base ya existía.
+- **Frontend:** Vercel (`frontend/vercel.json`, Root Directory `frontend`, `VITE_API_URL`).
+- **BD:** Neon (PostgreSQL) con SSL validado.
 
-## Commits
+## Proceso y limitaciones
 
-Se realizan commits atómicos con *Conventional Commits* en rama `develop`. **No se hace `push` sin autorización**.
+- Los commits de esta entrega se hacen por bloques con *Conventional Commits* en español y **no se hace `push`**.
+- **D-08:** el historial anterior concentra 15 de 16 commits en un integrante y no refleja el reparto ni la rotación de revisores. No se reescribe la historia; a partir de esta entrega se documentan los commits por bloque y se recomienda usar PRs hacia `develop` con el revisor asignado.
+- **D-09:** `develop` ya estaba publicado antes de esta tarea. La regla de “sin push” aplica a los cambios nuevos de esta entrega.
+- La migración se probó sobre el esquema anterior disponible en `HEAD`, no sobre una copia restaurada de producción. Antes de desplegar en Neon debe hacerse un respaldo y ejecutar `backend/scripts/migrar.js` en un entorno de ensayo.
+
+## Criterio de cierre
+
+1. `pnpm lint` pasa en backend y frontend.
+2. `pnpm test` pasa (unitarias y, con BD, integración).
+3. `pnpm build` del frontend termina sin errores.
+4. `002_semana2.sql` se ejecuta dos veces sin errores en CI.
+5. HU-020 queda declarada fuera de alcance y trasladada a la Semana 4.

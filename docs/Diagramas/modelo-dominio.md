@@ -144,7 +144,7 @@ classDiagram
 | **Aprendiz** | Integrante de un grupo. | Un solo proyecto activo ([RN-007](../requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz)). |
 | **Líder** | Aprendiz que creó el proyecto. | Fijo; solo el administrador reasigna ([RN-008](../requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo), [RN-030](../requisitos/reglas-de-negocio.md#rn-030--reasignación-de-liderazgo-por-el-administrador)). |
 | **Instructor** | Evalúa las fichas a las que está vinculado. | Vinculación con historial ([RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial)). |
-| **Grupo** | Conjunto de aprendices. Puede ser `General` (inscripción a la ficha) o de proyecto. | Cupo definido por el líder ([RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)); código `PRY-XXXXXX` ([RN-010](../requisitos/reglas-de-negocio.md#rn-010--código-de-invitación)). |
+| **Grupo** | Conjunto de aprendices. Puede ser `General` (inscripción a la ficha) o de proyecto. | Cupo definido por el líder ([RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)); código `PRY-XXXXXXXXXX` ([RN-010](../requisitos/reglas-de-negocio.md#rn-010--código-de-invitación)). |
 | **Proyecto** | Trabajo formativo de un grupo. | Un proyecto por grupo. |
 | **Fase** | Una de las cinco etapas: Análisis, Diseño, Desarrollo, Pruebas y Cierre/Entrega. | Fijas y automáticas ([RN-011](../requisitos/reglas-de-negocio.md#rn-011--cinco-fases-fijas)). |
 | **Carpeta** | Agrupador de evidencias dentro de una fase, creado por los aprendices. | Cualquier integrante la crea ([RN-012](../requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante)). |
@@ -190,7 +190,7 @@ Las dos formas de avance (cascada de evidencias y lista de chequeo) son **indepe
 | **ADSO** | Programa Análisis y Desarrollo de Software, código `2338`. |
 | **Ficha** | Número oficial que identifica a un grupo de formación. |
 | **General** | Grupo automático de cada ficha que representa la inscripción del aprendiz; no es un proyecto. |
-| **Código de invitación** | Código `PRY-XXXXXX` con el que un aprendiz se une a un proyecto. |
+| **Código de invitación** | Código `PRY-XXXXXXXXXX` con el que un aprendiz se une a un proyecto. |
 | **Evidencia** | Producto entregable del proyecto, como archivo o enlace. |
 | **Cascada** | Recalculo automático de los estados de carpeta y fase tras evaluar. |
 | **Vigente** | Último registro válido de algo que conserva historial (evaluación, versión). |

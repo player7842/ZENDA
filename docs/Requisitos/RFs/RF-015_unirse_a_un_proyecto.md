@@ -32,15 +32,15 @@ El sistema debe permitir que un aprendiz se una a un proyecto usando su código 
 
 | Campo | Tipo | Obligatorio | Validaciones |
 | --- | --- | --- | --- |
-| `codigo_grupo` | Texto | Sí | Formato `PRY-XXXXXX`, existente |
+| `codigo_grupo` | Texto | Sí | Formato `PRY-XXXXXXXXXX`, existente y de la misma ficha del aprendiz |
 
 ---
 
 ## Proceso
 
 1. El aprendiz ingresa el código.
-2. El backend verifica que no tenga un proyecto activo y que el código exista.
-3. Verifica que el grupo no haya alcanzado su cupo.
+2. El backend bloquea al usuario para evitar dobles clics, verifica que no tenga un proyecto activo y que el código exista.
+3. Verifica que el grupo sea de la ficha del aprendiz y que no haya alcanzado su cupo.
 4. Inscribe al aprendiz como integrante activo del grupo.
 
 ---

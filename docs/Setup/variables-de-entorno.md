@@ -51,14 +51,17 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `DB_USER` | ✅ | Sí | `postgres` | Usuario de la base de datos. |
 | `DB_PASSWORD` | ✅ | Sí | *(secreto)* | Contraseña del usuario. |
 | `DB_NAME` | ✅ | Sí | `zenda` | Nombre de la base de datos. |
-| `JWT_SECRET` | ✅ | **Sí** | *(secreto largo)* | Clave con la que se firman los tokens. Si falta, el servidor **no arranca** (H-02). |
+| `JWT_SECRET` | ✅ | **Sí** | *(secreto largo)* | Clave con la que se firman los tokens. Si falta, el servidor **no arranca** (H-02). En producción un secreto de menos de 32 caracteres también impide arrancar. |
+| `JWT_SESSION_EXPIRES` | ✅ | No | `24h` | Duración real de la sesión actual. HU-004 la reducirá a 15 min + refresh; no cambies el frontend sin implementar esa HU. |
 | `DB_SSL` | ✅ | No | `false` | Fuerza SSL en la conexión a PostgreSQL. En Neon debe ser `true`. |
-| `DATABASE_URL` | ✅ | No | `postgresql://...` | Cadena completa de conexión; si existe, tiene prioridad sobre `DB_*` y fuerza SSL. |
+| `DB_SSL_REJECT_UNAUTHORIZED` | ✅ | No | `true` | Valida el certificado del servidor. Solo se pone en `false` con un proxy local de certificado autofirmado; nunca en producción. |
+| `DATABASE_URL` | ✅ | No | `postgresql://...` | Cadena completa de conexión; si existe, tiene prioridad sobre `DB_*` y usa SSL validado. |
+| `CODIGO_PROGRAMA_COORDINADOR` | ✅ | No | `2338` | Código del programa que administra el coordinador (ADSO por defecto). |
 | `EMAIL_USER` | ✅ | Sí | `cuenta@gmail.com` | Cuenta de Gmail que envía los correos. |
 | `EMAIL_PASS` | ✅ | Sí | *(16 caracteres)* | **Contraseña de aplicación** de Gmail. |
 | `FRONTEND_URL` | ✅ | Sí | `https://zenda.vercel.app` | URL base del frontend. Se usa para CORS y para el enlace de recuperación. Admite varios orígenes separados por coma. |
-| `JWT_ACCESS_EXPIRES` | 🆕 | No | `15m` | Duración del token de acceso ([RT-004](../requisitos/restricciones.md#rt-004--método-de-autenticación)). |
-| `JWT_REFRESH_EXPIRES_DAYS` | 🆕 | No | `7` | Duración del token de refresco. |
+| `JWT_ACCESS_EXPIRES` | 🆕 | No | `15m` | Objetivo de HU-004 para el token de acceso; **no se lee todavía** ([RT-004](../requisitos/restricciones.md#rt-004--método-de-autenticación)). |
+| `JWT_REFRESH_EXPIRES_DAYS` | 🆕 | No | `7` | Objetivo de HU-004; **no se lee todavía**. |
 | `S3_ENDPOINT` | 🆕 | Sí (archivos) | `http://minio:9000` | Servicio compatible con S3 ([RT-006](../requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). |
 | `S3_BUCKET` | 🆕 | Sí (archivos) | `zenda-evidencias` | Bucket de las evidencias. |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY` | 🆕 | Sí (archivos) | *(secretos)* | Credenciales del almacenamiento. |
@@ -87,6 +90,8 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `DB_PASSWORD` | Sí | `db`, `backend` | Contraseña de ese usuario. |
 | `DB_NAME` | Sí | `db`, `backend` | Base de datos que se crea. |
 | `JWT_SECRET` | Sí | `backend` | Clave de firma de tokens. |
+| `JWT_SESSION_EXPIRES` | No | `backend` | Duración de la sesión actual (`24h` por defecto). |
+| `CODIGO_PROGRAMA_COORDINADOR` | No | `backend` | Programa del coordinador (`2338` por defecto). |
 | `EMAIL_USER`, `EMAIL_PASS` | Sí | `backend` | Cuenta de Gmail y contraseña de aplicación. |
 | `FRONTEND_URL` | No | `backend` | Origen del frontend para CORS y para el enlace de recuperación. Por defecto, `http://localhost:8080`. |
 | `VITE_API_URL` | No | `frontend` (build) | URL pública del backend. Por defecto, `http://localhost:4000`. |

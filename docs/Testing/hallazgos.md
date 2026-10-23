@@ -44,6 +44,8 @@
 
 **Por severidad:** Alta 3 · Media 8 · Baja 5.
 
+> **Estado tras la auditoría de Semana 2 (22-oct-2026):** H-01 a H-12, H-14, H-15 y H-16 quedaron corregidos en código/documentación. H-13 sigue **abierto**: la sesión continúa en `localStorage` y dura 24 h; el paso a 15 min + refresh pertenece a HU-004 (Semanas 3–6). H-12 queda pendiente de probar con Docker real.
+
 > **H-12 ya tiene corrección** en la entrega de infraestructura (`docker-compose.yml`, Dockerfiles, `nginx.conf`, `.dockerignore`); queda pendiente que el equipo la pruebe.
 
 ---
@@ -101,6 +103,8 @@ SELECT count(*) FROM evaluaciones WHERE evidencia_id = :id;
 
 **Qué pasa.** El endpoint solo recibe `titulo` y `descripcion`; el campo `evidencia_id` existe en la tabla, pero no se llena desde la API.
 
+**Corregido en Semana 2.** `crearObservacion` valida y guarda `evidencia_id`, la consulta devuelve `nombre_evidencia` y la UI permite asociar la observación a una evidencia.
+
 ### H-11 — Datos de prueba inconsistentes
 
 **Qué pasa.** El *seed* crea el proyecto "ZENDA" colgado del grupo `General` de la ficha 2724285 (que no debe ser un proyecto), y las fases se llaman "Fase 1: Análisis…" con estados como `En proceso`, que no son los que genera `crearProyecto`. Las pruebas que dependen del *seed* pueden fallar por datos, no por código.
@@ -111,7 +115,7 @@ Corregidos en la entrega de infraestructura; ver [con-docker.md](../setup/con-do
 
 ### H-13 — Token en `localStorage`
 
-**Qué pasa.** El token se guarda en `localStorage`, accesible a cualquier script de la página. Un defecto de XSS permitiría robarlo. Se mitiga con tokens de 15 minutos, cabeceras de seguridad y, si es posible, cookie `HttpOnly` para el refresco.
+**Qué pasa.** El token se guarda en `localStorage`, accesible a cualquier script de la página. Un defecto de XSS permitiría robarlo. Hoy el token dura **24 h**; la reducción a 15 min con refresh rotativo y, si es posible, cookie `HttpOnly` pertenece a HU-004 (Semanas 3–6). En Semana 2 se mitigó parcialmente con Helmet, CORS restringido, rate-limit y validación de URLs, pero el riesgo sigue abierto.
 
 ---
 

@@ -77,4 +77,4 @@ Detalle en [`reglas-de-negocio.md`](../reglas-de-negocio.md).
 
 ## Cambios frente a la versión v11
 
-- Hoy el endpoint solo recibe `titulo` y `descripcion`: la asociación a una evidencia (`evidencia_id`) es un cambio pendiente.
+- **Corregido en Semana 2:** `evidencia_id` es opcional y validado contra el proyecto; las consultas incluyen `nombre_evidencia`.

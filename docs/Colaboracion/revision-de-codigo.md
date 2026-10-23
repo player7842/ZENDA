@@ -112,7 +112,7 @@ Empieza por lo que más daño hace si falla. El estilo va al final.
 | Pregunta | Referencia |
 |---|---|
 | ¿Es una **migración nueva y numerada**, sin editar una anterior ya fusionada? | [Flujo, sección 8](flujo-github.md#8-versiones-y-publicación) |
-| ¿Usa `IF [NOT] EXISTS` y corre en una transacción? | [`001_v12.sql`](../../Database/migraciones/001_v12.sql) |
+| ¿Usa `IF [NOT] EXISTS` y corre en una transacción? | [`002_semana2.sql`](../../Database/migrations/002_semana2.sql) |
 | ¿Conserva los datos existentes y rellena las columnas nuevas? | [Esquema, notas de migración](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) |
 | ¿Define restricciones (`NOT NULL`, `CHECK`, `UNIQUE`) donde corresponde? | [MR](../diagramas/mer-mr.md) |
 | ¿Crea índices para las claves foráneas que se consultan? | [RNF-002.3](../requisitos/RNFs/RNF-002_rendimiento.md) |

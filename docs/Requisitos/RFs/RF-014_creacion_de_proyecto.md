@@ -36,7 +36,7 @@ El sistema debe permitir que un aprendiz sin proyecto activo cree el proyecto de
 | `descripcion`, `problema`, `objetivo`, `alcance` | Texto | Sí | Máximo 500 caracteres cada uno |
 | `tecnologias` | Texto | No | Máximo 500 caracteres |
 | `fecha_inicio`, `fecha_fin_estimada` | Fecha | Sí | Fin posterior al inicio |
-| `cupo_integrantes` | Número | Sí | Entero positivo; rango por definir |
+| `cupo_maximo` | Número | No | Entero entre 1 y 50; por defecto 6 |
 
 ---
 
@@ -44,7 +44,7 @@ El sistema debe permitir que un aprendiz sin proyecto activo cree el proyecto de
 
 1. El aprendiz completa el formulario.
 2. El backend verifica que esté inscrito en una ficha y que no tenga un proyecto activo.
-3. Crea el grupo con su código `PRY-XXXXXX` y lo marca con el aprendiz como líder.
+3. Crea el grupo con un código `PRY-XXXXXXXXXX` generado con `crypto.randomBytes` y lo marca con el aprendiz como líder.
 4. Crea el proyecto y sus 5 fases fijas.
 5. Inscribe al aprendiz como integrante del grupo y devuelve el código de invitación.
 
@@ -82,6 +82,6 @@ Detalle en [`reglas-de-negocio.md`](../reglas-de-negocio.md).
 
 ## Cambios frente a la versión v11
 
-- Se agrega `cupo_integrantes` a `grupos` o `proyectos`.
+- Se agrega `grupos.cupo_maximo` (1–50, por defecto 6), editable por el líder sin bajar del total actual.
 - El líder deja de depender de un sub-rol Scrum: es quien crea el proyecto.
 - Las fases se siguen creando con los nombres `FASE 1 - ANALISIS` a `FASE 5 - CIERRE/ENTREGA`.

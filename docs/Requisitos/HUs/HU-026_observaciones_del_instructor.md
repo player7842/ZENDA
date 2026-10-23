@@ -55,4 +55,4 @@
 
 ## Cambios frente a la versión v11
 
-- Hoy el endpoint solo recibe `titulo` y `descripcion`: la asociación a una evidencia (`evidencia_id`) es un cambio pendiente.
+- **Corregido en Semana 2:** el endpoint acepta `evidencia_id` opcional, valida que la evidencia pertenezca al proyecto y la consulta devuelve `nombre_evidencia`. La UI permite asociarla.

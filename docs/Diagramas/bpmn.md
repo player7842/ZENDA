@@ -132,7 +132,7 @@ flowchart LR
     subgraph P3["⚙️ ZENDA"]
         z0("Crear cuenta e inscribir en el grupo General")
         z1("Crear grupo, proyecto y 5 fases")
-        z2("Generar el código PRY-XXXXXX")
+        z2("Generar el código PRY-XXXXXXXXXX")
         z3{"✕ ¿Hay cupo?"}
         z4("Rechazar: grupo completo")
         z5("Inscribir al aprendiz en el grupo")

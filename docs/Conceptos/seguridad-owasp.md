@@ -33,7 +33,7 @@
 | A04 | Fallas criptográficas | ⚠️ | HTTPS en producción, tokens cortos | [bcrypt y JWT](autenticacion-jwt.md) |
 | A05 | Inyección | ✅ | Pruebas de inyección y de XSS | [RS-005](../requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas), PNF-S02, PNF-S13 |
 | A06 | Diseño inseguro | ⚠️ | Historial inmutable, límites de intentos, cupos | [Reglas de negocio](../requisitos/reglas-de-negocio.md) |
-| A07 | Fallas de autenticación | ⚠️ | Contraseña con política, límite de intentos, sesión de 15 min | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) |
+| A07 | Fallas de autenticación | ⚠️ | Contraseña con política, límite de intentos; sesión actual de 24 h (objetivo: 15 min + refresh en HU-004) | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) |
 | A08 | Fallas en la integridad del software o de los datos | ⚠️ | Archivos validados, CI, evaluaciones sin sobrescribir | [H-06](../testing/hallazgos.md), [RNF-012](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md) |
 | A09 | Fallas en el registro, alerta y monitoreo | ❌ | Tabla `auditoria` y registro de errores | [RNF-011](../requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
 | A10 | Manejo inadecuado de condiciones excepcionales | ⚠️ | Manejador de errores central y mensajes sin detalles | [RNF-001.13](../requisitos/RNFs/RNF-001_seguridad.md) |
@@ -107,7 +107,7 @@ pool.query('SELECT usuario_id FROM usuarios WHERE correo = $1', [correo]);
 | | |
 |---|---|
 | **Qué es** | Identidad débil: contraseñas triviales, ataques de fuerza bruta, sesiones que no se invalidan, mensajes que revelan qué cuentas existen. |
-| **ZENDA hoy** | Sin límite de intentos; `forgot-password` revela correos ([H-01](../testing/hallazgos.md)); sin longitud mínima al registrarse ([H-05](../testing/hallazgos.md)); sesión de 24 h. |
+| **ZENDA hoy** | `forgot-password` responde igual exista o no el correo ([H-01](../testing/hallazgos.md) corregido); contraseña con mínimo de 8 caracteres ([H-05](../testing/hallazgos.md) corregido); rate-limit en autenticación; sesión de 24 h. |
 | **Correcciones v12** | Política de contraseña y medidor, respuestas idénticas, límite de intentos, *honeypot*, verificación de correo, sesión de 15 minutos con refresco rotativo. Ver [autenticación](autenticacion-jwt.md). |
 
 > Bloquear el pegado en la confirmación de contraseña **no detiene a los bots** (envían la petición directamente); por eso se acompaña de las demás medidas.

@@ -1,7 +1,8 @@
 # Esquema de base de datos — ZENDA Semana 2
 
-> **Base oficial**: `Database/zenda_bd.sql`. **Migración idempotente**: `Database/migrations/2026-10-22-semana2.sql`.  
-> **Aplicación**: crear base desde `zenda_bd.sql` o aplicar la migración sobre una instalación existente. Las pruebas de CI ejecutan `psql -f Database/zenda_bd.sql` antes de `pnpm test`.  
+> **Base oficial**: `Database/zenda_bd.sql`. **Migración idempotente de Semana 2**: `Database/migrations/002_semana2.sql`.
+>
+> **Aplicación**: crear base desde `zenda_bd.sql` o aplicar la migración sobre una instalación existente. Las pruebas de CI ejecutan `psql -f Database/zenda_bd.sql` antes de `pnpm test`.
 > **Cambios Semana 2**: sin sub-roles Scrum, liderazgo por `grupos.lider_id`, `grupos.cupo_maximo`, `carpetas.estado_carpeta`, historial de `instructor_ficha` (única asignación vigente por índice único parcial), estados derivados por cascada con evaluación vigente mediante `LATERAL`.
 
 ## 1. Diccionario resumido (cambios relevantes)
@@ -55,7 +56,7 @@ Sin `rol_scrum`. `UNIQUE(grupo_id, usuario_id)`. Campos: `integrante_id`, `grupo
 - **H-07/HU-011**: historial de `instructor_ficha` sin borrados.
 
 ## 3. Notas de despliegue
-1. Aplicar `Database/zenda_bd.sql` o `Database/migrations/2026-10-22-semana2.sql`.
+1. Aplicar `Database/zenda_bd.sql` (base nueva) o `Database/migrations/002_semana2.sql` (base existente).
 2. Actualizar backend y frontend con el mismo *release* (los controladores exigen el nuevo esquema).
 3. No ejecutar sin revisar asignaciones activas de instructores (la migración preserva historial).
 
@@ -127,12 +128,12 @@ Grupo `General` de cada ficha y grupos de proyecto. **Estado:** Modificada.
 | --- | --- | --- | --- | --- |
 | `grupo_id` | INT | PK, identidad | Identificador | — |
 | `ficha_id` | INT | FK → fichas | Ficha | — |
-| `lider_id` | INT | FK → usuarios, NULL si es General | Líder del grupo de proyecto | ✏️ |
-| `nombre_grupo` | VARCHAR(50) | NOT NULL | Nombre | — |
-| `codigo_grupo` | VARCHAR(30) | UNIQUE, NOT NULL | `GEN-<ficha>` o `PRY-XXXXXX` | — |
+| `lider_id` | INT | FK → usuarios, NOT NULL | Líder del grupo; en General es el primer aprendiz vinculado | ✏️ |
+| `nombre_grupo` | VARCHAR(50) | NOT NULL, CHECK | `General` solo si `es_general`; los proyectos no pueden llamarse así | — |
+| `codigo_grupo` | VARCHAR(30) | UNIQUE, NOT NULL | `GEN-<número_ficha>` o `PRY-XXXXXXXXXX` | ✏️ |
+| `cupo_maximo` | INT | CHECK 1–50, NOT NULL, defecto 6 | Cupo máximo; General = 50 | 🆕 |
 | `estado_grupo` | VARCHAR(20) | por defecto `Activo` | Estado | — |
-| `tipo_grupo` | VARCHAR(10) | CHECK | `GENERAL` o `PROYECTO` (reemplaza la comparación por nombre) | 🆕 |
-| `cupo_integrantes` | INT | CHECK > 0 | Cupo máximo; NULL en General | 🆕 |
+| `es_general` | BOOLEAN | NOT NULL, defecto `false` | Distingue el grupo General sin mirar el nombre | 🆕 |
 | `fecha_creacion` | TIMESTAMP | NOT NULL | Creación | — |
 
 ### 2.6 `integrantes_grupo`
@@ -357,7 +358,7 @@ Registro de acciones críticas. **Estado:** Nueva.
 | --- | --- |
 | `usuarios.rol` | `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR`, `ADMINISTRADOR` |
 | `usuarios.tipo_documento` | `CC`, `TI`, `CE`, `PA`, `PPT` |
-| `grupos.tipo_grupo` | `GENERAL`, `PROYECTO` |
+| `grupos.es_general` | `true`/`false`; índice único parcial por ficha para `true` |
 | `fases.estado_fase`, `carpetas.estado_carpeta` | `Pendiente`, `En revisión`, `Aprobada`, `Desaprobada` |
 | `evidencias.tipo_evidencia` | `ARCHIVO`, `ENLACE` |
 | `evaluaciones.resultado` | `APROBADO`, `REPROBADO` |
@@ -395,7 +396,7 @@ Además de las claves primarias y las restricciones únicas, la migración crea 
 | Tema | Qué hace la migración | Qué debe revisar el equipo |
 | --- | --- | --- |
 | Sub-roles | Elimina `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`. | Quitar su uso en `register`, `crearProyecto`, `unirseAProyecto`, el seed y `Register.jsx`. |
-| Grupo `General` | Lo marca `GENERAL` y deja `lider_id` en `NULL`. | Reemplazar `nombre_grupo <> 'General'` por `tipo_grupo = 'PROYECTO'` en las consultas. |
+| Grupo `General` | Lo marca `es_general = true`; conserva un `lider_id` técnico (primer aprendiz) y código `GEN-<número_ficha>`. | Reemplazar `nombre_grupo <> 'General'` por `NOT es_general` en las consultas. |
 | Cupo | Asigna a cada grupo existente el número actual de integrantes. | Definir el rango permitido ([RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)). |
 | Evidencias | Convierte tipos antiguos a `ENLACE` y crea la versión 1 de cada una. | Escribir en `evidencia_versiones` al subir o reemplazar. |
 | Evaluaciones | Marca como no vigentes las duplicadas y deja una vigente por evidencia. | Insertar en lugar de `UPDATE` en `evaluarEvidencia`. |

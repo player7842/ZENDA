@@ -64,7 +64,7 @@
 | HU-014 | Creación de proyecto | Semana 2 | M | Hernán Robledo |
 | HU-015 | Unirse a un proyecto | Semana 2 | M | Hernán Robledo |
 | HU-019 | Carpetas de una fase | Semana 2 | M | Hernán Robledo |
-| HU-020 | Subida de evidencias | Semana 2 | M | Hernán Robledo |
+| HU-020 | Subida de evidencias (archivos reales) | Semana 4 | M | Hernán Robledo |
 | HU-022 | Versiones y eliminación de evidencias | Semana 3 | L | Hernán Robledo |
 | HU-036 | Creación de lista de chequeo | Semana 4 | L | Hernán Robledo |
 
@@ -149,6 +149,8 @@ gh pr list --state merged --limit 100 --json author,title --jq '.[] | "\(.author
 | Señal de alerta | Acción |
 |---|---|
 | Un integrante concentra más del 50 % de los commits | Repartir la siguiente HU y pedir que otro abra el PR. |
+
+> **Limitación histórica (D-08):** en el historial previo al 22-oct-2026, 15 de 16 commits figuran a nombre de Hernán y 1 de Nicolás; no hay PRs visibles y `main` no se actualizó. Esa historia no se reescribe. Para las semanas siguientes, cada HU debe abrir su PR, tener revisión de la pareja asignada y registrar la aprobación en GitHub. Los commits de la auditoría de Semana 2 se documentan por bloque en `SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`.
 | No hay PRs revisados en la semana | Bloquear la fusión hasta que exista una aprobación. |
 | Commits con correo personal distinto | Corregir `user.email` y actualizar `.mailmap`. |
 | Una HU sin pruebas ni documentación | No se marca como terminada en el Project. |

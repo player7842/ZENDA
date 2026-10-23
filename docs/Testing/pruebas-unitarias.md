@@ -191,7 +191,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 | PU-68 | `tieneCupo(4, 5)` | `true` | Queda un cupo |
 | PU-69 | `tieneCupo(5, 5)` | `false` | Grupo completo |
 | PU-70 | `tieneCupo(6, 5)` | `false` | Dato inconsistente: nunca se admite |
-| PU-71 | `generarCodigoGrupo()` | Coincide con `/^PRY-[A-Z0-9]{6}$/` |  |
+| PU-71 | `generarCodigoProyecto()` | Coincide con `/^PRY-[A-F0-9]{10}$/` |  |
 | PU-72 | 1000 llamadas a `generarCodigoGrupo()` | Sin repeticiones | Unicidad práctica |
 
 ### 9. Validación de archivos

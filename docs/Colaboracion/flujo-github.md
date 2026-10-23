@@ -266,7 +266,7 @@ Se usa **versionado semántico**: `vMAYOR.MENOR.PARCHE`.
 | 7 | Crear la *Release* en GitHub con el texto del changelog | GitHub → Releases |
 | 8 | Desplegar | [Con Docker](../setup/con-docker.md#8-llevarlo-a-producción) |
 
-> **Migraciones de base de datos:** van numeradas (`001_v12.sql`, `002_…`) y **nunca se editan una vez fusionadas**; los cambios nuevos van en una migración nueva. La migración del lanzamiento debe probarse antes sobre una copia ([IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)).
+> **Migraciones de base de datos:** van numeradas (`001_…`, `002_semana2.sql`, `003_…`) y **nunca se editan una vez fusionadas**; los cambios nuevos van en una migración nueva. La base inicial completa vive en `Database/zenda_bd.sql`; las migraciones incrementales, en `Database/migrations/`. La migración del lanzamiento debe probarse antes sobre una copia ([IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)).
 
 ---
 

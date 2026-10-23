@@ -142,8 +142,9 @@ Content-Type: application/json
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
 |---|---|---|---|:---:|:---:|
-| POST | `/` | `nombre_proyecto`, `descripcion`, `problema`, `objetivo`, `alcance`, `tecnologias`, `fecha_inicio`, `fecha_fin_estimada`, `cupo_integrantes` 🆕 | `201` `{ grupo_id, proyecto_id, codigo_grupo }` | [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md) | 🔄 |
-| POST | `/unirse` | `codigo_grupo`, ~~`rol_scrum`~~ | `200` "Te uniste al proyecto correctamente" | [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md) | 🔄 |
+| POST | `/` | `nombre_proyecto`, `descripcion`, `problema`, `objetivo`, `alcance`, `tecnologias`, `fecha_inicio`, `fecha_fin_estimada`, `cupo_maximo` | `201` `{ grupo_id, proyecto_id, codigo_grupo, cupo_maximo }` | [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md) | ✅ |
+| PUT | `/mio/cupo` | `cupo_maximo` (1–50, no menor al total actual; solo líder) | `200` `{ cupo_maximo }` | [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md) | ✅ |
+| POST | `/unirse` | `codigo_grupo` (misma ficha, grupo con cupo) | `200` "Te uniste al proyecto correctamente" | [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md) | ✅ |
 | GET | `/mio` | — | Proyecto, integrantes, líder y fases | [RF-016](../requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) | 🔄 |
 | GET | `/resumen` | — | Métricas y series para el panel | [RF-032](../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) | ✅ |
 | GET | `/mi-ficha` | — | Ficha actual | [RF-017](../requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | ✅ |
@@ -155,7 +156,7 @@ Content-Type: application/json
 |---|---|---|---|:---:|:---:|
 | GET | `/fases/:faseId/carpetas` | — | Carpetas con evidencias y resultado | [RF-021](../requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | 🔄 |
 | POST | `/fases/:faseId/carpetas` | `nombre_carpeta` | `201` carpeta | [RF-019](../requisitos/RFs/RF-019_carpetas_de_una_fase.md) | 🔄 |
-| POST | `/carpetas/:carpetaId/evidencias` | `nombre_evidencia`, `tipo_evidencia`, `ubicacion`; en v12 también archivo (`multipart/form-data`) | `201` `{ evidencia_id }` | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) | 🔄 |
+| POST | `/carpetas/:carpetaId/evidencias` | `nombre_evidencia`, `tipo_evidencia` (`Documento`/`Imagen`/`Video`/`Enlace`), `ubicacion` (`http/https`, máx. 500) | `201` `{ evidencia_id }` | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) | ✅ solo enlaces; archivos en Semana 4 |
 | POST | `/evidencias/:id/versiones` | Archivo o enlace nuevo | `201` nueva versión | [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | 🆕 |
 | DELETE | `/evidencias/:id` | — | `200`; `409` si está aprobada | [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | 🆕 |
 | GET | `/observaciones` | — | Observaciones de mi proyecto | [RF-027](../requisitos/RFs/RF-027_consulta_de_observaciones.md) | ✅ |
@@ -177,11 +178,11 @@ Authorization: Bearer <JWT>
 
 { "nombre_proyecto": "ZENDA", "descripcion": "…", "problema": "…", "objetivo": "…",
   "alcance": "…", "tecnologias": "React, Express", "fecha_inicio": "2026-03-01",
-  "fecha_fin_estimada": "2026-12-01", "cupo_integrantes": 5 }
+  "fecha_fin_estimada": "2026-12-01", "cupo_maximo": 5 }
 ```
 
 ```json
-{ "grupo_id": 12, "proyecto_id": 9, "codigo_grupo": "PRY-A3F9C1" }
+{ "grupo_id": 12, "proyecto_id": 9, "codigo_grupo": "PRY-A3F9C1D2E4", "cupo_maximo": 5 }
 ```
 
 ---
@@ -199,7 +200,7 @@ Authorization: Bearer <JWT>
 | GET | `/fases/:faseId/carpetas` | — | Carpetas y evidencias de la fase | [RF-021](../requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | 🔄 |
 | POST | `/evidencias/:evidenciaId/evaluar` | `resultado` (`APROBADO` o `REPROBADO`) | Evaluación y estado de la fase | [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md) | 🔄 |
 | GET | `/proyectos/:proyectoId/observaciones` | — | Observaciones del proyecto | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | ✅ |
-| POST | `/proyectos/:proyectoId/observaciones` | `titulo`, `descripcion`, `evidencia_id` 🆕 | `201` observación | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | 🔄 |
+| POST | `/proyectos/:proyectoId/observaciones` | `titulo`, `descripcion`, `evidencia_id` opcional | `201` observación con `nombre_evidencia` | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | ✅ |
 | POST | `/carpetas/:carpetaId/aprobar` | — | Estado de carpeta y fase | [RF-024](../requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) | 🆕 |
 | POST | `/fichas/:id/lista-chequeo` | `nombre`, ítems | `201` lista | [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) | 🆕 |
 | PUT | `/lista-chequeo/:listaId` | Lista e ítems | Lista actualizada | [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) | 🆕 |
@@ -255,9 +256,10 @@ Authorization: Bearer <JWT>
 |---|---|---|
 | `POST /auth/register` | Se elimina `sub_rol`; se agregan aceptaciones legales y verificación de correo. | El backend puede ignorar `sub_rol` mientras el frontend se actualiza. |
 | `POST /aprendiz/proyectos/unirse` | Se elimina `rol_scrum`. | Igual: se ignora primero y se elimina después. |
-| `POST /aprendiz/proyectos` | Se agrega `cupo_integrantes`. | Compatible si el campo es opcional al inicio. |
-| `POST /carpetas/:id/evidencias` | Acepta `multipart/form-data` para archivos, además de JSON para enlaces. | Compatible: el JSON actual sigue funcionando. |
-| `POST /auth/login` | El token dura 15 minutos y se devuelve `refresh_token`. | **Cambio de comportamiento:** el frontend debe renovar la sesión. |
+| `POST /aprendiz/proyectos` | Se agrega `cupo_maximo` (1–50, por defecto 6). | Compatible: si falta, se aplica 6. |
+| `PUT /aprendiz/proyectos/mio/cupo` | Nuevo endpoint para que el líder ajuste el cupo. | No menor al total actual de integrantes. |
+| `POST /carpetas/:id/evidencias` | En Semana 2 solo JSON con enlaces `http/https`. Archivos reales (`multipart/form-data`) en Semana 4. | Sin cambio para el JSON actual. |
+| `POST /auth/login` | **Hoy:** token único de 24 h (`JWT_SESSION_EXPIRES`). **Objetivo HU-004:** token de acceso de 15 min + `refresh_token`. | La reducción de 15 min aún **no** está implementada; el frontend no debe renovar todavía. |
 | `POST /auth/forgot-password` | Responde siempre `200`, exista o no el correo. | El frontend no debe depender del `404` actual. |
 | `POST /instructor/evidencias/:id/evaluar` | Inserta una evaluación nueva en lugar de actualizar la anterior. | Compatible: la respuesta no cambia. |
 | `POST /instructor/proyectos/:id/observaciones` | Acepta `evidencia_id` opcional. | Compatible. |

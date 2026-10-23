@@ -89,7 +89,7 @@ flowchart TB
 |---|---|---|---|
 | `frontend` | `node:<LTS>-alpine` (build) → `nginx:alpine` | 80 → 8080 | Compila con Vite y sirve la SPA; `try_files` devuelve `index.html` para las rutas de React Router. |
 | `backend` | `node:<LTS>-alpine` | 4000 | API REST. Corre como usuario `node`, no como `root`. |
-| `db` | `postgres:16-alpine` | 5432 (interno) | Persistencia; carga `zenda_bd.sql` la primera vez y `001_v12.sql` se aplica después. |
+| `db` | `postgres:16-alpine` | 5432 (interno) | Persistencia; carga `zenda_bd.sql` la primera vez y `002_semana2.sql` se aplica después. |
 | `storage` 🆕 | `minio/minio` (solo desarrollo) | 9000 | Archivos de evidencias. En producción se reemplaza por un servicio gestionado. |
 
 > **Importante:** `VITE_API_URL` se incrusta al **compilar** el frontend. Debe ser la URL del backend tal como la ve el navegador, no el nombre interno del contenedor. Detalle en `setup/`.
@@ -259,7 +259,7 @@ sequenceDiagram
     A->>BE: POST /api/aprendiz/proyectos
     BE->>DB: ¿inscrito en una ficha y sin proyecto activo?
     BE->>DB: BEGIN
-    BE->>DB: INSERT grupos (líder = aprendiz, código PRY-XXXXXX, cupo)
+    BE->>DB: INSERT grupos (líder = aprendiz, código PRY-XXXXXXXXXX, cupo)
     BE->>DB: INSERT integrantes_grupo
     BE->>DB: INSERT proyectos
     BE->>DB: INSERT 5 fases fijas
@@ -318,7 +318,7 @@ sequenceDiagram
 ZENDA/
 ├── README.md
 ├── docker-compose.yml        .env.example        .gitignore
-├── Database/                 zenda_bd.sql · migraciones/
+├── Database/                 zenda_bd.sql · migrations/
 ├── backend/                  Dockerfile · .dockerignore · .env.example
 ├── frontend/                 Dockerfile · .dockerignore · nginx.conf · .env.example
 └── docs/                     requisitos/ · referencia-tecnica/ · diagramas/ · setup/ · …

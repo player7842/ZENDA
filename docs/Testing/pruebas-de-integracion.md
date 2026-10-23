@@ -12,19 +12,35 @@
 
 | Campo | Valor |
 | --- | --- |
-| **Escenarios** | 13 |
-| **Pruebas de autorización** | 30 |
+| **Escenarios documentados** | 13 |
+| **Escenarios automatizados en Semana 2** | 6 (`backend/tests/integracion.test.js`) |
+| **Pruebas de autorización** | 30 (documentadas; se amplían en Semana 3) |
 | **Herramienta** | Vitest + Supertest contra la base `zenda_test` ([entorno](plan-de-pruebas.md#4-entornos-y-datos)) |
 | **Plan** | [Plan de pruebas](plan-de-pruebas.md) |
 | **Fecha** | Octubre 2026 |
 
 ---
 
+## 0. Suite implementada en Semana 2
+
+`backend/tests/integracion.test.js` usa Vitest + Supertest contra PostgreSQL real. Se omite si no hay base de datos o si falta el esquema actual, y en CI se ejecuta después de cargar `zenda_bd.sql` y aplicar dos veces la migración.
+
+**Resultado local (22-oct-2026):** 6/6 escenarios aprobados sobre PostgreSQL 18.6, después de cargar `Database/zenda_bd.sql` y ejecutar `Database/migrations/002_semana2.sql` dos veces. Las 9 pruebas unitarias también pasaron (15/15 en total).
+
+| Bloque | Qué comprueba |
+|---|---|
+| HU-001 | Registro con cuatro aceptaciones, correo institucional, tipo de documento y documento. |
+| HU-014/HU-015 | Código `PRY-*`, cupo 1, rechazo por cupo lleno, edición de cupo por el líder y rechazo de un aprendiz de otra ficha. |
+| HU-023/024/025 | Cascada, aprobación en bloque, historial de evaluaciones (4 filas), reprobación, re-aprobación y progreso 100 %. |
+| HU-026 | Observación asociada a `evidencia_id`, con nombre de evidencia en la consulta. |
+| HU-011 | Creación de instructor, reasignación de fichas y conservación de una fila inactiva. |
+| C-01 | Token de sesión rechazado en reset, token de reset de un solo uso, invalidación de sesión y login con la clave nueva. |
+
 ## 1. Convenciones
 
 | Tema | Regla |
 |---|---|
-| **Base de datos** | Real (PostgreSQL), no simulada; recreada desde `zenda_bd.sql` y `001_v12.sql`. |
+| **Base de datos** | Real (PostgreSQL), no simulada; recreada desde `zenda_bd.sql` y `002_semana2.sql`. |
 | **Aislamiento** | Cada escenario crea sus propios datos y no depende de otro. |
 | **Reloj** | Las expiraciones usan un reloj simulado. |
 | **Marcadores** | `:id` es el identificador creado en el escenario. |
@@ -72,14 +88,14 @@ SELECT g.codigo_grupo, i.estado_integrante FROM integrantes_grupo i JOIN grupos 
 
 **Pasos**
 
-1. A crea el proyecto con `cupo_integrantes` 3.
+1. A crea el proyecto con `cupo_maximo` 3.
 2. B y C se unen con el `codigo_grupo` recibido.
 3. D intenta unirse.
 4. B intenta crear otro proyecto.
 
 **Resultado esperado**
 
-- A queda como líder (`grupos.lider_id`), se crean 5 fases en `Pendiente` y se devuelve un código `PRY-XXXXXX`.
+- A queda como líder (`grupos.lider_id`), se crean 5 fases en `Pendiente` y se devuelve un código `PRY-XXXXXXXXXX`.
 - B y C quedan como integrantes; D recibe `400` por grupo completo.
 - B recibe `400` por ya tener un proyecto activo.
 
@@ -322,7 +338,7 @@ SELECT count(*) FROM integrantes_grupo WHERE grupo_id = :id AND estado_integrant
 
 ### IT-13 — Migración de v11 a v12
 
-**Requisito:** [esquema](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) y [migración](../../Database/migraciones/001_v12.sql)
+**Requisito:** [esquema](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) y [migración](../../Database/migrations/002_semana2.sql)
 
 **Objetivo:** Verificar que la migración conserva los datos y deja el esquema esperado.
 
@@ -331,18 +347,18 @@ SELECT count(*) FROM integrantes_grupo WHERE grupo_id = :id AND estado_integrant
 **Pasos**
 
 1. Hacer `pg_dump` de la base.
-2. Aplicar `001_v12.sql`.
+2. Aplicar `002_semana2.sql`.
 3. Comprobar el esquema y los datos.
-4. Aplicar `001_v12.sql` por segunda vez.
+4. Aplicar `002_semana2.sql` por segunda vez.
 5. Arrancar el backend v12 y ejecutar la lista de humo.
 
 **Resultado esperado**
 
 - Ya no existen `usuarios.sub_rol_intencion` ni `integrantes_grupo.rol_scrum`.
-- Los grupos `General` tienen `tipo_grupo = 'GENERAL'` y `lider_id` nulo; los de proyecto tienen cupo.
-- Cada evidencia tiene una versión 1 vigente; cada evidencia evaluada tiene una sola evaluación vigente.
+- Los grupos `General` tienen `es_general = true` y código `GEN-<número_ficha>`; los de proyecto tienen `es_general = false` y cupo.
+- Cada evidencia evaluada conserva su historial; la vigente se obtiene por `evaluacion_id DESC`.
 - La segunda ejecución no produce errores.
-- Los conteos de usuarios, fichas, grupos y proyectos son iguales a los de antes.
+- Los conteos de usuarios, fichas, grupos y proyectos son iguales a los de antes (salvo normalizaciones documentadas: cupo mínimo y estados recalculados).
 
 **Verificación en la base de datos**
 
@@ -360,7 +376,7 @@ Cada fila es una celda ❌ (o una condición) de la [matriz de permisos](../requ
 | --- | --- | --- | --- | --- |
 | PI-01 | Sin token | `GET /api/aprendiz/proyectos/mio` | 401 | Sin sesión |
 | PI-02 | Token manipulado | `GET /api/users` | 401 | Firma inválida |
-| PI-03 | Token vencido (reloj + 16 min) | `GET /api/aprendiz/proyectos/mio` | 401 | Acceso de 15 minutos |
+| PI-03 | Token vencido (reloj + 24 h) | `GET /api/aprendiz/proyectos/mio` | 401 | Sesión actual de 24 h; HU-004 la reducirá a 15 min |
 | PI-04 | Aprendiz | `GET /api/users` | 403 | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) |
 | PI-05 | Aprendiz | `POST /api/fichas` | 403 | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) |
 | PI-06 | Aprendiz | `GET /api/instructor/fichas` | 403 | Panel del instructor |

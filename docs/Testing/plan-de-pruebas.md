@@ -18,7 +18,7 @@
 | **Casos escritos** | 160 funcionales + escenarios de integración, unitarios y no funcionales |
 | **Fecha** | Octubre 2026 |
 
-> **Estado de partida:** el repositorio de v11 **no tiene pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). Los documentos de pruebas que ya elaboró el equipo (unitarias con TDD, integración y no funcionales en Excel) no estaban disponibles al redactar este plan; conviene **cruzarlos con los casos de esta carpeta** para no duplicar ni dejar huecos.
+> **Estado de partida:** el repositorio de v11 **no tenía pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). En Semana 2 se agregaron Vitest + Supertest: 9 pruebas unitarias y 6 de integración, ejecutadas contra PostgreSQL 18.6 el 22-oct-2026. El resto de los 160 casos sigue documentado para las semanas 3–6.
 
 ---
 
@@ -55,7 +55,7 @@ flowchart TB
 | Nivel | Qué verifica | Documento | Herramienta propuesta | Cantidad inicial |
 |---|---|---|---|:---:|
 | **Unitarias** | Funciones de negocio sin base de datos: cascada, avances, transiciones, validaciones | [Pruebas unitarias](pruebas-unitarias.md) | Vitest | 108 |
-| **Integración** | Rutas HTTP con PostgreSQL real, permisos por rol, transacciones | [Pruebas de integración](pruebas-de-integracion.md) | Vitest + Supertest | 13 escenarios + 30 de permisos |
+| **Integración** | Rutas HTTP con PostgreSQL real, permisos por rol, transacciones | [Pruebas de integración](pruebas-de-integracion.md) | Vitest + Supertest | 13 documentados; 6 automatizados en Semana 2 |
 | **Funcionales** | Criterios de aceptación de cada HU | [Casos funcionales](casos/) | API: Supertest · UI: Playwright | 160 |
 | **E2E** | Los 3 recorridos críticos en el navegador | Casos con nivel `E2E` | Playwright | 3 recorridos |
 | **No funcionales** | Seguridad, rendimiento, accesibilidad, compatibilidad, disponibilidad | [Pruebas no funcionales](pruebas-no-funcionales.md) | k6, axe-core, ZAP, Lighthouse | 82 |
@@ -112,11 +112,11 @@ docker compose --profile test up -d db-test
 
 | Tema | Regla |
 |---|---|
-| **Aislamiento** | Cada suite parte del esquema limpio (`zenda_bd.sql` + `001_v12.sql`) y limpia lo que crea. Ninguna prueba depende del resultado de otra. |
+| **Aislamiento** | Cada suite parte del esquema limpio (`zenda_bd.sql` + `002_semana2.sql`) y limpia lo que crea. Ninguna prueba depende del resultado de otra. |
 | **Datos** | Los usuarios y fichas del *seed* ([lista](../setup/sin-docker.md#6-usuarios-de-prueba)); cada prueba crea sus propios proyectos y evidencias. |
 | **Correo** | Se simula el transporte; para ver correos reales de prueba se necesita configurar el servidor SMTP por variable (cambio propuesto). |
 | **Archivos** | MinIO local en pruebas; nunca el almacenamiento de producción. |
-| **Reloj** | Las pruebas de expiración (token de 15 min, inactividad de 30 min) usan un reloj simulado, no esperas reales. |
+| **Reloj** | Las pruebas de expiración (token de reset de 15 min, sesión actual de 24 h e inactividad de 30 min) usan un reloj simulado, no esperas reales. |
 
 ---
 

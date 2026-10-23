@@ -51,7 +51,7 @@ Tu estructura debe verse así:
 
 ```text
 ZENDA/
-├── Database/     zenda_bd.sql · migraciones/
+├── Database/     zenda_bd.sql · migrations/
 ├── backend/
 ├── frontend/
 └── docs/
@@ -80,7 +80,7 @@ psql -U postgres -h localhost -d zenda -f Database/zenda_bd.sql
 Solo si ya actualizaste el backend a v12 ([esquema](../referencia-tecnica/esquema-bd.md)):
 
 ```bash
-psql -U postgres -h localhost -d zenda -f Database/migraciones/001_v12.sql
+psql -U postgres -h localhost -d zenda -f Database/migrations/002_semana2.sql
 ```
 
 > La migración elimina `rol_scrum` y `sub_rol_intencion`; con el backend de v11 el registro y la unión a proyectos dejan de funcionar. Haz antes una copia: `pg_dump -U postgres zenda > respaldo.sql`.

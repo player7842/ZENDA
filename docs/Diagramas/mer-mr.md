@@ -14,7 +14,7 @@
 | --- | --- |
 | **Motor** | PostgreSQL 14 o superior |
 | **Tablas** | 20 (de las cuales 7 son nuevas en v12) |
-| **Fuente** | `Database/zenda_bd.sql` + `Database/migraciones/001_v12.sql` |
+| **Fuente** | `Database/zenda_bd.sql` + `Database/migrations/002_semana2.sql` |
 | **Diccionario y restricciones** | [`esquema-bd.md`](../referencia-tecnica/esquema-bd.md) |
 | **Fecha** | Octubre 2026 |
 
@@ -330,12 +330,12 @@ erDiagram
     grupos {
         INT grupo_id PK "NOT NULL"
         INT ficha_id FK "NOT NULL"
-        INT lider_id FK "NULL"
-        VARCHAR(50) nombre_grupo "NOT NULL"
+        INT lider_id FK "NOT NULL"
+        VARCHAR(50) nombre_grupo "NOT NULL, CHECK"
         VARCHAR(30) codigo_grupo UK "NOT NULL"
         VARCHAR(20) estado_grupo "NOT NULL, DEF Activo"
-        VARCHAR(10) tipo_grupo "NOT NULL, CHECK"
-        INT cupo_integrantes "NULL, CHECK"
+        BOOLEAN es_general "NOT NULL, DEF false"
+        INT cupo_maximo "NOT NULL, CHECK 1..50"
         TIMESTAMP fecha_creacion "NOT NULL"
     }
     integrantes_grupo {

@@ -75,7 +75,7 @@ El seguimiento de los proyectos que los aprendices de **Análisis y Desarrollo d
 | Módulo | Qué ofrece |
 |---|---|
 | 🔐 **Autenticación** | Registro de aprendices con correo institucional, inicio de sesión con JWT y recuperación de contraseña por correo. |
-| 👥 **Grupos y proyectos** | Creación de proyecto con código de invitación `PRY-XXXXXX`; un aprendiz solo puede estar en un proyecto activo. |
+| 👥 **Grupos y proyectos** | Creación de proyecto con código de invitación `PRY-XXXXXXXXXX`; un aprendiz solo puede estar en un proyecto activo. |
 | 🗂️ **Fases, carpetas y evidencias** | 5 fases fijas por proyecto; el aprendiz crea carpetas y sube evidencias dentro de cada fase. |
 | ✅ **Evaluación en cascada** | Evidencia → carpeta → fase: el estado se recalcula solo a partir de las evaluaciones del instructor. |
 | 🧩 **Tablero de tareas** | Tareas asignadas por el líder, con flujo de estados y confirmación del líder. |

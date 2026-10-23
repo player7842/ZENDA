@@ -90,7 +90,7 @@ Cómo se refleja en el sistema:
 
 | Capa | Cambio |
 |---|---|
-| **Base de datos** | Se eliminan `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`; el líder es `grupos.lider_id`; se agrega `cupo_integrantes` ([migración](../../Database/migraciones/001_v12.sql)) |
+| **Base de datos** | Se eliminan `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`; el líder es `grupos.lider_id`; se agregan `grupos.cupo_maximo` y `grupos.es_general` ([migración](../../Database/migrations/002_semana2.sql)) |
 | **API** | `register` ya no recibe `sub_rol`; `unirse` ya no recibe `rol_scrum` ([contrato](../referencia-tecnica/api-endpoints.md#12-cambios-de-contrato-planificados)) |
 | **Interfaz** | Desaparece el selector de sub-rol; el equipo muestra "Líder" en lugar de etiquetas Scrum |
 | **Permisos** | [Matriz de permisos](../requisitos/matriz-permisos.md): el líder solo agrega tres permisos al aprendiz |

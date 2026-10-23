@@ -79,7 +79,7 @@ flowchart TD
         A2["Abre Mi proyecto"]
         A3{"¿Crear o unirse?"}
         A4["Completa nombre, problema, objetivo,<br/>alcance, fechas y cupo"]
-        A5["Ingresa el código PRY-XXXXXX"]
+        A5["Ingresa el código PRY-XXXXXXXXXX"]
         A6(["Ve su proyecto"])
         A7["Comparte el código con su grupo"]
     end

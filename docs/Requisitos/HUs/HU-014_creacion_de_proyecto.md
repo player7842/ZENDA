@@ -43,7 +43,7 @@
 
 - **Dado que** completé los campos obligatorios,
 - **cuando** envío el formulario,
-- **entonces** el proyecto se crea, recibo un código `PRY-XXXXXX`, quedo como líder y se generan las 5 fases.
+- **entonces** el proyecto se crea, recibo un código `PRY-XXXXXXXXXX`, quedo como líder y se generan las 5 fases.
 
 ### CA-014.3 — Un solo proyecto
 
@@ -67,6 +67,6 @@
 
 ## Cambios frente a la versión v11
 
-- Se agrega `cupo_integrantes` a `grupos` o `proyectos`.
+- Se agrega `grupos.cupo_maximo` (1–50, por defecto 6), editable por el líder con `PUT /api/aprendiz/proyectos/mio/cupo`.
 - El líder deja de depender de un sub-rol Scrum: es quien crea el proyecto.
 - Las fases se siguen creando con los nombres `FASE 1 - ANALISIS` a `FASE 5 - CIERRE/ENTREGA`.

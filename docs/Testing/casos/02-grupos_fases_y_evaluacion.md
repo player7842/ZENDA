@@ -38,7 +38,7 @@
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | CP-014.1 | Formulario del proyecto | soy un aprendiz inscrito en una ficha y sin proyecto activo | abro "Crear proyecto" | veo los campos nombre, descripción, problema, objetivo, alcance, tecnologías, fechas y cupo de integrantes | Positivo | E2E | Alta | Parcial |
-| CP-014.2 | Creación exitosa | completé los campos obligatorios | envío el formulario | el proyecto se crea, recibo un código `PRY-XXXXXX`, quedo como líder y se generan las 5 fases | Positivo | API | Alta | Parcial |
+| CP-014.2 | Creación exitosa | completé los campos obligatorios | envío el formulario | el proyecto se crea, recibo un código `PRY-XXXXXXXXXX`, quedo como líder y se generan las 5 fases | Positivo | API | Alta | Parcial |
 | CP-014.3 | Un solo proyecto | ya pertenezco a un proyecto activo | intento crear otro | veo el mensaje "Ya perteneces a un proyecto activo" | Negativo | E2E | Alta | Parcial |
 | CP-014.4 | Campos obligatorios | dejo vacío un campo obligatorio | envío el formulario | veo el mensaje "Faltan campos obligatorios del proyecto" | Negativo | E2E | Alta | Parcial |
 | CP-014.5 | Sin ficha | no estoy inscrito en ninguna ficha | intento crear un proyecto | veo el mensaje "No estás inscrito en ninguna ficha" | Negativo | E2E | Alta | Parcial |

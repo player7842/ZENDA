@@ -30,7 +30,7 @@
 | RN-006 | Grupo General por ficha | Vigente |
 | RN-007 | Un proyecto activo por aprendiz | Vigente |
 | RN-008 | Líder del grupo | Adoptada |
-| RN-009 | Cupo del grupo | Adoptada |
+| RN-009 | Cupo del grupo | Vigente |
 | RN-010 | Código de invitación | Vigente |
 | RN-011 | Cinco fases fijas | Vigente |
 | RN-012 | Carpetas y evidencias por cualquier integrante | Adoptada |
@@ -39,7 +39,7 @@
 | RN-015 | Sin bloqueo por fase | Adoptada |
 | RN-016 | Evaluación por el instructor asignado | Vigente |
 | RN-017 | Historial de evaluaciones | Adoptada |
-| RN-018 | Cascada de estados | Parcial |
+| RN-018 | Cascada de estados | Vigente |
 | RN-019 | Aprobación de carpeta en bloque | Adoptada |
 | RN-020 | Porcentaje de avance de la fase | Adoptada |
 | RN-021 | Tareas creadas solo por el líder | Vigente |
@@ -105,6 +105,8 @@ Los roles son `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR` y `ADMINISTRADOR`. Se elim
 
 Cada ficha tiene un grupo especial llamado `General` (código `GEN-<número de ficha>`) que representa la inscripción del aprendiz a la ficha. No cuenta como proyecto.
 
+Se identifica por la columna `grupos.es_general`, no por el nombre que escribe el aprendiz, y solo puede existir uno por ficha (índice único parcial). El código se crea desde el backend con el helper `services/grupos.js`. Los grupos de proyecto no pueden llamarse “General”.
+
 ### RN-007 — Un proyecto activo por aprendiz
 
 | Estado | Requisitos relacionados |
@@ -125,9 +127,9 @@ El aprendiz que crea el proyecto queda como líder del grupo. El liderazgo es fi
 
 | Estado | Requisitos relacionados |
 | --- | --- |
-| Adoptada | RF-014, RF-015 |
+| Vigente | RF-014, RF-015 |
 
-El líder define el cupo máximo de integrantes al crear el proyecto. No se admiten nuevos integrantes cuando el grupo está lleno y el cupo no puede ser menor que el número actual de integrantes. El rango permitido está por definir.
+El líder define el cupo máximo de integrantes al crear el proyecto. Rango permitido: **1–50**; valor por defecto: **6** (el grupo General usa 50). No se admiten nuevos integrantes cuando el grupo está lleno y el cupo no puede ser menor que el número actual de integrantes. El líder puede modificarlo con `PUT /api/aprendiz/proyectos/mio/cupo`; un valor menor al total actual se rechaza. La actualización se hace con bloqueo de la fila del grupo.
 
 ### RN-010 — Código de invitación
 
@@ -135,7 +137,7 @@ El líder define el cupo máximo de integrantes al crear el proyecto. No se admi
 | --- | --- |
 | Vigente | RF-014, RF-015 |
 
-Cada proyecto tiene un código único con formato `PRY-XXXXXX` que los demás aprendices usan para unirse.
+Cada proyecto tiene un código único con formato `PRY-XXXXXXXXXX` (10 caracteres hexadecimales en mayúscula), generado con `crypto.randomBytes`. Los demás aprendices lo usan para unirse y solo pueden hacerlo si pertenecen a la misma ficha.
 
 ### RN-011 — Cinco fases fijas
 
@@ -160,6 +162,8 @@ Cualquier integrante activo del grupo puede crear carpetas dentro de las fases y
 | Adoptada | RF-020 |
 
 Una evidencia es un archivo o un enlace. Los archivos se validan por tipo (lista blanca), por contenido real y por tamaño máximo; las imágenes grandes se comprimen antes de almacenarse.
+
+**Alcance Semanas 1–2:** solo se implementan enlaces `http/https` (máximo 500 caracteres). Los archivos reales, la lista blanca, el tamaño máximo y la compresión se trasladan a la Semana 4 (HU-020).
 
 ### RN-014 — Versionado y borrado lógico
 
@@ -191,15 +195,15 @@ Solo un instructor vinculado a la ficha del grupo puede evaluar sus evidencias. 
 | --- | --- |
 | Adoptada | RF-023, RF-024 |
 
-Cada evaluación conserva su autor y su fecha. Recalificar agrega un registro nuevo (el último es el vigente) en lugar de sobrescribir el anterior.
+Cada evaluación conserva su autor y su fecha. Recalificar agrega un registro nuevo (el último es el vigente) en lugar de sobrescribir el anterior. La vigente se determina por `evaluacion_id DESC` (desempate estable) y la fecha se registra con `clock_timestamp()`.
 
 ### RN-018 — Cascada de estados
 
 | Estado | Requisitos relacionados |
 | --- | --- |
-| Parcial | RF-022, RF-023, RF-024, RF-025 |
+| Vigente | RF-023, RF-024, RF-025 |
 
-Una evidencia reprobada desaprueba su carpeta, y una carpeta desaprobada desaprueba la fase. Una fase queda `Aprobada` solo si todas sus evidencias están aprobadas; en cualquier otro caso queda `En revisión`. Hoy la cascada se calcula de la evidencia a la fase; el estado de la carpeta es un cambio pendiente.
+Una evidencia reprobada desaprueba su carpeta, y una carpeta desaprobada desaprueba la fase. Una fase queda `Aprobada` solo si todas sus evidencias están aprobadas; en cualquier otro caso queda `En revisión`. La cascada se implementó en Semana 2 con funciones SQL (`zenda_recalcular_carpeta` y `zenda_recalcular_fase`) y bloqueos por carpeta/fase para evitar estados desincronizados.
 
 ### RN-019 — Aprobación de carpeta en bloque
 
