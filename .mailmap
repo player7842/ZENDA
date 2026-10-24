@@ -19,10 +19,8 @@
 Hernán Eduardo Robledo Montaña <rbldhernan@gmail.com> Hernan Robledo <rbldhernan@gmail.com>
 Nicolás Aparicio Camacho <nicoapariciocamacho@gmail.com> nicolas-22-ux <nicoapariciocamacho@gmail.com>
 
-# --- Pendientes de completar por el equipo ---------------------------
-# Descomentar y completar cuando cada integrante confirme su correo de Git.
-# El nombre y el correo de la izquierda son los que quedarán en el historial;
-# a la derecha va la identidad que hoy aparece en los commits.
+# --- Identidades pendientes por completar ---------------------------
+# Cada integrante debe registrar su nombre y correo en el mapa cuando
+# confirme su identidad de Git. Descomentar y completar:
 #
-# Leyner David Buitrago Thomas <CORREO_DE_LEYNER> Leyner <CORREO_DE_LEYNER>
-# Omar David González Cardozo <CORREO_DE_OMAR> Omar <CORREO_DE_OMAR>
+# Nombre Completo <correo@ejemplo.com> NombreEnGit <correoEnGit>
