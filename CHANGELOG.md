@@ -76,7 +76,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - Stack local verificado con PostgreSQL 16 (imagen `postgres:16-alpine`), Node 22 y Docker Compose.
 - CI de GitHub Actions con PostgreSQL 16.
-- Commits de cierre: `5be156a` (cascada y verificación), `bacaa2b` (migración v11 sin destruir datos) y merge `4e54425` en `develop`.
+- Commits de cierre: `5be156a` (cascada y verificación), `bacaa2b` (migración v11 sin destruir datos), merge `4e54425`, `9488c9f` (infra), `fd33bd0` (documentación), `4fb186f` (HU-019) y `88579ef` (cierre documental de HU-019) en `develop`.
 
 ### Limitaciones conocidas
 

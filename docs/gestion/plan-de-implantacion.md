@@ -1,7 +1,7 @@
 # Plan de Implantación — ZENDA Semanas 1 y 2
 
 > **Alcance:** únicamente las semanas 1 y 2. No se adelantan funcionalidades de las semanas 3–6.
-> **Rama de trabajo:** `develop`, publicada en `origin/develop` (commits `5be156a`, `bacaa2b` y merge `4e54425`).
+> **Rama de trabajo:** `develop`, publicada en `origin/develop` (commits `5be156a`, `bacaa2b`, merge `4e54425`, `9488c9f`, `fd33bd0`, `4fb186f` y `88579ef`).
 > **Fecha de cierre:** 23 de octubre de 2026.
 
 ## Objetivo
@@ -116,7 +116,7 @@ pnpm build
 
 - Los commits se hacen por bloques con *Conventional Commits* en español y ya están publicados en `origin/develop`.
 - **D-08:** el historial anterior concentra la mayoría de commits en un integrante y no refleja el reparto ni la rotación de revisores. No se reescribe la historia; a partir de esta entrega se documentan los commits por bloque y se recomienda usar PRs hacia `develop` con el revisor asignado.
-- **D-09:** `develop` ya estaba publicado antes de esta tarea. Los cambios nuevos también se publicaron (`5be156a`, `bacaa2b`, merge `4e54425`).
+- **D-09:** `develop` ya estaba publicado antes de esta tarea. Los cambios nuevos también se publicaron (`5be156a`, `bacaa2b`, merge `4e54425`, `9488c9f`, `fd33bd0`, `4fb186f` y `88579ef`).
 - La migración se probó sobre el *fixture* v11 y sobre el esquema actual, no sobre una copia restaurada de producción. Antes de desplegar en Neon debe hacerse un respaldo y ejecutar `backend/scripts/migrar.js` en un entorno de ensayo.
 - El despliegue público de Render/Vercel sigue sirviendo la versión v11; el código actual no se ha desplegado.
 

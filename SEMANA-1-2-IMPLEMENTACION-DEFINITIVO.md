@@ -441,7 +441,7 @@ docker compose config --quiet
 | **Build Docker** | **Verificado** en Docker Desktop: imágenes `zenda-backend` y `zenda-frontend` construidas y stack levantado. |
 | **Migración en producción** | Requiere respaldo y ensayo previo en Neon. No se ejecutó contra producción. |
 | **Semanas 3–6** | No se adelantó funcionalidad. |
-| **Push** | **Realizado**: `5be156a`, `bacaa2b` y merge `4e54425` en `origin/develop`. |
+| **Push** | **Realizado**: `5be156a`, `bacaa2b` y merge `4e54425`; cierre posterior con `9488c9f`, `fd33bd0`, `4fb186f` y `88579ef` en `origin/develop`. |
 | **Despliegue público** | La URL de Render/Vercel sigue en v11; el código actual no se ha desplegado. |
 
 ---
@@ -523,8 +523,12 @@ Los cambios se agruparon por bloque funcional y ya están publicados en `origin/
 | `5be156a` | `fix(semana2): corregir cascada de estados y reforzar verificacion` |
 | `bacaa2b` | `fix(db): migrar v11 sin destruir datos y probar el upgrade` |
 | `4e54425` | Merge de `develop` en `origin/develop` |
+| `9488c9f` | `fix(infra): migracion sin colisiones, healthcheck IPv4 y arranque en Render free` |
+| `fd33bd0` | `docs: alinear la documentacion con el codigo real de Semanas 1-2` |
+| `4fb186f` | `fix(hu-019): validar nombre de carpeta y distinguir fase inexistente` |
+| `88579ef` | `docs: cerrar HU-019 y actualizar conteos de pruebas y cobertura` |
 
-El bloque de documentación de esta revisión (README, CHANGELOG, este documento, auditoría y guías) se commitea después de los anteriores. Para verificar el estado:
+Para verificar el estado:
 
 ```bash
 git log --oneline --decorate -10
