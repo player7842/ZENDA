@@ -96,7 +96,17 @@ WITH candidatos AS (
 )
 UPDATE "grupos" g
 SET "nombre_grupo" = 'General',
-    "codigo_grupo" = 'GEN-' || f."numero_ficha",
+    -- Si otra fila ya usa GEN-<ficha> (por ejemplo, un General legado que
+    -- terminó con proyecto), se conserva el código actual para no chocar con
+    -- la restricción UNIQUE.
+    "codigo_grupo" = CASE
+      WHEN g."codigo_grupo" = 'GEN-' || f."numero_ficha" THEN g."codigo_grupo"
+      WHEN EXISTS (
+        SELECT 1 FROM "grupos" otro
+        WHERE otro."codigo_grupo" = 'GEN-' || f."numero_ficha"
+      ) THEN g."codigo_grupo"
+      ELSE 'GEN-' || f."numero_ficha"
+    END,
     "cupo_maximo" = 50,
     "es_general" = true
 FROM candidatos c
@@ -117,7 +127,21 @@ INSERT INTO "grupos"
 SELECT f."ficha_id",
        lider."lider_id",
        'General',
-       'GEN-' || f."numero_ficha",
+       -- RN-006 usa GEN-<ficha>; si ese código ya lo ocupa un grupo legado
+       -- (un General que terminó con proyecto), se añade un sufijo estable.
+       CASE
+         WHEN NOT EXISTS (
+           SELECT 1 FROM "grupos" ocupado
+           WHERE ocupado."codigo_grupo" = 'GEN-' || f."numero_ficha"
+         ) THEN 'GEN-' || f."numero_ficha"
+         WHEN NOT EXISTS (
+           SELECT 1 FROM "grupos" ocupado
+           WHERE ocupado."codigo_grupo" = 'GEN-' || f."numero_ficha" || '-' || f."ficha_id"
+         ) THEN 'GEN-' || f."numero_ficha" || '-' || f."ficha_id"
+         ELSE 'GEN-' || f."numero_ficha" || '-' || f."ficha_id" || '-' || (
+           SELECT COALESCE(MAX(grupo_id), 0) + 1 FROM "grupos"
+         )
+       END,
        50,
        'Activo',
        now(),

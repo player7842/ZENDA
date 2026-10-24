@@ -92,10 +92,31 @@ BEGIN
     RAISE EXCEPTION 'La ficha 2 no tiene exactamente un General: %', v_count;
   END IF;
 
+  -- La ficha 2 ya tenía un General legado con proyecto y código
+  -- GEN-2724310. Ese grupo se conserva y el General nuevo usa un sufijo.
+  SELECT count(*) INTO v_count
+  FROM grupos
+  WHERE grupo_id = 3
+    AND NOT es_general
+    AND nombre_grupo = 'General'
+    AND codigo_grupo = 'GEN-2724310';
+  IF v_count <> 1 THEN
+    RAISE EXCEPTION 'El General legado con proyecto de la ficha 2 fue alterado';
+  END IF;
+
+  SELECT count(*) INTO v_count
+  FROM proyectos p
+  JOIN grupos g ON g.grupo_id = p.grupo_id
+  WHERE g.grupo_id = 3 AND NOT g.es_general;
+  IF v_count <> 1 THEN
+    RAISE EXCEPTION 'El proyecto del General legado de la ficha 2 quedó inaccesible';
+  END IF;
+
   SELECT count(*) INTO v_count
   FROM grupos
   WHERE ficha_id = 2 AND es_general
-    AND codigo_grupo = 'GEN-2724310'
+    AND codigo_grupo LIKE 'GEN-2724310%'
+    AND codigo_grupo <> 'GEN-2724310'
     AND lider_id = 5
     AND cupo_maximo = 50;
   IF v_count <> 1 THEN

@@ -168,13 +168,15 @@ VALUES (1, 2, 1), (2, 2, 2);
 -- Grupo 1: General real de la ficha 1 (sin proyecto).
 -- Grupo 2: grupo de trabajo legado que también se llama "General" y SÍ tiene
 --          proyecto. La migración no debe convertirlo en el General.
--- Grupo 3: grupo de trabajo de la ficha 2, que no tiene General.
+-- Grupo 3: General legado de la ficha 2 que terminó con proyecto y ya ocupa
+--          el código GEN-2724310. La migración debe crear un General nuevo
+--          con sufijo sin tocar el grupo legado.
 INSERT INTO "grupos"
   ("grupo_id", "ficha_id", "lider_id", "nombre_grupo", "codigo_grupo", "estado_grupo")
 VALUES
   (1, 1, 3, 'General', 'GRP-GENERAL-1', 'Activo'),
   (2, 1, 4, 'General', 'PRY-LEGACY1', 'Activo'),
-  (3, 2, 5, 'Equipo X', 'PRY-LEGACY2', 'Activo');
+  (3, 2, 5, 'General', 'GEN-2724310', 'Activo');
 
 INSERT INTO "integrantes_grupo"
   ("integrante_id", "grupo_id", "usuario_id", "rol_scrum", "estado_integrante")

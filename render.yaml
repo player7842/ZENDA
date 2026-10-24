@@ -15,9 +15,11 @@ services:
     dockerContext: .
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /api/health
-    # Render ejecuta el script antes de arrancar la versión nueva. La migración
-    # es idempotente y falla con código distinto de cero si PostgreSQL la rechaza.
-    preDeployCommand: node scripts/migrar.js
+    # El plan free no admite `preDeployCommand` (solo planes pagos). La
+    # migración se ejecuta al arrancar el contenedor: es idempotente y, si
+    # PostgreSQL la rechaza, el proceso termina con código distinto de cero y
+    # Render no marca el despliegue como saludable.
+    startCommand: sh -c "node scripts/migrar.js && node server.js"
     autoDeploy: true
     envVars:
       - key: NODE_ENV
