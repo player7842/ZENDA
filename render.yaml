@@ -27,10 +27,10 @@ services:
       - key: PORT
         value: 4000
       - key: DB_SSL
-        value: "true"
+        value: 'true'
       # Neon usa certificados válidos; no desactivar esta validación.
       - key: DB_SSL_REJECT_UNAUTHORIZED
-        value: "true"
+        value: 'true'
       # Cadena de conexión de Neon, por ejemplo:
       # postgresql://usuario:clave@ep-xxx.us-east-2.aws.neon.tech/zenda?sslmode=require
       - key: DATABASE_URL
@@ -41,7 +41,7 @@ services:
       - key: JWT_SESSION_EXPIRES
         value: 24h
       - key: CODIGO_PROGRAMA_COORDINADOR
-        value: "2338"
+        value: '2338'
       # Dominio público del frontend en Vercel. Si hay varios, séparalos con coma.
       - key: FRONTEND_URL
         sync: false

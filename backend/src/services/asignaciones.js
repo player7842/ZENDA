@@ -9,11 +9,7 @@
 
 function normalizarIds(ids) {
   return [
-    ...new Set(
-      (ids || [])
-        .map((id) => Number(id))
-        .filter((id) => Number.isInteger(id) && id > 0)
-    ),
+    ...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)),
   ];
 }
 
@@ -32,7 +28,7 @@ export async function sincronizarFichasInstructor(
   db,
   instructorId,
   fichaIds,
-  { soloPrograma = null } = {}
+  { soloPrograma = null } = {},
 ) {
   const deseadas = normalizarIds(fichaIds);
 
@@ -45,7 +41,7 @@ export async function sincronizarFichasInstructor(
        AND ifi.fecha_fin IS NULL
        AND ($2::int IS NULL OR pr.codigo_programa = $2)
      FOR UPDATE OF ifi`,
-    [instructorId, soloPrograma]
+    [instructorId, soloPrograma],
   );
 
   const idsActivas = new Set(activas.map((fila) => Number(fila.ficha_id)));
@@ -60,7 +56,7 @@ export async function sincronizarFichasInstructor(
       `UPDATE instructor_ficha
        SET fecha_fin = CURRENT_DATE, estado = 'Inactivo'
        WHERE instructor_ficha_id = ANY($1::int[])`,
-      [aCerrar]
+      [aCerrar],
     );
   }
 
@@ -75,7 +71,7 @@ export async function sincronizarFichasInstructor(
        VALUES ($1, $2, CURRENT_DATE, NULL, 'Activo')
        ON CONFLICT (instructor_id, ficha_id) WHERE fecha_fin IS NULL
        DO NOTHING`,
-      [instructorId, fichaId]
+      [instructorId, fichaId],
     );
 
     creadas += rowCount;
@@ -93,7 +89,7 @@ export async function cerrarAsignacionesInstructor(db, instructorId) {
     `UPDATE instructor_ficha
      SET fecha_fin = CURRENT_DATE, estado = 'Inactivo'
      WHERE instructor_id = $1 AND fecha_fin IS NULL`,
-    [instructorId]
+    [instructorId],
   );
 
   return rowCount;

@@ -17,7 +17,11 @@ import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 
 // Generalizado: recibe qué roles se aceptan para esta acción en concreto.
-export const verificarPassword = async (idUsuario, password, rolesPermitidos = ['ADMINISTRADOR']) => {
+export const verificarPassword = async (
+  idUsuario,
+  password,
+  rolesPermitidos = ['ADMINISTRADOR'],
+) => {
   if (!password) {
     const err = new Error('Necesito tu contraseña para confirmar la acción');
     err.codigo = 400;
@@ -26,7 +30,7 @@ export const verificarPassword = async (idUsuario, password, rolesPermitidos = [
 
   const result = await pool.query(
     'SELECT usuario_id, contrasena, rol FROM usuarios WHERE usuario_id = $1',
-    [idUsuario]
+    [idUsuario],
   );
   if (result.rows.length === 0) {
     const err = new Error('Tu usuario no existe en la base de datos');

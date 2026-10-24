@@ -6,15 +6,17 @@
   - Todo lo demás que no exista → al login.
 */
 
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Auth/Login";
-import Register from "./components/Auth/Register";
-import ForgotPassword from "./components/Auth/ForgotPassword";
-import ResetPassword from "./components/Auth/ResetPassword";
-import ProtectedRoute from "./components/Auth/ProtectedRoute";
-import AdminRoute from "./components/Auth/AdminRoute";
-import DashboardLite from "./pages/Dashboard";
-import Admin from "./pages/Admin";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
+import ForgotPassword from './components/Auth/ForgotPassword';
+import ResetPassword from './components/Auth/ResetPassword';
+import VerifyEmail from './components/Auth/VerifyEmail';
+import SessionManager from './components/Auth/SessionManager';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import AdminRoute from './components/Auth/AdminRoute';
+import DashboardLite from './pages/Dashboard';
+import Admin from './pages/Admin';
 import Aprendiz from './pages/aprendiz.jsx';
 import AprendizRoute from './components/Auth/AprendizRoute.jsx';
 
@@ -27,11 +29,12 @@ import Coordinador from './pages/coordinador.jsx';
 import CoordinadorRoute from './components/Auth/CoordinadorRoute.jsx';
 
 // HOMEPAGE
-import Home from "./pages/Home.jsx";
-import { getToken, getStoredUser, getRutaPorRol } from "./api";
+import Home from './pages/Home.jsx';
+import Legal from './pages/Legal.jsx';
+import { getToken, getStoredUser, getRutaPorRol } from './api';
 
 // COMPONENTE LEGAL (HABEAS DATA & LOCALSTORAGE)
-import CookieBanner from "./components/CookieBanner";
+import CookieBanner from './components/CookieBanner';
 
 function App() {
   return (
@@ -39,19 +42,24 @@ function App() {
       {/* Banner flotante global de almacenamiento local y cookies */}
       <CookieBanner />
 
+      {/* HU-004: renovación de sesión y cierre por inactividad */}
+      <SessionManager />
+
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verificar-correo" element={<VerifyEmail />} />
+        <Route path="/terminos" element={<Legal tipo="terminos" />} />
+        <Route path="/privacidad" element={<Legal tipo="privacidad" />} />
+        <Route path="/cookies" element={<Legal tipo="cookies" />} />
 
         {/* ANTES: <Route path="/" element={<Navigate to="/admin" replace />} /> */}
         <Route
           path="/"
           element={
-            getToken()
-              ? <Navigate to={getRutaPorRol(getStoredUser()?.rol)} replace />
-              : <Home />
+            getToken() ? <Navigate to={getRutaPorRol(getStoredUser()?.rol)} replace /> : <Home />
           }
         />
 

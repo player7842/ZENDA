@@ -4,8 +4,8 @@
   Si no es admin, lo manda al dashboard.
 */
 
-import { Navigate } from "react-router-dom";
-import { getToken, isAdmin } from "../../api";
+import { Navigate } from 'react-router-dom';
+import { getToken, isAdmin } from '../../api';
 
 function AdminRoute({ children }) {
   const authenticated = getToken() !== null;

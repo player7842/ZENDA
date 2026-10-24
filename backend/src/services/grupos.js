@@ -32,14 +32,14 @@ export async function obtenerOCrearGrupoGeneral(db, fichaId, liderId = null) {
      VALUES ('General', $1, $2, $3, 50, 'Activo', now(), true)
      ON CONFLICT (ficha_id) WHERE es_general DO NOTHING
      RETURNING grupo_id`,
-    [codigo, fichaId, liderId]
+    [codigo, fichaId, liderId],
   );
 
   if (creado.rows.length > 0) return creado.rows[0].grupo_id;
 
   const existente = await db.query(
     'SELECT grupo_id FROM grupos WHERE ficha_id = $1 AND es_general LIMIT 1',
-    [fichaId]
+    [fichaId],
   );
 
   if (existente.rows.length === 0) {

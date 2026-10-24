@@ -18,16 +18,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '../.env') });
 dotenv.config({ path: resolve(__dirname, '../../.env') });
 
-const candidatos = [
-  resolve(__dirname, '../Database/migrations/002_semana2.sql'), // imagen Docker
-  resolve(__dirname, '../../Database/migrations/002_semana2.sql'), // repo local
-];
-const rutaMigracion = candidatos.find((ruta) => existsSync(ruta));
+const MIGRACIONES = ['002_semana2.sql', '003_cierre.sql'];
 
-if (!rutaMigracion) {
-  console.error('[migrar] No se encontró Database/migrations/002_semana2.sql');
-  process.exit(1);
-}
+const rutasMigraciones = MIGRACIONES.map((archivo) => {
+  const candidatos = [
+    resolve(__dirname, `../Database/migrations/${archivo}`), // imagen Docker
+    resolve(__dirname, `../../Database/migrations/${archivo}`), // repo local
+  ];
+  const ruta = candidatos.find((candidato) => existsSync(candidato));
+  if (!ruta) {
+    console.error(`[migrar] No se encontró Database/migrations/${archivo}`);
+    process.exit(1);
+  }
+  return ruta;
+});
 
 const sslRechazaCertificadosInvalidos =
   process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
@@ -53,9 +57,11 @@ const client = new pg.Client(config);
 
 try {
   await client.connect();
-  const sql = readFileSync(rutaMigracion, 'utf8');
-  await client.query(sql);
-  console.info('[migrar] Migración 002_semana2.sql aplicada correctamente');
+  for (const rutaMigracion of rutasMigraciones) {
+    const sql = readFileSync(rutaMigracion, 'utf8');
+    await client.query(sql);
+    console.info(`[migrar] ${rutaMigracion.split(/[\\/]/).pop()} aplicada correctamente`);
+  }
 } catch (error) {
   console.error('[migrar] Error al aplicar la migración:', error.message);
   process.exitCode = 1;

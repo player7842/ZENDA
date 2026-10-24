@@ -35,29 +35,39 @@ const generalLimiter = rateLimit({
 });
 app.use('/api/', generalLimiter);
 
-// Limitador más estricto para autenticación y recuperación de contraseñas
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20, // máximo 20 intentos cada 15 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: 'Demasiados intentos de autenticación, por favor intenta más tarde.' },
-});
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
-app.use('/api/auth/reset-password', authLimiter);
+// Limitador más estricto para autenticación y recuperación de contraseñas.
+// Cada ruta tiene su propio contador: un usuario que reintenta el login no
+// agota el cupo de la verificación de correo ni del refresco de sesión.
+const crearAuthLimiter = () =>
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20, // máximo 20 intentos cada 15 min por ruta
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Demasiados intentos de autenticación, por favor intenta más tarde.' },
+  });
+
+app.use('/api/auth/login', crearAuthLimiter());
+app.use('/api/auth/register', crearAuthLimiter());
+app.use('/api/auth/forgot-password', crearAuthLimiter());
+app.use('/api/auth/reset-password', crearAuthLimiter());
+app.use('/api/auth/verify-email', crearAuthLimiter());
+app.use('/api/auth/resend-verification', crearAuthLimiter());
+app.use('/api/auth/refresh', crearAuthLimiter());
+app.use('/api/auth/logout', crearAuthLimiter());
 
 // CORS: solo se aceptan los orígenes declarados en FRONTEND_URL.
 app.use(
   cors({
+    // HU-004: la cookie HttpOnly del refresco viaja entre el frontend y la API.
+    credentials: true,
     origin: (origin, callback) => {
       // Sin origin: Postman, Thunder Client o health checks de infraestructura
       if (!origin) return callback(null, true);
       if (env.frontendUrls.includes(origin)) return callback(null, true);
       return callback(null, false);
     },
-  })
+  }),
 );
 
 app.use(express.json({ limit: '1mb' }));

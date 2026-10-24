@@ -16,7 +16,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
   - 9 pruebas unitarias y 8 de integración con Supertest (17 en total).
   - Migración incremental e idempotente `Database/migrations/002_semana2.sql`.
   - Servicio `migrate` en Compose y `startCommand` con migración en Render (el plan free no admite `preDeployCommand`).
-  - *Fixtures* `Database/fixtures/v11_migracion.sql` y `v11_migracion_assert.sql` para probar el upgrade desde v11.
+  - _Fixtures_ `Database/fixtures/v11_migracion.sql` y `v11_migracion_assert.sql` para probar el upgrade desde v11.
 - **Seguridad:** `helmet`, `express-rate-limit`, `trust proxy`, `/health` y `/api/health`.
 - **Recuperación de contraseña:** tabla `recuperacion_contrasena`, tokens con `purpose: 'reset'`, hash SHA-256 de un solo uso y `token_version`.
 - **Esquema:** `grupos.es_general`, `grupos.cupo_maximo`, `instructor_ficha` con historial, funciones `zenda_recalcular_carpeta`/`zenda_recalcular_fase`, checks de URLs de evidencias y de tipos.
@@ -45,7 +45,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - **C-02:** el plan ahora coincide con el código (`helmet`, rate-limit, `/health`).
 - **C-04:** la migración recalcula datos antes de añadir `CHECK`, normaliza cupos y es idempotente.
 - **C-05:** se elimina la comparación por `nombre_grupo = 'General'` y la posibilidad de crear un proyecto “General”.
-- **Colisión `GEN-<ficha>`:** si un General legado con proyecto ya ocupa el código, se conserva y el General nuevo recibe un sufijo estable. El *fixture* v11 cubre ese caso y las *assertions* comprueban que el grupo legado y su proyecto siguen intactos.
+- **Colisión `GEN-<ficha>`:** si un General legado con proyecto ya ocupa el código, se conserva y el General nuevo recibe un sufijo estable. El _fixture_ v11 cubre ese caso y las _assertions_ comprueban que el grupo legado y su proyecto siguen intactos.
 - **C-06:** bloqueos en cascada, RN-007, cupo y evaluaciones; `clock_timestamp()`.
 - **C-07:** URLs `javascript:` rechazadas en backend y frontend.
 - **Q-01 a Q-11:** logging en `catch`, funciones SQL únicas, helper General, listados sin N+1, aprobación en bloque atómica, validación de fechas/longitudes, código criptográfico y `ORDER BY` antes de `LIMIT 1`.
@@ -69,7 +69,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - 9 pruebas unitarias de reglas puras (`backend/tests/reglas.test.js`).
 - 8 pruebas de integración con Supertest (`backend/tests/integracion.test.js`). Se omiten sin PostgreSQL; en CI se ejecutan con `REQUIRE_DB=1`.
 - **Total: 17/17.**
-- Migración probada sobre una base v11 con datos: se aplica dos veces seguidas sin errores y las *assertions* confirman que no se pierden evidencias, grupos ni proyectos (`V11_MIGRATION_OK`).
+- Migración probada sobre una base v11 con datos: se aplica dos veces seguidas sin errores y las _assertions_ confirman que no se pierden evidencias, grupos ni proyectos (`V11_MIGRATION_OK`).
 - `docker compose up --build` verificado: `db`, `migrate`, `backend` y `frontend` arrancan; `GET /api/health` responde 200, el frontend responde 200 y el login de administrador y aprendiz responde 200.
 
 ### Verificación

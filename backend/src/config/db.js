@@ -11,8 +11,7 @@ dotenv.config({ path: resolve(__dirname, '../../.env') });
 import pg from 'pg';
 const { Pool } = pg;
 
-const sslRechazaCertificadosInvalidos =
-  process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
+const sslRechazaCertificadosInvalidos = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
 
 const pool = new Pool(
   process.env.DATABASE_URL
@@ -30,7 +29,7 @@ const pool = new Pool(
           process.env.DB_SSL === 'true'
             ? { rejectUnauthorized: sslRechazaCertificadosInvalidos }
             : false,
-      }
+      },
 );
 
 // Verificación de conectividad con la base de datos

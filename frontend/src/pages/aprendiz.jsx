@@ -5,8 +5,8 @@
   integrante trabaja luego en las carpetas y evidencias del grupo.
 */
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getMiProyectoAprendiz,
   crearProyectoAprendiz,
@@ -16,52 +16,52 @@ import {
   getMiFichaActual,
   clearToken,
   getStoredUser,
-} from "../api";
-import { useTheme } from "../context/ThemeContext";
-import ThemeToggle from "../components/ThemeToggle";
-import MiProyecto from "./aprendiz/MiProyecto";
-import Fases from "./aprendiz/Fases";
-import Observaciones from "./aprendiz/Observaciones";
-import Tareas from "./aprendiz/Tareas";
-import Resumen from "./aprendiz/Resumen";
-import Equipo from "./aprendiz/Equipo";
-import { 
-  LayoutDashboard, 
-  FolderGit2, 
-  Layers, 
-  MessageSquare, 
-  CheckSquare, 
-  Users, 
-  PlusCircle, 
-  UserPlus, 
-  AlertCircle 
-} from "lucide-react";
-import "../styles/Admin.css";
-import "../styles/Instructor.css";
+} from '../api';
+import { useTheme } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
+import MiProyecto from './aprendiz/MiProyecto';
+import Fases from './aprendiz/Fases';
+import Observaciones from './aprendiz/Observaciones';
+import Tareas from './aprendiz/Tareas';
+import Resumen from './aprendiz/Resumen';
+import Equipo from './aprendiz/Equipo';
+import {
+  LayoutDashboard,
+  FolderGit2,
+  Layers,
+  MessageSquare,
+  CheckSquare,
+  Users,
+  PlusCircle,
+  UserPlus,
+  AlertCircle,
+} from 'lucide-react';
+import '../styles/Admin.css';
+import '../styles/Instructor.css';
 
 const FORM_INICIAL = {
-  nombre_grupo: "",
-  nombre_proyecto: "",
-  descripcion: "",
-  problema: "",
-  objetivo: "",
-  alcance: "",
-  tecnologias: "",
-  fecha_inicio: "",
-  fecha_fin_estimada: "",
+  nombre_grupo: '',
+  nombre_proyecto: '',
+  descripcion: '',
+  problema: '',
+  objetivo: '',
+  alcance: '',
+  tecnologias: '',
+  fecha_inicio: '',
+  fecha_fin_estimada: '',
   cupo_maximo: 6,
 };
 
 function Aprendiz() {
   const [datos, setDatos] = useState(null);
-  const [pestana, setPestana] = useState("resumen");
+  const [pestana, setPestana] = useState('resumen');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [exito, setExito] = useState("");
+  const [error, setError] = useState('');
+  const [exito, setExito] = useState('');
 
   const [form, setForm] = useState(FORM_INICIAL);
-  const [codigo, setCodigo] = useState("");
-  const [modoSinProyecto, setModoSinProyecto] = useState("crear");
+  const [codigo, setCodigo] = useState('');
+  const [modoSinProyecto, setModoSinProyecto] = useState('crear');
 
   const [fichasDisponibles, setFichasDisponibles] = useState([]);
   const [fichaActual, setFichaActual] = useState(null);
@@ -72,15 +72,15 @@ function Aprendiz() {
 
   const fetchMiProyecto = async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const data = await getMiProyectoAprendiz();
       setDatos(data);
     } catch (err) {
-      setError(err?.message || "Error al cargar el proyecto");
-      if (err?.message?.includes("Token")) {
+      setError(err?.message || 'Error al cargar el proyecto');
+      if (err?.message?.includes('Token')) {
         clearToken();
-        navigate("/login");
+        navigate('/login');
       }
     } finally {
       setLoading(false);
@@ -93,15 +93,19 @@ function Aprendiz() {
 
   useEffect(() => {
     if (!loading && !datos) {
-      getFichasPublicas().then(setFichasDisponibles).catch(() => setFichasDisponibles([]));
-      getMiFichaActual().then((r) => setFichaActual(r?.numero_ficha || null)).catch(() => setFichaActual(null));
+      getFichasPublicas()
+        .then(setFichasDisponibles)
+        .catch(() => setFichasDisponibles([]));
+      getMiFichaActual()
+        .then((r) => setFichaActual(r?.numero_ficha || null))
+        .catch(() => setFichaActual(null));
     }
   }, [loading, datos]);
 
   const handleCrear = async (e) => {
     e.preventDefault();
-    setError("");
-    setExito("");
+    setError('');
+    setExito('');
     try {
       const data = await crearProyectoAprendiz(form);
       setExito(`Proyecto creado con éxito. Código de invitación: ${data.codigo_grupo}`);
@@ -114,11 +118,11 @@ function Aprendiz() {
 
   const handleUnirse = async (e) => {
     e.preventDefault();
-    setError("");
-    setExito("");
+    setError('');
+    setExito('');
     try {
       await unirseProyectoAprendiz(codigo.trim().toUpperCase());
-      setCodigo("");
+      setCodigo('');
       await fetchMiProyecto();
     } catch (err) {
       setError(err.message);
@@ -128,13 +132,13 @@ function Aprendiz() {
   const handleCambiarFicha = async (e) => {
     const numeroFicha = e.target.value;
     if (!numeroFicha) return;
-    setError("");
-    setExito("");
+    setError('');
+    setExito('');
     try {
       await cambiarMiFicha(numeroFicha);
-      setExito("Ficha actualizada correctamente");
+      setExito('Ficha actualizada correctamente');
       setFichaActual(Number(numeroFicha));
-      e.target.value = "";
+      e.target.value = '';
     } catch (err) {
       setError(err.message);
     }
@@ -142,11 +146,11 @@ function Aprendiz() {
 
   const handleLogout = () => {
     clearToken();
-    localStorage.removeItem("zenda-user");
-    navigate("/login");
+    localStorage.removeItem('zenda-user');
+    navigate('/login');
   };
 
-  const logo = theme === "dark" ? "/logos/logo-dark.png" : "/logos/logo-light.png";
+  const logo = theme === 'dark' ? '/logos/logo-dark.png' : '/logos/logo-light.png';
   const esLider = datos && aprendiz && datos.grupo.lider_id === aprendiz.usuario_id;
 
   return (
@@ -167,27 +171,45 @@ function Aprendiz() {
       <div className="admin-body">
         <aside className="admin-sidebar">
           <nav className="admin-nav">
-            <button className={`admin-nav-btn ${pestana === "resumen" ? "active" : ""}`} onClick={() => setPestana("resumen")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'resumen' ? 'active' : ''}`}
+              onClick={() => setPestana('resumen')}
+            >
               <LayoutDashboard size={18} />
               <span>Resumen</span>
             </button>
-            <button className={`admin-nav-btn ${pestana === "proyecto" ? "active" : ""}`} onClick={() => setPestana("proyecto")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'proyecto' ? 'active' : ''}`}
+              onClick={() => setPestana('proyecto')}
+            >
               <FolderGit2 size={18} />
               <span>Mi proyecto</span>
             </button>
-            <button className={`admin-nav-btn ${pestana === "equipo" ? "active" : ""}`} onClick={() => setPestana("equipo")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'equipo' ? 'active' : ''}`}
+              onClick={() => setPestana('equipo')}
+            >
               <Users size={18} />
               <span>Equipo</span>
             </button>
-            <button className={`admin-nav-btn ${pestana === "fases" ? "active" : ""}`} onClick={() => setPestana("fases")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'fases' ? 'active' : ''}`}
+              onClick={() => setPestana('fases')}
+            >
               <Layers size={18} />
               <span>Fases</span>
             </button>
-            <button className={`admin-nav-btn ${pestana === "observaciones" ? "active" : ""}`} onClick={() => setPestana("observaciones")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'observaciones' ? 'active' : ''}`}
+              onClick={() => setPestana('observaciones')}
+            >
               <MessageSquare size={18} />
               <span>Observaciones</span>
             </button>
-            <button className={`admin-nav-btn ${pestana === "tareas" ? "active" : ""}`} onClick={() => setPestana("tareas")}>
+            <button
+              className={`admin-nav-btn ${pestana === 'tareas' ? 'active' : ''}`}
+              onClick={() => setPestana('tareas')}
+            >
               <CheckSquare size={18} />
               <span>Tareas</span>
             </button>
@@ -196,7 +218,7 @@ function Aprendiz() {
           <div className="admin-sidebar-footer">
             <div className="admin-user">
               <span className="admin-user-name">
-                {aprendiz ? `${aprendiz.nombre} ${aprendiz.apellido}` : "Aprendiz"}
+                {aprendiz ? `${aprendiz.nombre} ${aprendiz.apellido}` : 'Aprendiz'}
               </span>
               <span className="admin-user-email">{aprendiz?.correo}</span>
             </div>
@@ -207,26 +229,53 @@ function Aprendiz() {
         </aside>
 
         <main className="admin-content">
-          {error && <div className="server-error" style={{ marginBottom: 16 }}><AlertCircle size={16} /> {error}</div>}
-          {exito && <div className="server-exito" style={{ marginBottom: 16 }}>{exito}</div>}
+          {error && (
+            <div className="server-error" style={{ marginBottom: 16 }}>
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+          {exito && (
+            <div className="server-exito" style={{ marginBottom: 16 }}>
+              {exito}
+            </div>
+          )}
 
           {loading ? (
-            <div className="skeleton-box" style={{ height: 300, width: "100%" }} />
+            <div className="skeleton-box" style={{ height: 300, width: '100%' }} />
           ) : datos ? (
-            pestana === "resumen" ? <Resumen fases={datos.fases} /> :
-            pestana === "proyecto" ? <MiProyecto datos={datos} esLider={esLider} onCupoActualizado={fetchMiProyecto} /> :
-            pestana === "equipo" ? <Equipo integrantes={datos.integrantes} grupo={datos.grupo} /> :
-            pestana === "fases" ? <Fases fases={datos.fases} /> :
-            pestana === "tareas" ? <Tareas esLider={esLider} integrantes={datos.integrantes} usuarioId={aprendiz?.usuario_id} /> :
-            <Observaciones />
+            pestana === 'resumen' ? (
+              <Resumen fases={datos.fases} />
+            ) : pestana === 'proyecto' ? (
+              <MiProyecto datos={datos} esLider={esLider} onCupoActualizado={fetchMiProyecto} />
+            ) : pestana === 'equipo' ? (
+              <Equipo integrantes={datos.integrantes} grupo={datos.grupo} />
+            ) : pestana === 'fases' ? (
+              <Fases fases={datos.fases} />
+            ) : pestana === 'tareas' ? (
+              <Tareas
+                esLider={esLider}
+                integrantes={datos.integrantes}
+                usuarioId={aprendiz?.usuario_id}
+              />
+            ) : (
+              <Observaciones />
+            )
           ) : (
             <>
               {/* Corrección contextual de ficha */}
-              <div className="bloque-separado" style={{ marginBottom: 20, maxWidth: 580, margin: "0 auto 20px" }}>
+              <div
+                className="bloque-separado"
+                style={{ marginBottom: 20, maxWidth: 580, margin: '0 auto 20px' }}
+              >
                 <p className="admin-hint" style={{ marginBottom: 10 }}>
-                  {fichaActual
-                    ? <>Tu ficha actual registrada es la <strong>{fichaActual}</strong>. Si necesitas hacer una corrección, elígela a continuación:</>
-                    : "Selecciona tu ficha asignada para continuar:"}
+                  {fichaActual ? (
+                    <>
+                      Tu ficha actual registrada es la <strong>{fichaActual}</strong>. Si necesitas
+                      hacer una corrección, elígela a continuación:
+                    </>
+                  ) : (
+                    'Selecciona tu ficha asignada para continuar:'
+                  )}
                 </p>
                 <select className="modal-select" onChange={handleCambiarFicha} defaultValue="">
                   <option value="">Cambiar ficha...</option>
@@ -241,81 +290,140 @@ function Aprendiz() {
               </div>
 
               {/* CONTENEDOR CENTRADO Y COMPACTO DE FORMULARIO */}
-              <div style={{ maxWidth: 580, margin: "0 auto" }}>
+              <div style={{ maxWidth: 580, margin: '0 auto' }}>
                 <div className="bloque-separado" style={{ padding: 18, marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                    <PlusCircle size={22} style={{ color: "var(--color-primary)" }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <PlusCircle size={22} style={{ color: 'var(--color-primary)' }} />
                     <div>
-                      <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Sin proyecto en esta ficha</h3>
-                      <span className="admin-count" style={{ fontSize: "0.78rem" }}>
+                      <h3 style={{ margin: 0, fontSize: '1.05rem' }}>Sin proyecto en esta ficha</h3>
+                      <span className="admin-count" style={{ fontSize: '0.78rem' }}>
                         Puedes crear un grupo (quedarás como líder) o unirte con un código.
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
                     <button
                       type="button"
-                      className={modoSinProyecto === "crear" ? "btn-rol" : "btn-secondary"}
-                      onClick={() => setModoSinProyecto("crear")}
+                      className={modoSinProyecto === 'crear' ? 'btn-rol' : 'btn-secondary'}
+                      onClick={() => setModoSinProyecto('crear')}
                       style={{ flex: 1, height: 38 }}
                     >
                       <PlusCircle size={16} style={{ marginRight: 8 }} /> Crear proyecto
                     </button>
                     <button
                       type="button"
-                      className={modoSinProyecto === "unirse" ? "btn-rol" : "btn-secondary"}
-                      onClick={() => setModoSinProyecto("unirse")}
+                      className={modoSinProyecto === 'unirse' ? 'btn-rol' : 'btn-secondary'}
+                      onClick={() => setModoSinProyecto('unirse')}
                       style={{ flex: 1, height: 38 }}
                     >
                       <UserPlus size={16} style={{ marginRight: 8 }} /> Unirme con código
                     </button>
                   </div>
 
-                  {modoSinProyecto === "crear" ? (
+                  {modoSinProyecto === 'crear' ? (
                     <form onSubmit={handleCrear}>
                       <label className="modal-label">Nombre del Grupo</label>
-                      <input className="modal-input" required value={form.nombre_grupo}
-                        onChange={(e) => setForm({ ...form, nombre_grupo: e.target.value })} placeholder="Ej: Célula Alpha ADSO" style={{ marginBottom: 10 }} />
+                      <input
+                        className="modal-input"
+                        required
+                        value={form.nombre_grupo}
+                        onChange={(e) => setForm({ ...form, nombre_grupo: e.target.value })}
+                        placeholder="Ej: Célula Alpha ADSO"
+                        style={{ marginBottom: 10 }}
+                      />
 
                       <label className="modal-label">Nombre del Proyecto</label>
-                      <input className="modal-input" required value={form.nombre_proyecto}
-                        onChange={(e) => setForm({ ...form, nombre_proyecto: e.target.value })} placeholder="Ej: Sistema ZENDA" style={{ marginBottom: 10 }} />
+                      <input
+                        className="modal-input"
+                        required
+                        value={form.nombre_proyecto}
+                        onChange={(e) => setForm({ ...form, nombre_proyecto: e.target.value })}
+                        placeholder="Ej: Sistema ZENDA"
+                        style={{ marginBottom: 10 }}
+                      />
 
-                      <label className="modal-label">Descripción Ejecutiva (Máx. 500 caract.)</label>
-                      <textarea className="modal-input" maxLength={500} rows={3} required value={form.descripcion}
-                        onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Resumen del proyecto..." style={{ marginBottom: 10, resize: "vertical" }} />
+                      <label className="modal-label">
+                        Descripción Ejecutiva (Máx. 500 caract.)
+                      </label>
+                      <textarea
+                        className="modal-input"
+                        maxLength={500}
+                        rows={3}
+                        required
+                        value={form.descripcion}
+                        onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                        placeholder="Resumen del proyecto..."
+                        style={{ marginBottom: 10, resize: 'vertical' }}
+                      />
 
                       <div className="modal-grid" style={{ marginBottom: 10 }}>
                         <div>
                           <label className="modal-label">Problema a Resolver</label>
-                          <input className="modal-input" maxLength={500} required value={form.problema}
-                            onChange={(e) => setForm({ ...form, problema: e.target.value })} placeholder="Problema identificado" />
+                          <input
+                            className="modal-input"
+                            maxLength={500}
+                            required
+                            value={form.problema}
+                            onChange={(e) => setForm({ ...form, problema: e.target.value })}
+                            placeholder="Problema identificado"
+                          />
                         </div>
                         <div>
                           <label className="modal-label">Objetivo Principal</label>
-                          <input className="modal-input" maxLength={500} required value={form.objetivo}
-                            onChange={(e) => setForm({ ...form, objetivo: e.target.value })} placeholder="Objetivo de desarrollo" />
+                          <input
+                            className="modal-input"
+                            maxLength={500}
+                            required
+                            value={form.objetivo}
+                            onChange={(e) => setForm({ ...form, objetivo: e.target.value })}
+                            placeholder="Objetivo de desarrollo"
+                          />
                         </div>
                       </div>
 
                       <label className="modal-label">Alcance</label>
-                      <input className="modal-input" maxLength={500} required value={form.alcance}
-                        onChange={(e) => setForm({ ...form, alcance: e.target.value })} placeholder="Delimitación de entregables" style={{ marginBottom: 10 }} />
+                      <input
+                        className="modal-input"
+                        maxLength={500}
+                        required
+                        value={form.alcance}
+                        onChange={(e) => setForm({ ...form, alcance: e.target.value })}
+                        placeholder="Delimitación de entregables"
+                        style={{ marginBottom: 10 }}
+                      />
 
                       <label className="modal-label">Tecnologías (Opcional)</label>
-                      <input className="modal-input" maxLength={300} value={form.tecnologias}
-                        onChange={(e) => setForm({ ...form, tecnologias: e.target.value })} placeholder="Ej: React, Node.js, PostgreSQL" style={{ marginBottom: 12 }} />
+                      <input
+                        className="modal-input"
+                        maxLength={300}
+                        value={form.tecnologias}
+                        onChange={(e) => setForm({ ...form, tecnologias: e.target.value })}
+                        placeholder="Ej: React, Node.js, PostgreSQL"
+                        style={{ marginBottom: 12 }}
+                      />
 
                       <div className="modal-grid" style={{ marginBottom: 12 }}>
                         <div>
                           <label className="modal-label">Fecha de Inicio</label>
-                          <input className="modal-input" type="date" required value={form.fecha_inicio}
-                            onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })} />
+                          <input
+                            className="modal-input"
+                            type="date"
+                            required
+                            value={form.fecha_inicio}
+                            onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
+                          />
                         </div>
                         <div>
                           <label className="modal-label">Fecha Fin Estimada</label>
-                          <input className="modal-input" type="date" required value={form.fecha_fin_estimada}
-                            onChange={(e) => setForm({ ...form, fecha_fin_estimada: e.target.value })} />
+                          <input
+                            className="modal-input"
+                            type="date"
+                            required
+                            value={form.fecha_fin_estimada}
+                            onChange={(e) =>
+                              setForm({ ...form, fecha_fin_estimada: e.target.value })
+                            }
+                          />
                         </div>
                       </div>
 
@@ -331,11 +439,23 @@ function Aprendiz() {
                         style={{ marginBottom: 14 }}
                       />
 
-                      <div className="ficha-dates-badge" style={{ display: "block", textAlign: "center", marginBottom: 14, padding: "8px 12px" }}>
+                      <div
+                        className="ficha-dates-badge"
+                        style={{
+                          display: 'block',
+                          textAlign: 'center',
+                          marginBottom: 14,
+                          padding: '8px 12px',
+                        }}
+                      >
                         Serás el <strong>líder</strong> del grupo al crearlo.
                       </div>
 
-                      <button className="btn-rol" type="submit" style={{ width: "100%", height: 40 }}>
+                      <button
+                        className="btn-rol"
+                        type="submit"
+                        style={{ width: '100%', height: 40 }}
+                      >
                         Crear e iniciar proyecto
                       </button>
                     </form>
@@ -348,14 +468,26 @@ function Aprendiz() {
                         value={codigo}
                         onChange={(e) => setCodigo(e.target.value)}
                         placeholder="PRY-XXXXXXXXXX"
-                        style={{ marginBottom: 14, textTransform: "uppercase" }}
+                        style={{ marginBottom: 14, textTransform: 'uppercase' }}
                       />
 
-                      <div className="ficha-dates-badge" style={{ display: "block", textAlign: "center", marginBottom: 14, padding: "8px 12px" }}>
+                      <div
+                        className="ficha-dates-badge"
+                        style={{
+                          display: 'block',
+                          textAlign: 'center',
+                          marginBottom: 14,
+                          padding: '8px 12px',
+                        }}
+                      >
                         Se verifica el cupo disponible al unirte.
                       </div>
 
-                      <button className="btn-rol" type="submit" style={{ width: "100%", height: 40 }}>
+                      <button
+                        className="btn-rol"
+                        type="submit"
+                        style={{ width: '100%', height: 40 }}
+                      >
                         Unirme al proyecto
                       </button>
                     </form>

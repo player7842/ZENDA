@@ -4,19 +4,15 @@
   y una luna cuando está en claro (para indicar: "cambia a oscuro").
 */
 
-import { useTheme } from "../context/ThemeContext";
-import "../styles/ThemeToggle.css";
+import { useTheme } from '../context/ThemeContext';
+import '../styles/ThemeToggle.css';
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <button
-      className="theme-toggle"
-      onClick={toggleTheme}
-      aria-label="Cambiar tema"
-    >
-      {theme === "dark" ? (
+    <button className="theme-toggle" onClick={toggleTheme} aria-label="Cambiar tema">
+      {theme === 'dark' ? (
         // Icono de sol
         <svg
           width="18"

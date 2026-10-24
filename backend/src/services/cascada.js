@@ -29,16 +29,15 @@ const SQL_EVALUACION_VIGENTE = `
 export async function bloquearCarpeta(db, carpetaId) {
   const { rows } = await db.query(
     'SELECT carpeta_id, fase_id FROM carpetas WHERE carpeta_id = $1 FOR UPDATE',
-    [carpetaId]
+    [carpetaId],
   );
   return rows[0] || null;
 }
 
 export async function bloquearFase(db, faseId) {
-  const { rows } = await db.query(
-    'SELECT fase_id FROM fases WHERE fase_id = $1 FOR UPDATE',
-    [faseId]
-  );
+  const { rows } = await db.query('SELECT fase_id FROM fases WHERE fase_id = $1 FOR UPDATE', [
+    faseId,
+  ]);
   return rows[0] || null;
 }
 
@@ -53,7 +52,7 @@ export async function resultadosDeCarpeta(db, carpetaId) {
      ${SQL_EVALUACION_VIGENTE}
      WHERE ev.carpeta_id = $1
      ORDER BY ev.evidencia_id`,
-    [carpetaId]
+    [carpetaId],
   );
 
   return rows;
@@ -71,7 +70,7 @@ export async function resultadosDeFase(db, faseId) {
      ${SQL_EVALUACION_VIGENTE}
      WHERE f.fase_id = $1
      ORDER BY ev.evidencia_id`,
-    [faseId]
+    [faseId],
   );
 
   return rows.filter((fila) => fila.evidencia_id !== null);
@@ -90,10 +89,9 @@ export async function recalcularCarpeta(db, carpetaId) {
   const filas = await resultadosDeCarpeta(db, carpetaId);
   const resultados = filas.map((fila) => fila.resultado);
 
-  const { rows } = await db.query(
-    'SELECT zenda_recalcular_carpeta($1) AS estado_carpeta',
-    [carpetaId]
-  );
+  const { rows } = await db.query('SELECT zenda_recalcular_carpeta($1) AS estado_carpeta', [
+    carpetaId,
+  ]);
 
   return {
     faseId: carpeta.fase_id,

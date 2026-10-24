@@ -67,7 +67,14 @@ async function registrarAprendiz({ ficha = '2724285' } = {}) {
     acepta_tratamiento_datos: true,
   });
   expect(respuesta.status).toBe(201);
-  return respuesta.body;
+  expect(respuesta.body.requiere_verificacion).toBe(true);
+
+  // La verificación real llega por correo. En pruebas se marca en la base y
+  // se inicia sesión para obtener el token de acceso.
+  await pool.query('UPDATE usuarios SET correo_verificado = true WHERE correo = $1', [correo]);
+  const sesion = await login(correo, 'Prueba123!');
+
+  return { ...respuesta.body, ...sesion };
 }
 
 describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
@@ -128,6 +135,73 @@ describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
     lider = await registrarAprendiz();
     expect(lider.token).toBeTruthy();
     expect(lider.user.rol).toBe('APRENDIZ');
+  });
+
+  it('RS-006: honeypot, verificación de correo y bloqueo de login sin verificar', async () => {
+    contador += 1;
+    const correo = `verifica${sufijo}${contador}@soy.sena.edu.co`;
+    const base = {
+      nombre: 'Vera',
+      apellido: 'Verificación',
+      correo,
+      tipo_documento: 'CC',
+      numero_documento: String(2020000000 + contador),
+      password: 'Prueba123!',
+      numero_ficha: '2724285',
+      acepta_terminos: true,
+      acepta_privacidad: true,
+      acepta_cookies: true,
+      acepta_tratamiento_datos: true,
+    };
+
+    // El campo trampa rechaza al bot y no deja ninguna cuenta creada.
+    const bot = await api
+      .post('/api/auth/register')
+      .send({ ...base, sitio_web: 'https://spam.example' });
+    expect(bot.status).toBe(400);
+    const cuentaBot = await pool.query('SELECT 1 FROM usuarios WHERE correo = $1', [correo]);
+    expect(cuentaBot.rowCount).toBe(0);
+
+    // Registro real: sin token de sesión y pendiente de verificación.
+    const registro = await api.post('/api/auth/register').send(base);
+    expect(registro.status).toBe(201);
+    expect(registro.body.token).toBeUndefined();
+    expect(registro.body.requiere_verificacion).toBe(true);
+    expect(registro.body.user.correo_verificado).toBe(false);
+
+    const usuarioId = registro.body.user.usuario_id;
+
+    const bloqueado = await api
+      .post('/api/auth/login')
+      .send({ correo, password: 'Prueba123!' });
+    expect(bloqueado.status).toBe(403);
+    expect(bloqueado.body.codigo).toBe('CORREO_NO_VERIFICADO');
+
+    // No hay correo saliente en pruebas: se inserta un token conocido.
+    const token = jwt.sign(
+      { usuario_id: usuarioId, correo, purpose: 'verify' },
+      env.jwtSecret,
+      { expiresIn: '24h' }
+    );
+    await pool.query('DELETE FROM verificacion_correo WHERE usuario_id = $1', [usuarioId]);
+    await pool.query(
+      `INSERT INTO verificacion_correo (usuario_id, token_hash, expira_en)
+       VALUES ($1, $2, now() + interval '24 hours')`,
+      [usuarioId, hashToken(token)]
+    );
+
+    // Un token de sesión no sirve para verificar el correo.
+    const sesionComoToken = await api.post('/api/auth/verify-email').send({ token: lider.token });
+    expect(sesionComoToken.status).toBe(400);
+
+    const verificado = await api.post('/api/auth/verify-email').send({ token });
+    expect(verificado.status).toBe(200);
+
+    const segundoUso = await api.post('/api/auth/verify-email').send({ token });
+    expect(segundoUso.status).toBe(400);
+
+    const sesion = await login(correo, 'Prueba123!');
+    expect(sesion.user.correo_verificado).toBe(true);
   });
 
   it('HU-014/HU-015: cupo, unión por código y ficha del aprendiz', async () => {
@@ -424,6 +498,122 @@ describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
     expect(historial.rows).toHaveLength(2);
     expect(historial.rows.filter((fila) => fila.fecha_fin === null)).toHaveLength(1);
     expect(historial.rows.filter((fila) => fila.estado === 'Inactivo')).toHaveLength(1);
+  });
+
+  it('RF-028: la fecha límite de una tarea no puede ser anterior al inicio', async () => {
+    const invalida = await api
+      .post('/api/aprendiz/proyectos/tareas')
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({
+        titulo: 'Tarea con fechas invertidas',
+        responsable_id: segundo.user.usuario_id,
+        fecha_inicio: '2026-05-10',
+        fecha_limite: '2026-05-01',
+      });
+    expect(invalida.status).toBe(400);
+    expect(invalida.body.message).toBe(
+      'La fecha límite no puede ser anterior a la fecha de inicio'
+    );
+
+    const valida = await api
+      .post('/api/aprendiz/proyectos/tareas')
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({
+        titulo: 'Tarea con fechas correctas',
+        responsable_id: segundo.user.usuario_id,
+        fecha_inicio: '2026-05-01',
+        fecha_limite: '2026-05-10',
+      });
+    expect(valida.status).toBe(201);
+    expect(valida.body.tarea_id).toBeTruthy();
+  });
+
+  it('HU-033: la alerta de 15 días usa actividad real, no un porcentaje', async () => {
+    const coordinador = await login('maria@zenda.com', 'Prueba123!');
+
+    const base = await api
+      .get('/api/coordinador/dashboard')
+      .set('Authorization', `Bearer ${coordinador.token}`);
+    expect(base.status).toBe(200);
+    const inicial = base.body.totales.proyectos_sin_actividad;
+    expect(Number.isInteger(inicial)).toBe(true);
+
+    // Proyecto nuevo con fecha de inicio antigua y sin evidencias: debe alertar.
+    const nuevo = await registrarAprendiz();
+    const inicio = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const fin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    const creacion = await api
+      .post('/api/aprendiz/proyectos')
+      .set('Authorization', `Bearer ${nuevo.token}`)
+      .send({
+        nombre_grupo: 'Grupo alerta 15 días',
+        nombre_proyecto: 'Proyecto sin actividad reciente',
+        descripcion: 'Proyecto para probar la alerta de 15 días',
+        problema: 'Problema de prueba',
+        objetivo: 'Objetivo de prueba',
+        alcance: 'Alcance de prueba',
+        tecnologias: 'Node.js, PostgreSQL',
+        fecha_inicio: inicio,
+        fecha_fin_estimada: fin,
+        cupo_maximo: 2,
+      });
+    expect(creacion.status).toBe(201);
+
+    const conAlerta = await api
+      .get('/api/coordinador/dashboard')
+      .set('Authorization', `Bearer ${coordinador.token}`);
+    expect(conAlerta.body.totales.proyectos_sin_actividad).toBe(inicial + 1);
+
+    // Con una evidencia reciente, el proyecto sale de la alerta.
+    const mio = await api
+      .get('/api/aprendiz/proyectos/mio')
+      .set('Authorization', `Bearer ${nuevo.token}`);
+    const faseUno = mio.body.fases.find((f) => f.numero_fase === 1);
+
+    const carpeta = await api
+      .post(`/api/aprendiz/proyectos/fases/${faseUno.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${nuevo.token}`)
+      .send({ nombre_carpeta: 'Evidencia reciente' });
+    expect(carpeta.status).toBe(201);
+
+    const evidencia = await api
+      .post(`/api/aprendiz/proyectos/carpetas/${carpeta.body.carpeta_id}/evidencias`)
+      .set('Authorization', `Bearer ${nuevo.token}`)
+      .send({
+        nombre_evidencia: 'Evidencia reciente',
+        tipo_evidencia: 'Enlace',
+        ubicacion: 'https://example.com/alerta-15-dias',
+      });
+    expect(evidencia.status).toBe(201);
+
+    const sinAlerta = await api
+      .get('/api/coordinador/dashboard')
+      .set('Authorization', `Bearer ${coordinador.token}`);
+    expect(sinAlerta.body.totales.proyectos_sin_actividad).toBe(inicial);
+  });
+
+  it('HU-004: refresco rotativo en cookie HttpOnly y revocación al cerrar sesión', async () => {
+    const agente = request.agent(app);
+    const entrada = await agente
+      .post('/api/auth/login')
+      .send({ correo: lider.user.correo, password: 'Prueba123!' });
+    expect(entrada.status).toBe(200);
+
+    const cookies = entrada.headers['set-cookie']?.join(';') || '';
+    expect(cookies).toContain('zenda_refresh=');
+    expect(cookies.toLowerCase()).toContain('httponly');
+
+    const renovado = await agente.post('/api/auth/refresh');
+    expect(renovado.status).toBe(200);
+    expect(renovado.body.token).toBeTruthy();
+
+    const salida = await agente.post('/api/auth/logout');
+    expect(salida.status).toBe(200);
+
+    // El refresco revocado ya no sirve, aunque el navegador conserve la cookie.
+    const despues = await agente.post('/api/auth/refresh');
+    expect(despues.status).toBe(401);
   });
 
   it('C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso', async () => {

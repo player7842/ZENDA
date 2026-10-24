@@ -74,6 +74,8 @@ jobs:
         run: |
           psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
           psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+          psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/003_cierre.sql
+          psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/003_cierre.sql
 
       - name: Probar migración desde esquema v11
         env:
@@ -84,7 +86,12 @@ jobs:
           psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion.sql
           psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
           psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/003_cierre.sql
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/003_cierre.sql
           psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion_assert.sql
+
+      - name: Formato (Prettier)
+        run: pnpm dlx prettier --check "backend/src/**/*.{js,mjs,cjs}" "frontend/src/**/*.{jsx,js}" "*.{md,json,yml,yaml}"
 
       - name: Pruebas
         working-directory: backend

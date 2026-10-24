@@ -31,7 +31,7 @@ const auth = async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       'SELECT usuario_id, correo, rol, estado, token_version FROM usuarios WHERE usuario_id = $1',
-      [decoded.usuario_id]
+      [decoded.usuario_id],
     );
 
     if (rows.length === 0 || rows[0].estado !== 'Activo') {

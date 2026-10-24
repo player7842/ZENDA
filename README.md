@@ -74,17 +74,17 @@ El seguimiento de los proyectos que los aprendices de **Análisis y Desarrollo d
 
 ## ✨ Funcionalidades
 
-| Módulo | Qué ofrece |
-|---|---|
-| 🔐 **Autenticación** | Registro de aprendices con correo institucional, inicio de sesión con JWT y recuperación de contraseña por correo. |
-| 👥 **Grupos y proyectos** | Creación de proyecto con código de invitación `PRY-XXXXXXXXXX`; un aprendiz solo puede estar en un proyecto activo. |
-| 🗂️ **Fases, carpetas y evidencias** | 5 fases fijas por proyecto; el aprendiz crea carpetas y sube evidencias dentro de cada fase. |
-| ✅ **Evaluación en cascada** | Evidencia → carpeta → fase: el estado se recalcula solo a partir de las evaluaciones del instructor. |
-| 🧩 **Tablero de tareas** | Tareas asignadas por el líder, con flujo de estados y confirmación del líder. |
-| 📊 **Dashboards** | Gráficas y métricas para cada rol. |
-| 🧾 **Reportes** | Exportación a PDF (aprendiz e instructor) y reporte en CSV/Excel (coordinador). |
-| 🛡️ **Administración** | Gestión de usuarios, fichas, programas e instructores, con acciones delicadas confirmadas por contraseña. |
-| 🌗 **Interfaz** | Tema claro y oscuro, aviso de cookies. |
+| Módulo                              | Qué ofrece                                                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 🔐 **Autenticación**                | Registro de aprendices con correo institucional, inicio de sesión con JWT y recuperación de contraseña por correo.  |
+| 👥 **Grupos y proyectos**           | Creación de proyecto con código de invitación `PRY-XXXXXXXXXX`; un aprendiz solo puede estar en un proyecto activo. |
+| 🗂️ **Fases, carpetas y evidencias** | 5 fases fijas por proyecto; el aprendiz crea carpetas y sube evidencias dentro de cada fase.                        |
+| ✅ **Evaluación en cascada**        | Evidencia → carpeta → fase: el estado se recalcula solo a partir de las evaluaciones del instructor.                |
+| 🧩 **Tablero de tareas**            | Tareas asignadas por el líder, con flujo de estados y confirmación del líder.                                       |
+| 📊 **Dashboards**                   | Gráficas y métricas para cada rol.                                                                                  |
+| 🧾 **Reportes**                     | Exportación a PDF (aprendiz e instructor) y reporte en CSV/Excel (coordinador).                                     |
+| 🛡️ **Administración**               | Gestión de usuarios, fichas, programas e instructores, con acciones delicadas confirmadas por contraseña.           |
+| 🌗 **Interfaz**                     | Tema claro y oscuro, aviso de cookies.                                                                              |
 
 Las funcionalidades aprobadas para la siguiente versión (archivos reales, lista de chequeo, mejoras de seguridad e interfaz) están en [Estado del proyecto](#-estado-del-proyecto).
 
@@ -94,12 +94,12 @@ Las funcionalidades aprobadas para la siguiente versión (archivos reales, lista
 
 Los roles son un `ENUM` en la base de datos: `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR`, `ADMINISTRADOR`.
 
-| Perfil | Ruta | Qué resuelve |
-|---|---|---|
-| 🎓 **Aprendiz** | `/aprendiz` | Crea o se une a un proyecto, sube evidencias, consulta observaciones y mueve sus tareas. El **líder** además crea y asigna tareas y confirma su cumplimiento. |
-| 👨‍🏫 **Instructor** | `/instructor` | Revisa las evidencias de sus fichas, las aprueba o reprueba y deja observaciones al proyecto. |
-| 🧭 **Coordinador** | `/coordinador` | Supervisa fichas, grupos y proyectos del programa **ADSO** (código `2338`) y reasigna instructores. |
-| 🛡️ **Administrador** | `/admin` | Gestiona usuarios, fichas y programas de toda la plataforma. |
+| Perfil               | Ruta           | Qué resuelve                                                                                                                                                  |
+| -------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎓 **Aprendiz**      | `/aprendiz`    | Crea o se une a un proyecto, sube evidencias, consulta observaciones y mueve sus tareas. El **líder** además crea y asigna tareas y confirma su cumplimiento. |
+| 👨‍🏫 **Instructor**    | `/instructor`  | Revisa las evidencias de sus fichas, las aprueba o reprueba y deja observaciones al proyecto.                                                                 |
+| 🧭 **Coordinador**   | `/coordinador` | Supervisa fichas, grupos y proyectos del programa **ADSO** (código `2338`) y reasigna instructores.                                                           |
+| 🛡️ **Administrador** | `/admin`       | Gestiona usuarios, fichas y programas de toda la plataforma.                                                                                                  |
 
 > [!TIP]
 > El detalle de permisos por rol está en [`docs/Requisitos/matriz-permisos.md`](docs/Requisitos/matriz-permisos.md).
@@ -108,12 +108,12 @@ Los roles son un `ENUM` en la base de datos: `APRENDIZ`, `INSTRUCTOR`, `COORDINA
 
 ## 🧰 Stack tecnológico
 
-| Capa | Tecnología | Función |
-|---|---|---|
-| **Frontend** | React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Recharts · Lucide | Aplicación de una sola página (SPA) |
-| **Backend** | Node.js · Express 4 · `pg` · `jsonwebtoken` · `bcryptjs` · Nodemailer | API REST con SQL directo (sin ORM) |
-| **Base de datos** | PostgreSQL 16 | Persistencia relacional (14 tablas, 1 tipo `ENUM`) |
-| **Gestor de paquetes** | **pnpm** | Instalación reproducible con `pnpm-lock.yaml` |
+| Capa                   | Tecnología                                                              | Función                                            |
+| ---------------------- | ----------------------------------------------------------------------- | -------------------------------------------------- |
+| **Frontend**           | React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Recharts · Lucide | Aplicación de una sola página (SPA)                |
+| **Backend**            | Node.js · Express 4 · `pg` · `jsonwebtoken` · `bcryptjs` · Nodemailer   | API REST con SQL directo (sin ORM)                 |
+| **Base de datos**      | PostgreSQL 16                                                           | Persistencia relacional (14 tablas, 1 tipo `ENUM`) |
+| **Gestor de paquetes** | **pnpm**                                                                | Instalación reproducible con `pnpm-lock.yaml`      |
 
 > [!IMPORTANT]
 > El proyecto usa **pnpm** como único gestor de paquetes. No uses `npm install` ni `yarn`: generarían lockfiles distintos.
@@ -155,16 +155,16 @@ Más detalle en [`docs/Referencia-Tecnica/arquitectura.md`](docs/Referencia-Tecn
 
 ## 📐 Reglas de negocio esenciales
 
-| # | Regla |
-|---|---|
-| 1 | El autoregistro es **solo para aprendices** y exige correo `@soy.sena.edu.co`. |
-| 2 | Cada ficha tiene un grupo especial **`General`**: es la inscripción del aprendiz a la ficha y **no cuenta como proyecto**. |
-| 3 | Un aprendiz solo puede pertenecer a **un proyecto activo** a la vez. |
-| 4 | El aprendiz que **crea el proyecto es el líder** del grupo. El liderazgo queda fijo; si el líder abandona o su cuenta se desactiva, el **administrador** lo reasigna. |
-| 5 | Todos los integrantes pueden **crear carpetas y subir evidencias**. Solo el **líder** crea y asigna tareas y confirma su cumplimiento. |
-| 6 | Cada proyecto tiene **5 fases fijas**: Análisis, Diseño, Desarrollo, Pruebas y Cierre/Entrega. |
-| 7 | La evaluación es **en cascada**: una evidencia reprobada desaprueba su carpeta, y una carpeta desaprobada desaprueba su fase. |
-| 8 | Las cuentas con estado distinto de `Activo` no pueden iniciar sesión. |
+| #   | Regla                                                                                                                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | El autoregistro es **solo para aprendices** y exige correo `@soy.sena.edu.co`.                                                                                        |
+| 2   | Cada ficha tiene un grupo especial **`General`**: es la inscripción del aprendiz a la ficha y **no cuenta como proyecto**.                                            |
+| 3   | Un aprendiz solo puede pertenecer a **un proyecto activo** a la vez.                                                                                                  |
+| 4   | El aprendiz que **crea el proyecto es el líder** del grupo. El liderazgo queda fijo; si el líder abandona o su cuenta se desactiva, el **administrador** lo reasigna. |
+| 5   | Todos los integrantes pueden **crear carpetas y subir evidencias**. Solo el **líder** crea y asigna tareas y confirma su cumplimiento.                                |
+| 6   | Cada proyecto tiene **5 fases fijas**: Análisis, Diseño, Desarrollo, Pruebas y Cierre/Entrega.                                                                        |
+| 7   | La evaluación es **en cascada**: una evidencia reprobada desaprueba su carpeta, y una carpeta desaprobada desaprueba su fase.                                         |
+| 8   | Las cuentas con estado distinto de `Activo` no pueden iniciar sesión.                                                                                                 |
 
 ```mermaid
 stateDiagram-v2
@@ -188,13 +188,13 @@ El catálogo completo está en [`docs/Requisitos/reglas-de-negocio.md`](docs/Req
 
 ### Requisitos previos
 
-| Herramienta | Versión | Notas |
-|---|---|---|
-| [Node.js](https://nodejs.org/) | **22 (LTS)** | Usa siempre una versión LTS |
-| [pnpm](https://pnpm.io/installation) | reciente | Gestor de paquetes del proyecto |
-| [PostgreSQL](https://www.postgresql.org/download/) | **16** | Con el cliente `psql` (o usa Docker) |
-| [Git](https://git-scm.com/) | cualquiera | Para clonar el repositorio |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | opcional | Alternativa que levanta todo el stack |
+| Herramienta                                                       | Versión      | Notas                                 |
+| ----------------------------------------------------------------- | ------------ | ------------------------------------- |
+| [Node.js](https://nodejs.org/)                                    | **22 (LTS)** | Usa siempre una versión LTS           |
+| [pnpm](https://pnpm.io/installation)                              | reciente     | Gestor de paquetes del proyecto       |
+| [PostgreSQL](https://www.postgresql.org/download/)                | **16**       | Con el cliente `psql` (o usa Docker)  |
+| [Git](https://git-scm.com/)                                       | cualquiera   | Para clonar el repositorio            |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | opcional     | Alternativa que levanta todo el stack |
 
 ### Opción A — Todo con Docker (recomendada)
 
@@ -207,13 +207,13 @@ cp .env.example .env          # cambia DB_PASSWORD y JWT_SECRET
 docker compose up --build -d
 ```
 
-| Servicio | URL |
-|---|---|
-| Frontend (Nginx) | <http://localhost:8080> |
-| API | <http://localhost:4000/api/health> |
-| PostgreSQL | interno, puerto `5432` de la red de Compose |
+| Servicio         | URL                                         |
+| ---------------- | ------------------------------------------- |
+| Frontend (Nginx) | <http://localhost:8080>                     |
+| API              | <http://localhost:4000/api/health>          |
+| PostgreSQL       | interno, puerto `5432` de la red de Compose |
 
-Compose crea la base con `Database/zenda_bd.sql`, espera el *healthcheck* de PostgreSQL, aplica la migración `Database/migrations/002_semana2.sql` y arranca backend y frontend. En una base nueva la migración no hace nada; en una base v11 la actualiza sin destruir datos.
+Compose crea la base con `Database/zenda_bd.sql`, espera el _healthcheck_ de PostgreSQL, aplica la migración `Database/migrations/002_semana2.sql` y arranca backend y frontend. En una base nueva la migración no hace nada; en una base v11 la actualiza sin destruir datos.
 
 > [!NOTE]
 > La guía detallada, con la solución de problemas habitual, está en [`docs/Setup/con-docker.md`](docs/Setup/con-docker.md).
@@ -317,16 +317,16 @@ ZENDA/
 
 Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para leerse directamente en GitHub.
 
-| Carpeta | Contenido | Estado |
-|---|---|---|
-| [`docs/Requisitos/`](docs/Requisitos/) | 42 historias de usuario, 42 RF, 15 RNF, reglas de negocio, matriz de permisos, restricciones y trazabilidad | 🟡 En elaboración (Semana 2 cerrada) |
-| [`docs/Diagramas/`](docs/Diagramas/) | Contexto, componentes, clases, dominio, MER/MR, actividades, estados y procesos (en Mermaid) | 🟡 En elaboración |
-| [`docs/Referencia-Tecnica/`](docs/Referencia-Tecnica/) | Arquitectura, esquema real de las 14 tablas, 55 endpoints y sistema de diseño | 🟢 Alineado con el código |
-| [`docs/Setup/`](docs/Setup/) | Instalación con y sin Docker, variables de entorno y despliegue en Render + Vercel + Neon | 🟢 Verificado |
-| [`docs/Conceptos/`](docs/Conceptos/) | Seguridad (OWASP), autenticación JWT, patrones, contenedores y accesibilidad | 🟢 Disponible |
-| [`docs/Colaboracion/`](docs/Colaboracion/) | Flujo de Git, convenciones y revisión de código | 🟢 Disponible |
-| [`docs/Testing/`](docs/Testing/) | Plan, casos, pruebas unitarias, de integración y no funcionales, hallazgos y cobertura | 🟢 17/17 automatizadas |
-| [`docs/gestion/`](docs/gestion/) | Backlog priorizado, plan de implantación, cronograma y riesgos | 🟡 En elaboración |
+| Carpeta                                                | Contenido                                                                                                   | Estado                               |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [`docs/Requisitos/`](docs/Requisitos/)                 | 42 historias de usuario, 42 RF, 15 RNF, reglas de negocio, matriz de permisos, restricciones y trazabilidad | 🟡 En elaboración (Semana 2 cerrada) |
+| [`docs/Diagramas/`](docs/Diagramas/)                   | Contexto, componentes, clases, dominio, MER/MR, actividades, estados y procesos (en Mermaid)                | 🟡 En elaboración                    |
+| [`docs/Referencia-Tecnica/`](docs/Referencia-Tecnica/) | Arquitectura, esquema real de las 14 tablas, 55 endpoints y sistema de diseño                               | 🟢 Alineado con el código            |
+| [`docs/Setup/`](docs/Setup/)                           | Instalación con y sin Docker, variables de entorno y despliegue en Render + Vercel + Neon                   | 🟢 Verificado                        |
+| [`docs/Conceptos/`](docs/Conceptos/)                   | Seguridad (OWASP), autenticación JWT, patrones, contenedores y accesibilidad                                | 🟢 Disponible                        |
+| [`docs/Colaboracion/`](docs/Colaboracion/)             | Flujo de Git, convenciones y revisión de código                                                             | 🟢 Disponible                        |
+| [`docs/Testing/`](docs/Testing/)                       | Plan, casos, pruebas unitarias, de integración y no funcionales, hallazgos y cobertura                      | 🟢 17/17 automatizadas               |
+| [`docs/gestion/`](docs/gestion/)                       | Backlog priorizado, plan de implantación, cronograma y riesgos                                              | 🟡 En elaboración                    |
 
 El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`](SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md). La auditoría que lo originó se conserva en [`ZENDA_auditoria_semanas_1_y_2.md`](ZENDA_auditoria_semanas_1_y_2.md).
 
@@ -334,18 +334,18 @@ El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFIN
 
 ## 🛡️ Seguridad
 
-| Medida | Estado | Detalle |
-|---|:---:|---|
-| Contraseñas con hash **bcrypt** | ✅ | Nunca se guardan en texto plano. |
-| Sesión con **JWT** | ✅ | Hoy expira a las 24 h; el objetivo es 15 min con refresh y cierre por inactividad. |
-| Autorización por rol | ✅ | Middlewares `isAdmin`, `isCoordinador`, `isInstructor`, `isAprendiz`. |
-| Confirmación con contraseña | ✅ | Acciones delicadas del administrador y del coordinador. |
-| Transacciones SQL | ✅ | `BEGIN / COMMIT / ROLLBACK` en operaciones compuestas. |
-| Recuperación de contraseña | ✅ | Token de un solo uso, hash SHA-256 y 15 minutos de validez. |
-| Cabeceras y límite de peticiones | ✅ | `helmet`, `trust proxy`, 300 req/15 min general y 20 en autenticación. |
-| Secretos fuera del repositorio | ✅ | `.env` no se versiona y hay `.env.example` en raíz, `backend/` y `frontend/`. `JWT_SECRET` es obligatorio. |
-| Sesión en el navegador | ⚠️ | El token vive en `localStorage` y dura 24 h (hallazgo **H-13**); se corrige con HU-004 en las Semanas 3–6. |
-| Credenciales semilla | ⚠️ | `Database/zenda_bd.sql` incluye usuarios de demostración. **No las uses en producción**: cámbialas antes de desplegar. |
+| Medida                           | Estado | Detalle                                                                                                                |
+| -------------------------------- | :----: | ---------------------------------------------------------------------------------------------------------------------- |
+| Contraseñas con hash **bcrypt**  |   ✅   | Nunca se guardan en texto plano.                                                                                       |
+| Sesión con **JWT**               |   ✅   | Hoy expira a las 24 h; el objetivo es 15 min con refresh y cierre por inactividad.                                     |
+| Autorización por rol             |   ✅   | Middlewares `isAdmin`, `isCoordinador`, `isInstructor`, `isAprendiz`.                                                  |
+| Confirmación con contraseña      |   ✅   | Acciones delicadas del administrador y del coordinador.                                                                |
+| Transacciones SQL                |   ✅   | `BEGIN / COMMIT / ROLLBACK` en operaciones compuestas.                                                                 |
+| Recuperación de contraseña       |   ✅   | Token de un solo uso, hash SHA-256 y 15 minutos de validez.                                                            |
+| Cabeceras y límite de peticiones |   ✅   | `helmet`, `trust proxy`, 300 req/15 min general y 20 en autenticación.                                                 |
+| Secretos fuera del repositorio   |   ✅   | `.env` no se versiona y hay `.env.example` en raíz, `backend/` y `frontend/`. `JWT_SECRET` es obligatorio.             |
+| Sesión en el navegador           |   ⚠️   | El token vive en `localStorage` y dura 24 h (hallazgo **H-13**); se corrige con HU-004 en las Semanas 3–6.             |
+| Credenciales semilla             |   ⚠️   | `Database/zenda_bd.sql` incluye usuarios de demostración. **No las uses en producción**: cámbialas antes de desplegar. |
 
 > [!WARNING]
 > **Nunca subas `backend/.env` a GitHub.** Si una credencial se expuso alguna vez, revócala y genera una nueva.
@@ -365,33 +365,33 @@ El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFIN
 
 ### 🟢 Cerrado en las Semanas 1 y 2
 
-| Área | Qué quedó implementado |
-|---|---|
-| **Infraestructura** | Docker Compose con `db`, `migrate`, `backend` y `frontend`; Node 22 fijo; Nginx; `render.yaml`; `frontend/vercel.json`; `.env.example` en raíz, backend y frontend. |
-| **Migración** | `002_semana2.sql` idempotente, probada dos veces seguidas y sobre una base v11 con datos. El upgrade conserva evidencias, grupos y proyectos legados. |
-| **Reglas de negocio** | Funciones puras en `backend/src/domain/reglas.js` y servicios `cascada.js`, `asignaciones.js` y `grupos.js`. |
-| **Grupos y cupo** | `grupos.es_general`, `grupos.cupo_maximo` (1–50, por defecto 6; General 50) y líder editable sin bajar del total actual. |
-| **Fases y evaluación** | Estado de carpeta y fase derivado de la evaluación vigente; aprobación de carpeta en bloque; evaluación siempre `INSERT`. |
-| **Instructores** | Historial en `instructor_ficha` con una única asignación vigente por índice parcial. |
-| **Seguridad** | `helmet`, rate-limit, CORS por lista blanca, `JWT_SECRET` obligatorio, reset de un solo uso y validación de URLs. |
-| **Calidad** | 9 pruebas unitarias + 8 de integración = **17/17**, lint, build y CI de GitHub Actions con PostgreSQL 16. |
-| **Interfaz** | Medidor de contraseña, aceptaciones legales, anti-pegado, cupo editable, progreso por fase, aprobación en bloque y observaciones por evidencia. |
+| Área                   | Qué quedó implementado                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Infraestructura**    | Docker Compose con `db`, `migrate`, `backend` y `frontend`; Node 22 fijo; Nginx; `render.yaml`; `frontend/vercel.json`; `.env.example` en raíz, backend y frontend. |
+| **Migración**          | `002_semana2.sql` idempotente, probada dos veces seguidas y sobre una base v11 con datos. El upgrade conserva evidencias, grupos y proyectos legados.               |
+| **Reglas de negocio**  | Funciones puras en `backend/src/domain/reglas.js` y servicios `cascada.js`, `asignaciones.js` y `grupos.js`.                                                        |
+| **Grupos y cupo**      | `grupos.es_general`, `grupos.cupo_maximo` (1–50, por defecto 6; General 50) y líder editable sin bajar del total actual.                                            |
+| **Fases y evaluación** | Estado de carpeta y fase derivado de la evaluación vigente; aprobación de carpeta en bloque; evaluación siempre `INSERT`.                                           |
+| **Instructores**       | Historial en `instructor_ficha` con una única asignación vigente por índice parcial.                                                                                |
+| **Seguridad**          | `helmet`, rate-limit, CORS por lista blanca, `JWT_SECRET` obligatorio, reset de un solo uso y validación de URLs.                                                   |
+| **Calidad**            | 9 pruebas unitarias + 8 de integración = **17/17**, lint, build y CI de GitHub Actions con PostgreSQL 16.                                                           |
+| **Interfaz**           | Medidor de contraseña, aceptaciones legales, anti-pegado, cupo editable, progreso por fase, aprobación en bloque y observaciones por evidencia.                     |
 
 ### 🔄 Aprobado para las Semanas 3–6
 
-| Cambio | Resumen |
-|---|---|
-| **Archivos reales** | Evidencias como archivo (con compresión de imágenes) o enlace, en almacenamiento compatible con S3 (HU-020). |
+| Cambio               | Resumen                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Archivos reales**  | Evidencias como archivo (con compresión de imágenes) o enlace, en almacenamiento compatible con S3 (HU-020).    |
 | **Lista de chequeo** | Una por ficha, creada por el instructor, copiable entre fichas y con historial de evaluación (HU-036 a HU-038). |
-| **Sesiones** | Access token de 15 min, refresh token y cierre por inactividad (HU-004). |
-| **Páginas legales** | Términos, privacidad, cookies y protección de datos enlazadas desde el footer (HU-039). |
-| **Reportes** | Exportación a PDF y Excel desde el servidor (HU-034 y HU-035). |
-| **Panel y mensajes** | Dashboard colapsable, menú de tres puntos y mensajes guiados (HU-040 y HU-041). |
+| **Sesiones**         | Access token de 15 min, refresh token y cierre por inactividad (HU-004).                                        |
+| **Páginas legales**  | Términos, privacidad, cookies y protección de datos enlazadas desde el footer (HU-039).                         |
+| **Reportes**         | Exportación a PDF y Excel desde el servidor (HU-034 y HU-035).                                                  |
+| **Panel y mensajes** | Dashboard colapsable, menú de tres puntos y mensajes guiados (HU-040 y HU-041).                                 |
 
 ### 🛠️ Pendiente técnico
 
 - Endpoints del backend para **carga masiva de usuarios por CSV** (HU-008), **copia de seguridad y diagnóstico** (HU-013) y **gestión de programas** (HU-012): la interfaz existe, la API aún no.
-- Reducir el *bundle* del frontend (aviso de Vite por encima de 500 kB).
+- Reducir el _bundle_ del frontend (aviso de Vite por encima de 500 kB).
 - Migrar la sesión de `localStorage` a cookies seguras cuando se implemente HU-004.
 - Desplegar el código actual en Render/Vercel/Neon: la URL pública actual corresponde a la versión v11.
 
@@ -403,10 +403,10 @@ Chatbot, calendario de eventos, anuncios y recordatorios masivos. Se reemplazan 
 
 ## 🔀 Flujo de trabajo con Git
 
-| Rama | Propósito |
-|---|---|
-| `main` | Versión estable, lista para entregar o desplegar. |
-| `develop` | Integración de cambios y versionamiento. |
+| Rama                          | Propósito                                                            |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `main`                        | Versión estable, lista para entregar o desplegar.                    |
+| `develop`                     | Integración de cambios y versionamiento.                             |
 | `feat/*` · `fix/*` · `docs/*` | Ramas de trabajo que se fusionan en `develop` mediante Pull Request. |
 
 ```bash
@@ -418,25 +418,25 @@ git commit -m "feat: descripción corta del cambio"
 git push -u origin feat/nombre-de-la-funcionalidad
 ```
 
-| Prefijo | Uso |
-|---|---|
-| `feat:` | Nueva funcionalidad |
-| `fix:` | Corrección de un error |
-| `docs:` | Cambios en la documentación |
-| `style:` | Formato o estilos, sin cambio de lógica |
-| `refactor:` | Reestructuración de código |
-| `chore:` | Dependencias y tareas de mantenimiento |
+| Prefijo     | Uso                                     |
+| ----------- | --------------------------------------- |
+| `feat:`     | Nueva funcionalidad                     |
+| `fix:`      | Corrección de un error                  |
+| `docs:`     | Cambios en la documentación             |
+| `style:`    | Formato o estilos, sin cambio de lógica |
+| `refactor:` | Reestructuración de código              |
+| `chore:`    | Dependencias y tareas de mantenimiento  |
 
 ---
 
 ## 👤 Equipo
 
-| Integrante | Rol en el proyecto | GitHub |
-|---|---|---|
-| Hernán Eduardo Robledo Montaña| Lider de equipo|-|
-| Leyner David Buitrago Thomas | Documentacion | [@player7842](https://github.com/player7842) |
-| Nicolas Aparicio Camacho | Desarrollo | - |
-| Omar David Gonzalez Cardozo| Desarrollo | - |
+| Integrante                     | Rol en el proyecto | GitHub                                       |
+| ------------------------------ | ------------------ | -------------------------------------------- |
+| Hernán Eduardo Robledo Montaña | Lider de equipo    | -                                            |
+| Leyner David Buitrago Thomas   | Documentacion      | [@player7842](https://github.com/player7842) |
+| Nicolas Aparicio Camacho       | Desarrollo         | -                                            |
+| Omar David Gonzalez Cardozo    | Desarrollo         | -                                            |
 
 <!-- Agrega aquí a los demás integrantes del equipo en el mismo formato. -->
 

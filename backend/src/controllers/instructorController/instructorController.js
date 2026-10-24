@@ -1,12 +1,6 @@
 import pool from '../../config/db.js';
-import {
-  calcularProgreso,
-  normalizarResultado,
-} from '../../domain/reglas.js';
-import {
-  bloquearCarpeta,
-  recalcularCarpetaYFase,
-} from '../../services/cascada.js';
+import { calcularProgreso, normalizarResultado } from '../../domain/reglas.js';
+import { bloquearCarpeta, recalcularCarpetaYFase } from '../../services/cascada.js';
 
 const FILTRO_ASIGNACION_VIGENTE = `ifi.fecha_fin IS NULL AND ifi.estado = 'Activo'`;
 
@@ -22,7 +16,7 @@ export async function getMisFichas(req, res) {
        JOIN programas p ON p.programa_id = f.programa_id
        WHERE ifi.instructor_id = $1 AND ${FILTRO_ASIGNACION_VIGENTE}
        ORDER BY f.numero_ficha`,
-      [instructorId]
+      [instructorId],
     );
     res.json(rows);
   } catch (err) {
@@ -41,7 +35,7 @@ export async function getAprendicesDeFicha(req, res) {
     const pertenece = await pool.query(
       `SELECT 1 FROM instructor_ficha ifi
        WHERE ifi.instructor_id = $1 AND ifi.ficha_id = $2 AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [instructorId, id]
+      [instructorId, id],
     );
     if (pertenece.rowCount === 0) {
       return res.status(403).json({ message: 'Esta ficha no está a tu cargo' });
@@ -54,7 +48,7 @@ export async function getAprendicesDeFicha(req, res) {
        JOIN usuarios u ON u.usuario_id = ig.usuario_id
        WHERE g.ficha_id = $1 AND g.es_general AND ig.estado_integrante = 'Activo'
        ORDER BY u.apellido`,
-      [id]
+      [id],
     );
     res.json(rows);
   } catch (err) {
@@ -62,8 +56,6 @@ export async function getAprendicesDeFicha(req, res) {
     res.status(500).json({ message: 'Error al obtener aprendices' });
   }
 }
-
-
 
 // Grupos de proyecto (excluye el grupo "General") de una ficha del instructor
 export async function getGruposDeFicha(req, res) {
@@ -74,7 +66,7 @@ export async function getGruposDeFicha(req, res) {
     const pertenece = await pool.query(
       `SELECT 1 FROM instructor_ficha ifi
        WHERE ifi.instructor_id = $1 AND ifi.ficha_id = $2 AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [instructorId, id]
+      [instructorId, id],
     );
     if (pertenece.rowCount === 0) {
       return res.status(403).json({ message: 'Esta ficha no está a tu cargo' });
@@ -86,7 +78,7 @@ export async function getGruposDeFicha(req, res) {
        JOIN proyectos p ON p.grupo_id = g.grupo_id
        WHERE g.ficha_id = $1 AND NOT g.es_general AND g.estado_grupo = 'Activo'
        ORDER BY g.nombre_grupo`,
-      [id]
+      [id],
     );
     res.json(rows);
   } catch (err) {
@@ -109,7 +101,7 @@ export async function getReadmeProyecto(req, res) {
        WHERE p.proyecto_id = $1
          AND ifi.instructor_id = $2
          AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [proyectoId, instructorId]
+      [proyectoId, instructorId],
     );
     if (rows.length === 0) {
       return res.status(403).json({ message: 'Este proyecto no está a tu cargo' });
@@ -124,12 +116,12 @@ export async function getReadmeProyecto(req, res) {
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'
        ORDER BY (ig.usuario_id = g.lider_id) DESC, u.nombre`,
-      [proyecto.grupo_id]
+      [proyecto.grupo_id],
     );
 
     const fases = await pool.query(
       `SELECT * FROM fases WHERE proyecto_id = $1 ORDER BY numero_fase`,
-      [proyectoId]
+      [proyectoId],
     );
 
     res.json({ proyecto, integrantes: integrantes.rows, fases: fases.rows });
@@ -138,10 +130,6 @@ export async function getReadmeProyecto(req, res) {
     res.status(500).json({ message: 'Error al obtener el README del proyecto' });
   }
 }
-
-
-
-
 
 // Verifica que el instructor logueado tenga a cargo la fase indicada
 // (recorre fase → proyecto → grupo → ficha → instructor_ficha)
@@ -155,7 +143,7 @@ async function verificarInstructorDueñoDeFase(instructorId, faseId) {
      WHERE f.fase_id = $1
        AND ifi.instructor_id = $2
        AND ${FILTRO_ASIGNACION_VIGENTE}`,
-    [faseId, instructorId]
+    [faseId, instructorId],
   );
   return rows.length > 0;
 }
@@ -175,7 +163,7 @@ export async function getCarpetasDeFase(req, res) {
        FROM carpetas
        WHERE fase_id = $1
        ORDER BY carpeta_id`,
-      [faseId]
+      [faseId],
     );
 
     // Una sola consulta para toda la fase (Q-04).
@@ -198,7 +186,7 @@ export async function getCarpetasDeFase(req, res) {
        LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
        WHERE c.fase_id = $1
        ORDER BY ev.evidencia_id`,
-      [faseId]
+      [faseId],
     );
 
     const porCarpeta = new Map();
@@ -212,7 +200,7 @@ export async function getCarpetasDeFase(req, res) {
 
     const { rows: faseRows } = await pool.query(
       `SELECT fase_id, nombre_fase, estado_fase FROM fases WHERE fase_id = $1`,
-      [faseId]
+      [faseId],
     );
 
     const resultados = evidencias.map((evidencia) => evidencia.resultado);
@@ -266,7 +254,7 @@ export async function evaluarEvidencia(req, res) {
          AND ifi.instructor_id = $2
          AND ${FILTRO_ASIGNACION_VIGENTE}
        FOR UPDATE OF c`,
-      [evidenciaId, instructorId]
+      [evidenciaId, instructorId],
     );
     if (cadena.length === 0) {
       await client.query('ROLLBACK');
@@ -278,7 +266,7 @@ export async function evaluarEvidencia(req, res) {
     await client.query(
       `INSERT INTO evaluaciones (evidencia_id, instructor_id, resultado, fecha_evaluacion)
        VALUES ($1, $2, $3, clock_timestamp())`,
-      [evidenciaId, instructorId, resultado]
+      [evidenciaId, instructorId, resultado],
     );
 
     const cascada = await recalcularCarpetaYFase(client, carpetaId);
@@ -331,7 +319,7 @@ export async function aprobarCarpeta(req, res) {
        WHERE c.carpeta_id = $1
          AND ifi.instructor_id = $2
          AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [carpetaId, instructorId]
+      [carpetaId, instructorId],
     );
     if (cadena.length === 0) {
       await client.query('ROLLBACK');
@@ -351,7 +339,7 @@ export async function aprobarCarpeta(req, res) {
          LIMIT 1
        ) ult ON true
        WHERE ev.carpeta_id = $1`,
-      [carpetaId]
+      [carpetaId],
     );
 
     if (resumen[0].total === 0) {
@@ -375,7 +363,7 @@ export async function aprobarCarpeta(req, res) {
        WHERE ev.carpeta_id = $1
          AND ult.resultado IS DISTINCT FROM 'APROBADO'
        RETURNING evidencia_id`,
-      [carpetaId, instructorId]
+      [carpetaId, instructorId],
     );
 
     const cascada = await recalcularCarpetaYFase(client, carpetaId);
@@ -404,9 +392,6 @@ export async function aprobarCarpeta(req, res) {
   }
 }
 
-
-
-
 // GET /api/instructor/fichas/:id/evidencias — todas las evidencias reales
 // de los proyectos de una ficha (para el resumen en "Mis fichas")
 export async function getEvidenciasDeFicha(req, res) {
@@ -417,7 +402,7 @@ export async function getEvidenciasDeFicha(req, res) {
     const pertenece = await pool.query(
       `SELECT 1 FROM instructor_ficha ifi
        WHERE ifi.instructor_id = $1 AND ifi.ficha_id = $2 AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [instructorId, id]
+      [instructorId, id],
     );
     if (pertenece.rowCount === 0) {
       return res.status(403).json({ message: 'Esta ficha no está a tu cargo' });
@@ -440,7 +425,7 @@ export async function getEvidenciasDeFicha(req, res) {
        ) ult ON true
        WHERE g.ficha_id = $1
        ORDER BY e.evidencia_id DESC`,
-      [id]
+      [id],
     );
     res.json(rows);
   } catch (err) {
@@ -448,8 +433,6 @@ export async function getEvidenciasDeFicha(req, res) {
     res.status(500).json({ message: 'Error al obtener las evidencias de la ficha' });
   }
 }
-
-
 
 // Verifica que el instructor logueado tenga a cargo el proyecto indicado
 async function verificarInstructorDueñoDeProyecto(instructorId, proyectoId) {
@@ -461,7 +444,7 @@ async function verificarInstructorDueñoDeProyecto(instructorId, proyectoId) {
      WHERE p.proyecto_id = $1
        AND ifi.instructor_id = $2
        AND ${FILTRO_ASIGNACION_VIGENTE}`,
-    [proyectoId, instructorId]
+    [proyectoId, instructorId],
   );
   return rows.length > 0;
 }
@@ -484,7 +467,7 @@ export async function getObservacionesDeProyecto(req, res) {
        LEFT JOIN evidencias ev ON ev.evidencia_id = o.evidencia_id
        WHERE o.proyecto_id = $1
        ORDER BY o.fecha_observacion DESC`,
-      [proyectoId]
+      [proyectoId],
     );
     res.json(rows);
   } catch (err) {
@@ -528,12 +511,10 @@ export async function crearObservacion(req, res) {
          JOIN carpetas c ON c.carpeta_id = ev.carpeta_id
          JOIN fases f ON f.fase_id = c.fase_id
          WHERE ev.evidencia_id = $1 AND f.proyecto_id = $2`,
-        [evidenciaId, proyectoId]
+        [evidenciaId, proyectoId],
       );
       if (rowCount === 0) {
-        return res
-          .status(400)
-          .json({ message: 'La evidencia no pertenece al proyecto indicado' });
+        return res.status(400).json({ message: 'La evidencia no pertenece al proyecto indicado' });
       }
     }
 
@@ -542,7 +523,7 @@ export async function crearObservacion(req, res) {
          (proyecto_id, evidencia_id, instructor_id, titulo, descripcion, fecha_observacion)
        VALUES ($1, $2, $3, $4, $5, clock_timestamp())
        RETURNING observacion_id`,
-      [proyectoId, evidenciaId, instructorId, tituloLimpio, descripcionLimpia]
+      [proyectoId, evidenciaId, instructorId, tituloLimpio, descripcionLimpia],
     );
     res.status(201).json({ observacion_id: rows[0].observacion_id });
   } catch (err) {
@@ -576,7 +557,7 @@ export async function getResumenInstructor(req, res) {
          LIMIT 1
        ) ult ON true
        WHERE ifi.instructor_id = $1 AND ${FILTRO_ASIGNACION_VIGENTE}`,
-      [instructorId]
+      [instructorId],
     );
 
     const alertasResult = await pool.query(
@@ -590,7 +571,7 @@ export async function getResumenInstructor(req, res) {
          AND ${FILTRO_ASIGNACION_VIGENTE}
          AND f.estado_fase = 'Desaprobada'
        ORDER BY fi.numero_ficha`,
-      [instructorId]
+      [instructorId],
     );
 
     const progresoResult = await pool.query(
@@ -605,7 +586,7 @@ export async function getResumenInstructor(req, res) {
        WHERE ifi.instructor_id = $1 AND ${FILTRO_ASIGNACION_VIGENTE}
        GROUP BY fi.numero_ficha
        ORDER BY fi.numero_ficha`,
-      [instructorId]
+      [instructorId],
     );
 
     const ev = evidenciasResult.rows[0];

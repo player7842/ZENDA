@@ -15,6 +15,7 @@ import {
   normalizarResultado,
   puedeUnirse,
   validarCupo,
+  validarFechasTarea,
 } from '../src/domain/reglas.js';
 
 describe('dominio/reglas', () => {
@@ -75,6 +76,21 @@ describe('dominio/reglas', () => {
     expect(calcularEstadoFase([RESULTADO_REPROBADO])).toBe(ESTADO_DESAPROBADA);
     expect(calcularEstadoFase([RESULTADO_APROBADO])).toBe(ESTADO_APROBADA);
     expect(calcularEstadoFase([])).toBe(ESTADO_PENDIENTE);
+  });
+
+  it('validarFechasTarea rechaza una fecha límite anterior al inicio', () => {
+    expect(validarFechasTarea('2026-05-10', '2026-05-01')).toBe(
+      'La fecha límite no puede ser anterior a la fecha de inicio'
+    );
+    expect(validarFechasTarea('2026-05-01', '2026-05-10')).toBe(null);
+    expect(validarFechasTarea('2026-05-10', '2026-05-10')).toBe(null);
+    // Fechas opcionales: si falta una, no se compara.
+    expect(validarFechasTarea(null, '2026-05-10')).toBe(null);
+    expect(validarFechasTarea('2026-05-10', undefined)).toBe(null);
+    // Formatos inválidos.
+    expect(validarFechasTarea('no-es-fecha', '2026-05-10')).toBe(
+      'Las fechas de la tarea no son válidas'
+    );
   });
 
   it('calcularProgreso cuenta aprobadas/reprobadas/sin evaluar', () => {
