@@ -16,7 +16,7 @@
 | **Título** | Aprobación de carpetas en bloque |
 | **Módulo** | Evaluación |
 | **Prioridad** | Media |
-| **Estado** | Planificado |
+| **Estado** | Implementado |
 | **Rol** | Instructor |
 | **RF asociado** | RF-024 |
 | **Reglas de negocio** | RN-016, RN-017, RN-018, RN-019 |
@@ -56,3 +56,7 @@
 ## Cambios frente a la versión v11
 
 - Es una función nueva.
+
+## Estado en la Semana 2
+
+Implementado: `aprobarCarpeta` bloquea la carpeta, exige que no exista una evaluación vigente y aprueba todas sus evidencias en una sola sentencia. La respuesta informa el número real de evidencias aprobadas y la interfaz confirma antes de ejecutar y avisa si hay reprobadas.

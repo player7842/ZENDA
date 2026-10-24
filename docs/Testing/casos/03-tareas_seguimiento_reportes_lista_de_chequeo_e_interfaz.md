@@ -25,15 +25,15 @@
 | **ID** | `CP-<número de RF>.<número de criterio>`; coincide con el criterio `CA-<RF>.<n>` de la historia. |
 | **Tipo** | *Positivo*: el camino feliz. *Negativo*: un dato o permiso inválido que debe rechazarse. |
 | **Nivel** | Dónde conviene automatizarlo: `API` (petición HTTP) o `E2E` (navegador). |
-| **Aplica a v11** | `Sí` se puede ejecutar hoy · `Parcial` el requisito cambia en v12 (ejecutar y comparar con "Cambios frente a la versión v11") · `No` la funcionalidad aún no existe. |
+| **Aplica a v11** | `Sí` se puede ejecutar hoy · `Parcial` el requisito cambia en Semanas 1–2 (ejecutar y comparar con "Cambios frente a la versión v11") · `No` la funcionalidad aún no existe. |
 
-> Los usuarios y fichas de prueba están en [Instalación sin Docker](../../setup/sin-docker.md#6-usuarios-de-prueba).
+> Los usuarios y fichas de prueba están en [Instalación sin Docker](../../Setup/sin-docker.md#6-usuarios-de-prueba).
 
 ---
 
 ### RF-028 — Creación y asignación de tareas
 
-**Historia:** [HU-028](../../requisitos/HUs/HU-028_creacion_y_asignacion_de_tareas.md) · **Requisito:** [RF-028](../../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-028](../../Requisitos/HUs/HU-028_creacion_y_asignacion_de_tareas.md) · **Requisito:** [RF-028](../../Requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -44,7 +44,7 @@
 
 ### RF-029 — Avance de mis tareas
 
-**Historia:** [HU-029](../../requisitos/HUs/HU-029_avance_de_mis_tareas.md) · **Requisito:** [RF-029](../../requisitos/RFs/RF-029_avance_de_mis_tareas.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-029](../../Requisitos/HUs/HU-029_avance_de_mis_tareas.md) · **Requisito:** [RF-029](../../Requisitos/RFs/RF-029_avance_de_mis_tareas.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -55,7 +55,7 @@
 
 ### RF-030 — Confirmación de tareas
 
-**Historia:** [HU-030](../../requisitos/HUs/HU-030_confirmacion_de_tareas.md) · **Requisito:** [RF-030](../../requisitos/RFs/RF-030_confirmacion_de_tareas.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-030](../../Requisitos/HUs/HU-030_confirmacion_de_tareas.md) · **Requisito:** [RF-030](../../Requisitos/RFs/RF-030_confirmacion_de_tareas.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -65,7 +65,7 @@
 
 ### RF-031 — Tablero y progreso de tareas
 
-**Historia:** [HU-031](../../requisitos/HUs/HU-031_tablero_y_progreso_de_tareas.md) · **Requisito:** [RF-031](../../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-031](../../Requisitos/HUs/HU-031_tablero_y_progreso_de_tareas.md) · **Requisito:** [RF-031](../../Requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -75,7 +75,7 @@
 
 ### RF-032 — Paneles de resumen por rol
 
-**Historia:** [HU-032](../../requisitos/HUs/HU-032_paneles_de_resumen_por_rol.md) · **Requisito:** [RF-032](../../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-032](../../Requisitos/HUs/HU-032_paneles_de_resumen_por_rol.md) · **Requisito:** [RF-032](../../Requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -86,7 +86,7 @@
 
 ### RF-033 — Seguimiento académico de fichas y proyectos
 
-**Historia:** [HU-033](../../requisitos/HUs/HU-033_seguimiento_academico_de_fichas_y_proyectos.md) · **Requisito:** [RF-033](../../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-033](../../Requisitos/HUs/HU-033_seguimiento_academico_de_fichas_y_proyectos.md) · **Requisito:** [RF-033](../../Requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -97,7 +97,7 @@
 
 ### RF-034 — Reporte en PDF
 
-**Historia:** [HU-034](../../requisitos/HUs/HU-034_reporte_en_pdf.md) · **Requisito:** [RF-034](../../requisitos/RFs/RF-034_reporte_en_pdf.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-034](../../Requisitos/HUs/HU-034_reporte_en_pdf.md) · **Requisito:** [RF-034](../../Requisitos/RFs/RF-034_reporte_en_pdf.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -107,7 +107,7 @@
 
 ### RF-035 — Reporte en Excel
 
-**Historia:** [HU-035](../../requisitos/HUs/HU-035_reporte_en_excel.md) · **Requisito:** [RF-035](../../requisitos/RFs/RF-035_reporte_en_excel.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-035](../../Requisitos/HUs/HU-035_reporte_en_excel.md) · **Requisito:** [RF-035](../../Requisitos/RFs/RF-035_reporte_en_excel.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -117,7 +117,7 @@
 
 ### RF-036 — Creación de lista de chequeo
 
-**Historia:** [HU-036](../../requisitos/HUs/HU-036_creacion_de_lista_de_chequeo.md) · **Requisito:** [RF-036](../../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-036](../../Requisitos/HUs/HU-036_creacion_de_lista_de_chequeo.md) · **Requisito:** [RF-036](../../Requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -127,7 +127,7 @@
 
 ### RF-037 — Importación, exportación y copia de listas
 
-**Historia:** [HU-037](../../requisitos/HUs/HU-037_importacion_exportacion_y_copia_de_listas.md) · **Requisito:** [RF-037](../../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-037](../../Requisitos/HUs/HU-037_importacion_exportacion_y_copia_de_listas.md) · **Requisito:** [RF-037](../../Requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -138,7 +138,7 @@
 
 ### RF-038 — Evaluación con lista de chequeo
 
-**Historia:** [HU-038](../../requisitos/HUs/HU-038_evaluacion_con_lista_de_chequeo.md) · **Requisito:** [RF-038](../../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-038](../../Requisitos/HUs/HU-038_evaluacion_con_lista_de_chequeo.md) · **Requisito:** [RF-038](../../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -150,7 +150,7 @@
 
 ### RF-039 — Páginas legales y aviso de cookies
 
-**Historia:** [HU-039](../../requisitos/HUs/HU-039_paginas_legales_y_aviso_de_cookies.md) · **Requisito:** [RF-039](../../requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-039](../../Requisitos/HUs/HU-039_paginas_legales_y_aviso_de_cookies.md) · **Requisito:** [RF-039](../../Requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -161,7 +161,7 @@
 
 ### RF-040 — Tema e interfaz del panel
 
-**Historia:** [HU-040](../../requisitos/HUs/HU-040_tema_e_interfaz_del_panel.md) · **Requisito:** [RF-040](../../requisitos/RFs/RF-040_tema_e_interfaz_del_panel.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-040](../../Requisitos/HUs/HU-040_tema_e_interfaz_del_panel.md) · **Requisito:** [RF-040](../../Requisitos/RFs/RF-040_tema_e_interfaz_del_panel.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -172,7 +172,7 @@
 
 ### RF-041 — Mensajes guiados
 
-**Historia:** [HU-041](../../requisitos/HUs/HU-041_mensajes_guiados.md) · **Requisito:** [RF-041](../../requisitos/RFs/RF-041_mensajes_guiados.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-041](../../Requisitos/HUs/HU-041_mensajes_guiados.md) · **Requisito:** [RF-041](../../Requisitos/RFs/RF-041_mensajes_guiados.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -182,7 +182,7 @@
 
 ### RF-042 — Página de inicio pública
 
-**Historia:** [HU-042](../../requisitos/HUs/HU-042_pagina_de_inicio_publica.md) · **Requisito:** [RF-042](../../requisitos/RFs/RF-042_pagina_de_inicio_publica.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-042](../../Requisitos/HUs/HU-042_pagina_de_inicio_publica.md) · **Requisito:** [RF-042](../../Requisitos/RFs/RF-042_pagina_de_inicio_publica.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

@@ -49,9 +49,9 @@ El esquema de base de datos y la referencia de la API se actualizan en el mismo 
 
 ### RNF-015.5 — Registro de decisiones
 
-Las decisiones de arquitectura se registran en `docs/decisiones/` con su contexto y consecuencias.
+Las decisiones de arquitectura se registran con su contexto y consecuencias. Hoy viven en la sección [«Decisiones de arquitectura»](../../Referencia-Tecnica/arquitectura.md#9-decisiones-de-arquitectura) y en `SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`; la carpeta `docs/decisiones/` todavía no existe.
 
-**Estado:** Adoptada
+**Estado:** Parcial
 
 ### RNF-015.6 — Guía rápida por rol
 

@@ -12,13 +12,28 @@
 
 | Campo | Valor |
 | --- | --- |
-| **Casos** | 108 |
-| **Herramienta** | Vitest (propuesta) |
-| **Dónde** | `backend/tests/` y `frontend/src/**/*.test.js` |
+| **Casos documentados** | 108 |
+| **Casos automatizados en Semana 2** | 9 (`backend/tests/reglas.test.js`) |
+| **Herramienta** | Vitest |
+| **Dónde** | `backend/src/domain/reglas.js` (funciones puras) y `backend/tests/reglas.test.js` |
 | **Plan** | [Plan de pruebas](plan-de-pruebas.md) |
 | **Fecha** | Octubre 2026 |
 
-> **Requisito previo:** hoy estas reglas viven dentro de los controladores. Para probarlas hay que **extraerlas a funciones puras** en `services/` ([clases](../diagramas/clases.md#2-servicios-y-controladores)). Una función pura recibe datos y devuelve un resultado, sin leer ni escribir en la base de datos.
+> **Estado actual:** las reglas puras ya están extraídas en `backend/src/domain/reglas.js`. La suite automatizada de la Semana 2 cubre **9 casos** sobre cupo, normalización, unión, estado de carpeta, estado de fase y progreso. Los 108 casos de este documento son el catálogo completo; los que aún no tienen prueba automatizada quedan como trabajo de las Semanas 3–6.
+
+### Casos implementados
+
+| # | Prueba | Función |
+|---|---|---|
+| 1 | Valida cupo por defecto y rangos | `validarCupo` |
+| 2 | Normaliza resultados a `APROBADO`/`REPROBADO` | `normalizarResultado` |
+| 3 | `puedeUnirse` respeta el cupo (el líder cuenta) | `puedeUnirse` |
+| 4 | Sin evidencias → `Pendiente` | `calcularEstadoCarpeta` |
+| 5 | Alguna reprobada → `Desaprobada` | `calcularEstadoCarpeta` |
+| 6 | Todas aprobadas → `Aprobada` | `calcularEstadoCarpeta` |
+| 7 | Con evidencia sin evaluar → `En revisión` | `calcularEstadoCarpeta` |
+| 8 | La fase usa las evidencias (cascada) | `calcularEstadoFase` |
+| 9 | Cuenta aprobadas, reprobadas y sin evaluar | `calcularProgreso` |
 
 ---
 
@@ -33,19 +48,20 @@
 Ejemplo con la regla de la carpeta (caso `PU-01` a `PU-11`):
 
 ```js
-// backend/src/services/cascada.js  (función pura: no toca la base de datos)
-export function calcularEstadoCarpeta(resultados) {
-  if (resultados.length === 0) return 'Pendiente';
-  if (resultados.includes('REPROBADO')) return 'Desaprobada';
-  if (resultados.every((r) => r === 'APROBADO')) return 'Aprobada';
+// backend/src/domain/reglas.js  (función pura: no toca la base de datos)
+export function calcularEstadoCarpeta(resultados = []) {
+  const lista = Array.isArray(resultados) ? resultados : [];
+  if (lista.length === 0) return 'Pendiente';
+  if (lista.some((r) => r === 'REPROBADO')) return 'Desaprobada';
+  if (lista.every((r) => r === 'APROBADO')) return 'Aprobada';
   return 'En revisión';
 }
 ```
 
 ```js
-// backend/tests/cascada.test.js
+// backend/tests/reglas.test.js
 import { describe, it, expect } from 'vitest';
-import { calcularEstadoCarpeta } from '../src/services/cascada.js';
+import { calcularEstadoCarpeta } from '../src/domain/reglas.js';
 
 describe('calcularEstadoCarpeta', () => {
   it.each([
@@ -68,7 +84,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 1. Estado de una carpeta
 
-`calcularEstadoCarpeta(resultados)` recibe el resultado **vigente** de cada evidencia no eliminada (`null` = aún sin evaluar). Regla: [RN-018](../requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados).
+`calcularEstadoCarpeta(resultados)` recibe el resultado **vigente** de cada evidencia no eliminada (`null` = aún sin evaluar). Regla: [RN-018](../Requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -81,8 +97,8 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 | PU-07 | `["APROBADO","REPROBADO"]` | `Desaprobada` | Una reprobada desaprueba la carpeta |
 | PU-08 | `[null,"REPROBADO"]` | `Desaprobada` | La reprobada pesa más que la pendiente |
 | PU-09 | `["REPROBADO","REPROBADO"]` | `Desaprobada` |  |
-| PU-10 | `["APROBADO","APROBADO",null]` | `En revisión` | Evidencia nueva en una carpeta aprobada ([RN-015](../requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase)) |
-| PU-11 | Evidencia eliminada con `REPROBADO` y otra `APROBADO` | `Aprobada` | Las eliminadas no cuentan ([RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico)) |
+| PU-10 | `["APROBADO","APROBADO",null]` | `En revisión` | Evidencia nueva en una carpeta aprobada ([RN-015](../Requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase)) |
+| PU-11 | Evidencia eliminada con `REPROBADO` y otra `APROBADO` | `Aprobada` | Las eliminadas no cuentan ([RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico)) |
 
 ### 2. Estado de una fase
 
@@ -101,7 +117,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 3. Porcentaje y conteo de carpetas
 
-`porcentajeFase(aprobadas, total)` redondea al entero más cercano; `carpetasAprobadas(aprobadas, total)` devuelve el texto "X de Y". Regla: [RN-020](../requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase).
+`porcentajeFase(aprobadas, total)` redondea al entero más cercano; `carpetasAprobadas(aprobadas, total)` devuelve el texto "X de Y". Regla: [RN-020](../Requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase).
 
 | ID | Entrada (aprobadas, total) | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -115,7 +131,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 4. Transiciones de una tarea
 
-`puedeTransicionar(de, a, actor)` con `actor` ∈ {`responsable`, `lider`, `otro`}. Regla: [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea).
+`puedeTransicionar(de, a, actor)` con `actor` ∈ {`responsable`, `lider`, `otro`}. Regla: [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea).
 
 | ID | Entrada (de → a, actor) | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -138,7 +154,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 5. Correo institucional
 
-`esCorreoInstitucional(correo)`. Regla: [RN-001](../requisitos/reglas-de-negocio.md#rn-001--registro-limitado-a-aprendices-con-correo-institucional).
+`esCorreoInstitucional(correo)`. Regla: [RN-001](../Requisitos/reglas-de-negocio.md#rn-001--registro-limitado-a-aprendices-con-correo-institucional).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -153,7 +169,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 6. Política de contraseña
 
-`cumplePolitica(clave)`: mínimo 8 caracteres y al menos un número ([RNF-001.8](../requisitos/RNFs/RNF-001_seguridad.md)).
+`cumplePolitica(clave)`: mínimo 8 caracteres y al menos un número ([RNF-001.8](../Requisitos/RNFs/RNF-001_seguridad.md)).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -183,7 +199,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 8. Cupo y código de invitación
 
-`tieneCupo(integrantesActivos, cupo)` y `generarCodigoGrupo()`. Reglas: [RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo), [RN-010](../requisitos/reglas-de-negocio.md#rn-010--código-de-invitación).
+`tieneCupo(integrantesActivos, cupo)` y `generarCodigoGrupo()`. Reglas: [RN-009](../Requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo), [RN-010](../Requisitos/reglas-de-negocio.md#rn-010--código-de-invitación).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -196,7 +212,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 9. Validación de archivos
 
-`validarArchivo({ nombre, bytes, tamano })`: lista blanca por **contenido real**, tamaño máximo de 10 MB (10 × 1024 × 1024 bytes) y nombre seguro. Regla: [RNF-012](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md).
+`validarArchivo({ nombre, bytes, tamano })`: lista blanca por **contenido real**, tamaño máximo de 10 MB (10 × 1024 × 1024 bytes) y nombre seguro. Regla: [RNF-012](../Requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -214,7 +230,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 10. Sesión y tokens
 
-`SesionService`. Regla: [RF-004](../requisitos/RFs/RF-004_sesion_segura.md).
+`SesionService`. Regla: [RF-004](../Requisitos/RFs/RF-004_sesion_segura.md).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -227,7 +243,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 11. Avances de tareas y lista de chequeo
 
-`AvanceService`. Reglas: [RN-027](../requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo), [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md).
+`AvanceService`. Reglas: [RN-027](../Requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo), [RF-031](../Requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -244,7 +260,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 
 ### 12. Permisos
 
-`PermisosService`. Matriz: [permisos](../requisitos/matriz-permisos.md).
+`PermisosService`. Matriz: [permisos](../Requisitos/matriz-permisos.md).
 
 | ID | Entrada | Resultado esperado | Nota |
 | --- | --- | --- | --- |
@@ -255,7 +271,7 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 | PU-104 | `esIntegranteActivo` con `fecha_salida` o estado distinto de `Activo` | `false` |  |
 | PU-105 | `esIntegranteActivo` de otro grupo | `false` |  |
 | PU-106 | `instructorDeFicha` con vinculación vigente | `true` |  |
-| PU-107 | `instructorDeFicha` con `fecha_fin` cerrada | `false` | Ya no evalúa esa ficha ([RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial)) |
+| PU-107 | `instructorDeFicha` con `fecha_fin` cerrada | `false` | Ya no evalúa esa ficha ([RN-024](../Requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial)) |
 | PU-108 | `instructorDeFicha` de otra ficha | `false` |  |
 
 ---
@@ -274,4 +290,4 @@ Convención: `PU-<número>`. La tabla de cada sección indica la función, la en
 ## Documentos relacionados
 
 - [Plan de pruebas](plan-de-pruebas.md) · [Matriz de cobertura](matriz-cobertura.md)
-- [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Clases](../diagramas/clases.md) · [Estados](../diagramas/estados.md)
+- [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Clases](../Diagramas/clases.md) · [Estados](../Diagramas/estados.md)

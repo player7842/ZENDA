@@ -1,407 +1,517 @@
-# Esquema de base de datos — ZENDA Semana 2
+# Esquema de base de datos — ZENDA
 
-> **Base oficial**: `Database/zenda_bd.sql`. **Migración idempotente de Semana 2**: `Database/migrations/002_semana2.sql`.
->
-> **Aplicación**: crear base desde `zenda_bd.sql` o aplicar la migración sobre una instalación existente. Las pruebas de CI ejecutan `psql -f Database/zenda_bd.sql` antes de `pnpm test`.
-> **Cambios Semana 2**: sin sub-roles Scrum, liderazgo por `grupos.lider_id`, `grupos.cupo_maximo`, `carpetas.estado_carpeta`, historial de `instructor_ficha` (única asignación vigente por índice único parcial), estados derivados por cascada con evaluación vigente mediante `LATERAL`.
+<!--
+  ¿Qué? Diccionario del esquema real de PostgreSQL: tablas, columnas, tipos,
+  restricciones, índices, funciones y migración.
+  ¿Para qué? Que cualquier integrante pueda leer el modelo sin abrir el SQL y
+  sepa exactamente qué existe hoy y qué no.
+  ¿Impacto? Un esquema mal documentado produce consultas y migraciones sobre
+  columnas que no existen.
+-->
 
-## 1. Diccionario resumido (cambios relevantes)
+---
 
-### 1.1 `usuarios`
-Sin `sub_rol_intencion`. Campos: `usuario_id`, `rol` (`APRENDIZ|INSTRUCTOR|COORDINADOR|ADMINISTRADOR`), `nombre`, `apellido`, `correo` (UNIQUE), `contrasena`, `tipo_documento`, `numero_documento`, `estado`, `fecha_creacion`, `fecha_actualizacion`.
+## Identificación
 
-### 1.2 `instructor_ficha` (historial)
-| Columna | Tipo | Restricciones | Descripción |
-| --- | --- | --- | --- |
-| `instructor_ficha_id` | INT | PK, identidad | Identificador |
-| `instructor_id` | INT | FK → usuarios | Instructor |
-| `ficha_id` | INT | FK → fichas | Ficha |
-| `fecha_inicio` | DATE | NOT NULL, DEFAULT CURRENT_DATE | Inicio de asignación |
-| `fecha_fin` | DATE | NULL = vigente | Cierre; al reasignar se cierra, **nunca se borra** |
-| `estado` | VARCHAR(20) | NOT NULL, DEFAULT 'Activo' | `Activo` ⇔ `fecha_fin IS NULL`; `Inactivo` ⇔ `fecha_fin NOT NULL` |
+| Campo | Valor |
+|---|---|
+| **Motor** | PostgreSQL 16 |
+| **Esquema oficial** | [`Database/zenda_bd.sql`](../../Database/zenda_bd.sql) |
+| **Migración incremental** | [`Database/migrations/002_semana2.sql`](../../Database/migrations/002_semana2.sql) |
+| **Tablas** | **14** |
+| **Tipos enumerados** | 1 (`tipo_rol`) |
+| **Funciones** | 2 (`zenda_recalcular_carpeta`, `zenda_recalcular_fase`) |
+| **Disparadores (triggers)** | 0 |
+| **Última verificación** | 23-oct-2026, contra PostgreSQL 16 en Docker |
 
-Índices/constraints: `CHECK` coherencia fechas/estado; **índice único parcial** `uq_instructor_ficha_vigente` (`instructor_id`, `ficha_id`) `WHERE fecha_fin IS NULL`.
+> **Fuente de verdad:** el esquema se verificó consultando `information_schema`,
+> `pg_constraint`, `pg_indexes` y `pg_proc` sobre una base creada con
+> `Database/zenda_bd.sql` y actualizada con la migración. Las tablas que
+> aparecían en versiones anteriores de este documento (`evidencia_versiones`,
+> `listas_chequeo`, `lista_chequeo_items`, `lista_chequeo_evaluaciones`,
+> `sesiones_refresh`, `tokens_verificacion_correo`, `auditoria`) **no existen**
+> en el código actual: pertenecen a propuestas de Semanas 3–6.
 
-### 1.3 `grupos`
-| Columna | Tipo | Restricciones | Descripción |
-| --- | --- | --- | --- |
-| `grupo_id` | INT | PK, identidad | Identificador |
-| `ficha_id` | INT | FK → fichas | Ficha |
-| `lider_id` | INT | FK → usuarios, NOT NULL | Líder del grupo de trabajo (sin sub-rol) |
-| `nombre_grupo` | VARCHAR(50) | NOT NULL | Nombre (grupo `General` o nombre del proyecto) |
-| `codigo_grupo` | VARCHAR(30) | UNIQUE, NOT NULL | Código de invitación |
-| `cupo_maximo` | INT | NOT NULL, DEFAULT 6, `CHECK BETWEEN 1 AND 50` | Cupo máximo (RN-009) |
-| `estado_grupo` | VARCHAR(20) | NOT NULL, DEFAULT 'Activo' | Estado |
-| `fecha_creacion` | TIMESTAMP | NOT NULL, DEFAULT now() | Creación |
+---
 
-### 1.4 `integrantes_grupo`
-Sin `rol_scrum`. `UNIQUE(grupo_id, usuario_id)`. Campos: `integrante_id`, `grupo_id`, `usuario_id`, `estado_integrante` (`Activo`/`Inactivo`), `fecha_ingreso`, `fecha_salida`.
+## 1. Resumen del modelo
 
-### 1.5 `fases`, `carpetas`, `evidencias`, `evaluaciones`
-- `fases.estado_fase`: `CHECK IN ('Pendiente','En revisión','Aprobada','Desaprobada')`.
-- `carpetas.estado_carpeta`: `CHECK IN ('Pendiente','En revisión','Aprobada','Desaprobada')` (añadido en Semana 2).
-- `evaluaciones.resultado`: `CHECK IN ('APROBADO','REPROBADO')`.
-- **Evaluación vigente**: la más reciente por `fecha_evaluacion DESC, evaluacion_id DESC` (RN-017). Seleccionada con `LATERAL` en consultas y en servicios.
-- **Cascada**: tras insertar evidencia o evaluación se recalcula `carpetas.estado_carpeta` y `fases.estado_fase` con las reglas puras (`backend/src/domain/reglas.js`), persistidas en BD.
+| Tabla | Propósito | Filas que crecen |
+|---|---|---|
+| `programas` | Catálogo de programas de formación | Poco |
+| `usuarios` | Todas las cuentas, con rol y aceptaciones legales | Sí |
+| `recuperacion_contrasena` | Tokens de un solo uso para restablecer la clave | Sí |
+| `fichas` | Fichas de formación de un programa | Poco |
+| `instructor_ficha` | Historial de instructores asignados a cada ficha | Sí |
+| `grupos` | Grupos de trabajo y el grupo General de cada ficha | Sí |
+| `integrantes_grupo` | Pertenencia de aprendices a grupos | Sí |
+| `proyectos` | Proyecto formativo de un grupo (1 a 1 con `grupos`) | Sí |
+| `fases` | Las 5 fases de un proyecto | Sí |
+| `carpetas` | Carpetas de evidencias dentro de una fase | Sí |
+| `evidencias` | Enlaces entregados por los aprendices | Sí |
+| `evaluaciones` | Historial de evaluaciones por evidencia | Sí |
+| `observaciones` | Observaciones del instructor, opcionalmente ligadas a una evidencia | Sí |
+| `tareas` | Tablero de tareas del proyecto | Sí |
 
-### 1.6 Índices relevantes
-`idx_fichas_programa`, `idx_grupos_ficha`, `idx_integrantes_grupo_usuario`, `idx_integrantes_grupo_grupo`, `idx_fases_proyecto`, `idx_carpetas_fase`, `idx_evidencias_carpeta`, `idx_evaluaciones_evidencia_fecha` (soporte a la selección de evaluación vigente).
+### 1.1 Relaciones principales
 
-## 2. Reglas aplicadas
-- **RN-007**: un aprendiz, un proyecto activo (grupo distinto de `General`).
-- **RN-008**: líder = `grupos.lider_id`.
-- **RN-009**: cupo validado al crear/unirse; bloqueo `FOR UPDATE` al unirse.
-- **RN-012**: cualquier integrante activo crea carpetas/sube evidencias, autor desde token.
-- **RN-017/RN-018/RN-019**: historial de evaluaciones, cascada y aprobación en bloque.
-- **H-07/HU-011**: historial de `instructor_ficha` sin borrados.
+```mermaid
+erDiagram
+    programas ||--o{ fichas : tiene
+    fichas ||--o{ instructor_ficha : asigna
+    usuarios ||--o{ instructor_ficha : dicta
+    fichas ||--o{ grupos : agrupa
+    usuarios ||--o{ grupos : lidera
+    grupos ||--o{ integrantes_grupo : contiene
+    usuarios ||--o{ integrantes_grupo : pertenece
+    grupos ||--|| proyectos : desarrolla
+    proyectos ||--o{ fases : divide
+    fases ||--o{ carpetas : contiene
+    carpetas ||--o{ evidencias : almacena
+    usuarios ||--o{ evidencias : sube
+    evidencias ||--o{ evaluaciones : recibe
+    usuarios ||--o{ evaluaciones : evalua
+    proyectos ||--o{ observaciones : recibe
+    evidencias ||--o{ observaciones : detalla
+    usuarios ||--o{ observaciones : escribe
+    proyectos ||--o{ tareas : planifica
+    usuarios ||--o{ tareas : responde
+    usuarios ||--o{ recuperacion_contrasena : solicita
+```
 
-## 3. Notas de despliegue
-1. Aplicar `Database/zenda_bd.sql` (base nueva) o `Database/migrations/002_semana2.sql` (base existente).
-2. Actualizar backend y frontend con el mismo *release* (los controladores exigen el nuevo esquema).
-3. No ejecutar sin revisar asignaciones activas de instructores (la migración preserva historial).
+Todas las claves foráneas son `DEFERRABLE` (se validan al confirmar la
+transacción), salvo `recuperacion_contrasena.usuario_id`, que además es
+`ON DELETE CASCADE`. No hay borrado en cascada en el resto del modelo: las
+entidades se desactivan (`estado`, `estado_grupo`, `estado_integrante`,
+`fecha_fin`).
 
-Ver [`docs/gestion/plan-de-implantacion.md`](../gestion/plan-de-implantacion.md) para el plan completo.
+---
 
-## 2. Diccionario de datos
+## 2. Diccionario de tablas
 
-Leyenda de la columna **Cambio**: 🆕 nueva · ✏️ modificada · — sin cambios.
+Convenciones de las tablas siguientes:
+
+- **Nulo:** `NO` significa `NOT NULL`.
+- **Default:** `—` significa que no hay valor por defecto.
+- Los `*_id` son `INT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY`.
+- Las fechas de negocio son `DATE`; las marcas de tiempo son `TIMESTAMP`
+  (sin zona horaria) y usan `now()`.
 
 ### 2.1 `programas`
 
-Catálogo de programas de formación. **Estado:** Existente.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `programa_id` | INT | PK, identidad | Identificador | — |
-| `codigo_programa` | INT | UNIQUE, NOT NULL | Código SENA del programa (ADSO = 2338) | — |
-| `nombre_programa` | VARCHAR(220) | NOT NULL | Nombre del programa | — |
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `programa_id` | `INT` | NO | identidad | PK |
+| `codigo_programa` | `INT` | NO | — | Código del programa; **UNIQUE** |
+| `nombre_programa` | `VARCHAR(220)` | NO | — | Nombre del programa |
 
 ### 2.2 `usuarios`
 
-Todas las personas con acceso al sistema. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `usuario_id` | `INT` | NO | identidad | PK |
+| `rol` | `tipo_rol` | NO | — | `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR` o `ADMINISTRADOR` |
+| `nombre` | `VARCHAR(100)` | NO | — | Nombres |
+| `apellido` | `VARCHAR(100)` | NO | — | Apellidos |
+| `correo` | `VARCHAR(150)` | NO | — | **UNIQUE**; en el registro debe ser `@soy.sena.edu.co` |
+| `contrasena` | `VARCHAR(255)` | NO | — | Hash bcrypt (10 rondas) |
+| `tipo_documento` | `VARCHAR(10)` | Sí | `'CC'` | `CC`, `TI`, `CE`, `PA` o `PPT` (validado en la aplicación) |
+| `numero_documento` | `VARCHAR(30)` | Sí | — | Número de documento |
+| `estado` | `VARCHAR(20)` | NO | `'Activo'` | `Activo` / `Inactivo` (validado en la aplicación) |
+| `token_version` | `INT` | NO | `0` | Se incrementa al cambiar la clave para invalidar sesiones |
+| `acepta_terminos` | `BOOLEAN` | NO | `false` | Aceptación de términos |
+| `acepta_privacidad` | `BOOLEAN` | NO | `false` | Aceptación de privacidad |
+| `acepta_cookies` | `BOOLEAN` | NO | `false` | Aceptación de cookies |
+| `acepta_tratamiento_datos` | `BOOLEAN` | NO | `false` | Aceptación de tratamiento de datos |
+| `fecha_aceptacion_legal` | `TIMESTAMP` | Sí | — | Momento de la aceptación |
+| `fecha_creacion` | `TIMESTAMP` | NO | `now()` | Alta |
+| `fecha_actualizacion` | `TIMESTAMP` | NO | `now()` | Última modificación |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `usuario_id` | INT | PK, identidad | Identificador | — |
-| `rol` | tipo_rol | NOT NULL | `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR` o `ADMINISTRADOR` | — |
-| `nombre`, `apellido` | VARCHAR(100) | NOT NULL | Datos personales | — |
-| `correo` | VARCHAR(150) | UNIQUE, NOT NULL | Correo de acceso (`@soy.sena.edu.co` para aprendices) | — |
-| `contrasena` | VARCHAR(255) | NOT NULL | Hash bcrypt | — |
-| `tipo_documento` | VARCHAR(10) | CHECK, por defecto `CC` | `CC`, `TI`, `CE`, `PA` o `PPT` | ✏️ |
-| `numero_documento` | VARCHAR(30) | — | Número de documento | — |
-| `estado` | VARCHAR(20) | NOT NULL, por defecto `Activo` | Solo `Activo` inicia sesión | — |
-| `acepto_legales_en` | TIMESTAMP | — | Fecha de aceptación de los textos legales | 🆕 |
-| `correo_verificado_en` | TIMESTAMP | — | Fecha de verificación del correo | 🆕 |
-| `fecha_creacion`, `fecha_actualizacion` | TIMESTAMP | NOT NULL | Auditoría básica | — |
+> No existen `sub_rol_intencion`, `correo_verificado_en` ni
+> `acepto_legales_en`. El liderazgo de grupo **no** es un sub-rol: vive en
+> `grupos.lider_id`.
 
-**Columna eliminada:** `sub_rol_intencion`.
+### 2.3 `recuperacion_contrasena`
 
-### 2.3 `fichas`
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `recuperacion_id` | `INT` | NO | identidad | PK |
+| `usuario_id` | `INT` | NO | — | FK → `usuarios`, **ON DELETE CASCADE** |
+| `token_hash` | `CHAR(64)` | NO | — | SHA-256 hexadecimal del token; **UNIQUE** |
+| `expira_en` | `TIMESTAMP` | NO | — | Validez de 15 minutos |
+| `usado_en` | `TIMESTAMP` | Sí | — | Marca de un solo uso |
+| `creado_en` | `TIMESTAMP` | NO | `now()` | Emisión |
 
-Grupos de formación de un programa. **Estado:** Existente.
+Índice: `idx_recuperacion_usuario (usuario_id, expira_en DESC)`.
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `ficha_id` | INT | PK, identidad | Identificador | — |
-| `programa_id` | INT | FK → programas | Programa | — |
-| `numero_ficha` | INT | UNIQUE, NOT NULL | Número oficial de la ficha | — |
-| `fecha_inicio`, `fecha_fin` | DATE | NOT NULL | Vigencia de la ficha | — |
-| `jornada` | VARCHAR(20) | — | Diurna, Tarde, etc. | — |
+### 2.4 `fichas`
 
-### 2.4 `instructor_ficha`
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `ficha_id` | `INT` | NO | identidad | PK |
+| `programa_id` | `INT` | NO | — | FK → `programas` |
+| `numero_ficha` | `INT` | NO | — | **UNIQUE** |
+| `fecha_inicio` | `DATE` | NO | — | Inicio de la ficha |
+| `fecha_fin` | `DATE` | NO | — | Fin de la ficha |
+| `jornada` | `VARCHAR(20)` | Sí | — | Mañana / tarde / mixta |
 
-Vinculación de un instructor con una ficha, con historial. **Estado:** Modificada.
+Índice: `idx_fichas_programa (programa_id)`.
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `instructor_ficha_id` | INT | PK, identidad | Identificador | — |
-| `instructor_id` | INT | FK → usuarios | Instructor | — |
-| `ficha_id` | INT | FK → fichas | Ficha | — |
-| `fecha_inicio` | TIMESTAMP | NOT NULL | Inicio de la vinculación | 🆕 |
-| `fecha_fin` | TIMESTAMP | NULL = vigente | Cierre de la vinculación | 🆕 |
+### 2.5 `instructor_ficha`
 
-### 2.5 `grupos`
+Historial de asignaciones. Una fila **inactiva** conserva el registro; no se
+borra.
 
-Grupo `General` de cada ficha y grupos de proyecto. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `instructor_ficha_id` | `INT` | NO | identidad | PK |
+| `instructor_id` | `INT` | NO | — | FK → `usuarios` |
+| `ficha_id` | `INT` | NO | — | FK → `fichas` |
+| `fecha_inicio` | `DATE` | NO | `CURRENT_DATE` | Inicio de la asignación |
+| `fecha_fin` | `DATE` | Sí | — | Fin; `NULL` mientras está vigente |
+| `estado` | `VARCHAR(20)` | NO | `'Activo'` | `Activo` / `Inactivo` |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `grupo_id` | INT | PK, identidad | Identificador | — |
-| `ficha_id` | INT | FK → fichas | Ficha | — |
-| `lider_id` | INT | FK → usuarios, NOT NULL | Líder del grupo; en General es el primer aprendiz vinculado | ✏️ |
-| `nombre_grupo` | VARCHAR(50) | NOT NULL, CHECK | `General` solo si `es_general`; los proyectos no pueden llamarse así | — |
-| `codigo_grupo` | VARCHAR(30) | UNIQUE, NOT NULL | `GEN-<número_ficha>` o `PRY-XXXXXXXXXX` | ✏️ |
-| `cupo_maximo` | INT | CHECK 1–50, NOT NULL, defecto 6 | Cupo máximo; General = 50 | 🆕 |
-| `estado_grupo` | VARCHAR(20) | por defecto `Activo` | Estado | — |
-| `es_general` | BOOLEAN | NOT NULL, defecto `false` | Distingue el grupo General sin mirar el nombre | 🆕 |
-| `fecha_creacion` | TIMESTAMP | NOT NULL | Creación | — |
+Restricciones:
 
-### 2.6 `integrantes_grupo`
+- `chk_instructor_ficha_fechas`: `fecha_fin IS NULL OR fecha_fin >= fecha_inicio`.
+- `chk_instructor_ficha_estado`: `Activo` exige `fecha_fin IS NULL`;
+  `Inactivo` exige `fecha_fin IS NOT NULL`.
+- `uq_instructor_ficha_vigente`: **UNIQUE parcial** sobre
+  `(instructor_id, ficha_id) WHERE fecha_fin IS NULL`. Garantiza una sola
+  asignación vigente por par instructor–ficha y permite el historial.
 
-Pertenencia de un usuario a un grupo. **Estado:** Modificada.
+### 2.6 `grupos`
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `integrante_id` | INT | PK, identidad | Identificador | — |
-| `grupo_id`, `usuario_id` | INT | FK, UNIQUE conjunto | Grupo y usuario | — |
-| `estado_integrante` | VARCHAR(20) | por defecto `Activo` | Estado | — |
-| `fecha_ingreso`, `fecha_salida` | TIMESTAMP | salida NULL | Permanencia | — |
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `grupo_id` | `INT` | NO | identidad | PK |
+| `ficha_id` | `INT` | NO | — | FK → `fichas` |
+| `lider_id` | `INT` | NO | — | FK → `usuarios`; líder del grupo |
+| `nombre_grupo` | `VARCHAR(50)` | NO | — | Nombre visible |
+| `codigo_grupo` | `VARCHAR(30)` | NO | — | **UNIQUE**; `PRY-*` para proyectos y `GEN-<ficha>` para el General |
+| `cupo_maximo` | `INT` | NO | `6` | Cupo del grupo |
+| `estado_grupo` | `VARCHAR(20)` | NO | `'Activo'` | `Activo` / `Inactivo` |
+| `es_general` | `BOOLEAN` | NO | `false` | Marca el grupo General de la ficha |
+| `fecha_creacion` | `TIMESTAMP` | NO | `now()` | Alta |
 
-**Columna eliminada:** `rol_scrum`.
+Restricciones:
 
-### 2.7 `proyectos`
+- `chk_grupos_cupo`: `cupo_maximo BETWEEN 1 AND 50`.
+- `chk_grupos_general_nombre`: si `es_general`, el nombre debe ser `'General'`.
+- `uq_grupo_general_por_ficha`: **UNIQUE parcial** sobre `ficha_id WHERE es_general`.
+  Hay exactamente un General por ficha.
+- Índice: `idx_grupos_ficha (ficha_id)`.
 
-Proyecto formativo de un grupo (relación 1 a 1). **Estado:** Modificada.
+> El cupo del General es 50. El cupo de un grupo de trabajo es 1–50, 6 por
+> defecto, y nunca puede quedar por debajo de sus integrantes activos.
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `proyecto_id` | INT | PK, identidad | Identificador | — |
-| `grupo_id` | INT | FK UNIQUE → grupos | Grupo dueño | — |
-| `nombre_proyecto` | VARCHAR(150) | NOT NULL | Nombre | — |
-| `descripcion`, `problema`, `objetivo`, `alcance` | VARCHAR(500) | NOT NULL | README del proyecto | — |
-| `tecnologias` | VARCHAR(500) | — | Tecnologías | — |
-| `fecha_inicio`, `fecha_fin_estimada` | DATE | NOT NULL | Plazos | — |
-| `estado_proyecto` | VARCHAR(30) | por defecto `Activo` | `Activo`, `Pausado`, `Finalizado` | — |
-| `fecha_actualizacion` | TIMESTAMP | NOT NULL | Última modificación | 🆕 |
+### 2.7 `integrantes_grupo`
 
-### 2.8 `fases`
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `integrante_id` | `INT` | NO | identidad | PK |
+| `grupo_id` | `INT` | NO | — | FK → `grupos` |
+| `usuario_id` | `INT` | NO | — | FK → `usuarios` |
+| `estado_integrante` | `VARCHAR(20)` | NO | `'Activo'` | `Activo` / `Inactivo` |
+| `fecha_ingreso` | `TIMESTAMP` | NO | `now()` | Ingreso |
+| `fecha_salida` | `TIMESTAMP` | Sí | — | Salida |
 
-Las 5 fases fijas del proyecto. **Estado:** Modificada.
+Restricción `unq_integrantes_grupo (grupo_id, usuario_id)` e índices
+`idx_integrantes_grupo_grupo`, `idx_integrantes_grupo_usuario`.
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `fase_id` | INT | PK, identidad | Identificador | — |
-| `proyecto_id` | INT | FK → proyectos | Proyecto | — |
-| `numero_fase` | INT | UNIQUE con proyecto | 1 a 5 | — |
-| `nombre_fase` | VARCHAR(100) | NOT NULL | Nombre de la fase | — |
-| `estado_fase` | VARCHAR(30) | CHECK | `Pendiente`, `En revisión`, `Aprobada` o `Desaprobada` | ✏️ |
+> El líder también se registra como integrante: por eso el cupo cuenta
+> integrantes activos, no “invitados”.
 
-### 2.9 `carpetas`
+### 2.8 `proyectos`
 
-Carpeta creada por los aprendices dentro de una fase. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `proyecto_id` | `INT` | NO | identidad | PK |
+| `grupo_id` | `INT` | NO | — | FK → `grupos`; **UNIQUE** (1 proyecto por grupo) |
+| `nombre_proyecto` | `VARCHAR(150)` | NO | — | Nombre |
+| `descripcion` | `VARCHAR(500)` | NO | — | Descripción |
+| `problema` | `VARCHAR(500)` | NO | — | Problema que resuelve |
+| `objetivo` | `VARCHAR(500)` | NO | — | Objetivo |
+| `alcance` | `VARCHAR(500)` | NO | — | Alcance |
+| `tecnologias` | `VARCHAR(500)` | Sí | — | Tecnologías |
+| `fecha_inicio` | `DATE` | NO | — | Inicio |
+| `fecha_fin_estimada` | `DATE` | NO | — | Fin estimado |
+| `estado_proyecto` | `VARCHAR(30)` | NO | `'Activo'` | `Activo` / `Finalizado` |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `carpeta_id` | INT | PK, identidad | Identificador | — |
-| `fase_id` | INT | FK → fases | Fase | — |
-| `nombre_carpeta` | VARCHAR(150) | NOT NULL | Nombre libre | — |
-| `fecha_creacion` | TIMESTAMP | NOT NULL | Creación | — |
-| `estado_carpeta` | VARCHAR(20) | CHECK | `Pendiente`, `En revisión`, `Aprobada` o `Desaprobada` | 🆕 |
-| `creada_por` | INT | FK → usuarios | Autor | 🆕 |
-| `fecha_actualizacion` | TIMESTAMP | NOT NULL | Última modificación | 🆕 |
+> No existe `fecha_actualizacion` en esta tabla.
 
-### 2.10 `evidencias`
+### 2.9 `fases`
 
-Identidad de una evidencia; el contenido está en sus versiones. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `fase_id` | `INT` | NO | identidad | PK |
+| `proyecto_id` | `INT` | NO | — | FK → `proyectos` |
+| `numero_fase` | `INT` | NO | — | 1 a 5 |
+| `nombre_fase` | `VARCHAR(100)` | NO | — | Nombre |
+| `estado_fase` | `VARCHAR(30)` | NO | `'Pendiente'` | Estado derivado |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `evidencia_id` | INT | PK, identidad | Identificador | — |
-| `carpeta_id` | INT | FK → carpetas | Carpeta | — |
-| `usuario_id` | INT | FK → usuarios | Quién la subió | — |
-| `nombre_evidencia` | VARCHAR(200) | NOT NULL | Nombre | — |
-| `tipo_evidencia` | VARCHAR(20) | CHECK | `ARCHIVO` o `ENLACE` (espejo de la versión vigente) | ✏️ |
-| `ubicacion` | TEXT | NOT NULL | URL o ruta (espejo de la versión vigente) | — |
-| `fecha_subida` | TIMESTAMP | NOT NULL | Primera subida | — |
-| `eliminada` | BOOLEAN | NOT NULL, `false` | Borrado lógico | 🆕 |
-| `eliminada_por` | INT | FK → usuarios | Quién la eliminó | 🆕 |
-| `fecha_eliminacion` | TIMESTAMP | — | Cuándo | 🆕 |
-| `fecha_actualizacion` | TIMESTAMP | NOT NULL | Última modificación | 🆕 |
+Restricciones: `unq_fases_proyecto (proyecto_id, numero_fase)` y
+`chk_fases_estado` con `Pendiente`, `En revisión`, `Aprobada` o `Desaprobada`.
+Índice `idx_fases_proyecto`.
 
-### 2.11 `evidencia_versiones`
+### 2.10 `carpetas`
 
-Historial de contenidos de una evidencia. **Estado:** Nueva.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `carpeta_id` | `INT` | NO | identidad | PK |
+| `fase_id` | `INT` | NO | — | FK → `fases` |
+| `nombre_carpeta` | `VARCHAR(150)` | NO | — | Nombre |
+| `estado_carpeta` | `VARCHAR(20)` | NO | `'Pendiente'` | Estado derivado |
+| `fecha_creacion` | `TIMESTAMP` | NO | `now()` | Alta |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `version_id` | INT | PK, identidad | Identificador | 🆕 |
-| `evidencia_id` | INT | FK → evidencias | Evidencia | 🆕 |
-| `numero_version` | INT | UNIQUE con evidencia | 1, 2, 3… | 🆕 |
-| `tipo_evidencia` | VARCHAR(20) | CHECK | `ARCHIVO` o `ENLACE` | 🆕 |
-| `ubicacion` | TEXT | NOT NULL | Enlace o ruta en el almacenamiento | 🆕 |
-| `nombre_original` | VARCHAR(255) | — | Nombre del archivo subido | 🆕 |
-| `tipo_mime` | VARCHAR(100) | — | Tipo real detectado | 🆕 |
-| `tamano_bytes` | BIGINT | ≥ 0 | Tamaño | 🆕 |
-| `hash_sha256` | CHAR(64) | — | Huella para detectar duplicados | 🆕 |
-| `subida_por` | INT | FK → usuarios | Autor de la versión | 🆕 |
-| `fecha_subida` | TIMESTAMP | NOT NULL | Cuándo | 🆕 |
-| `vigente` | BOOLEAN | única por evidencia | Versión actual | 🆕 |
+Restricción `chk_carpetas_estado` con los mismos cuatro estados e índice
+`idx_carpetas_fase`.
+
+> No existen `creada_por` ni `fecha_actualizacion`. La autoría se conoce por
+> la evidencia (`evidencias.usuario_id`).
+
+### 2.11 `evidencias`
+
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `evidencia_id` | `INT` | NO | identidad | PK |
+| `carpeta_id` | `INT` | NO | — | FK → `carpetas` |
+| `usuario_id` | `INT` | NO | — | FK → `usuarios`; quién la subió |
+| `nombre_evidencia` | `VARCHAR(200)` | NO | — | Nombre |
+| `tipo_evidencia` | `VARCHAR(20)` | NO | — | `Documento`, `Imagen`, `Video` o `Enlace` |
+| `ubicacion` | `TEXT` | NO | — | URL `http(s)://…` de hasta 500 caracteres |
+| `fecha_subida` | `TIMESTAMP` | NO | `now()` | Primera subida |
+
+Restricciones:
+
+- `chk_evidencias_tipo` con los cuatro tipos.
+- `chk_evidencias_ubicacion`: `ubicacion ~* '^https?://[^[:space:]]+$' AND
+  length(ubicacion) <= 500`. La migración la añade como **`NOT VALID`** para
+  no romper con ubicaciones heredadas; las filas nuevas y las actualizadas sí
+  se validan.
+- Índice `idx_evidencias_carpeta`.
+
+> No existen columnas de borrado lógico (`eliminada`, `eliminada_por`,
+> `fecha_eliminacion`) ni versionado (`evidencia_versiones`,
+> `fecha_actualizacion`). En Semana 2 las evidencias son enlaces; los archivos
+> reales son de la Semana 4.
 
 ### 2.12 `evaluaciones`
 
-Evaluaciones de evidencias, con historial. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `evaluacion_id` | `INT` | NO | identidad | PK |
+| `evidencia_id` | `INT` | NO | — | FK → `evidencias` |
+| `instructor_id` | `INT` | NO | — | FK → `usuarios` |
+| `resultado` | `VARCHAR(20)` | NO | — | `APROBADO` / `REPROBADO` |
+| `fecha_evaluacion` | `TIMESTAMP` | NO | `now()` | Momento de la evaluación |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `evaluacion_id` | INT | PK, identidad | Identificador | — |
-| `evidencia_id` | INT | FK → evidencias | Evidencia | — |
-| `instructor_id` | INT | FK → usuarios | Quién evaluó | — |
-| `resultado` | VARCHAR(20) | CHECK | `APROBADO` o `REPROBADO` | ✏️ |
-| `fecha_evaluacion` | TIMESTAMP | NOT NULL | Cuándo | — |
-| `vigente` | BOOLEAN | única por evidencia | La última es la válida; no se sobrescribe | 🆕 |
+Restricción `chk_evaluaciones_resultado`. Índice
+`idx_evaluaciones_evidencia (evidencia_id, evaluacion_id DESC)`.
+
+> **Nunca se actualiza una evaluación.** Cada recalificación inserta una fila
+> nueva; la vigente es la de mayor `evaluacion_id` para esa evidencia
+> (`LATERAL … ORDER BY evaluacion_id DESC LIMIT 1`).
 
 ### 2.13 `observaciones`
 
-Observaciones del instructor sobre un proyecto o evidencia. **Estado:** Existente.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `observacion_id` | INT | PK, identidad | Identificador | — |
-| `evidencia_id` | INT | FK → evidencias, NULL | Evidencia relacionada | — |
-| `proyecto_id` | INT | FK → proyectos | Proyecto | — |
-| `instructor_id` | INT | FK → usuarios | Autor | — |
-| `titulo` | VARCHAR(150) | NOT NULL | Título | — |
-| `descripcion` | VARCHAR(500) | NOT NULL | Texto | — |
-| `fecha_observacion` | TIMESTAMP | NOT NULL | Cuándo | — |
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `observacion_id` | `INT` | NO | identidad | PK |
+| `evidencia_id` | `INT` | Sí | — | FK → `evidencias`; opcional |
+| `proyecto_id` | `INT` | NO | — | FK → `proyectos` |
+| `instructor_id` | `INT` | NO | — | FK → `usuarios` |
+| `titulo` | `VARCHAR(150)` | NO | — | Título |
+| `descripcion` | `VARCHAR(500)` | NO | — | Texto |
+| `fecha_observacion` | `TIMESTAMP` | NO | `now()` | Alta |
 
 ### 2.14 `tareas`
 
-Tablero de tareas del proyecto. **Estado:** Modificada.
+| Columna | Tipo | Nulo | Default | Descripción |
+|---|---|:---:|---|---|
+| `tarea_id` | `INT` | NO | identidad | PK |
+| `proyecto_id` | `INT` | NO | — | FK → `proyectos` |
+| `responsable_id` | `INT` | NO | — | FK → `usuarios` |
+| `titulo` | `VARCHAR(150)` | NO | — | Título |
+| `descripcion` | `VARCHAR(500)` | Sí | — | Detalle |
+| `prioridad` | `VARCHAR(20)` | NO | `'Media'` | `Alta`, `Media` o `Baja` |
+| `estado` | `VARCHAR(20)` | NO | `'Pendiente'` | Flujo de la tabla siguiente |
+| `fecha_inicio` | `DATE` | Sí | — | Inicio |
+| `fecha_limite` | `DATE` | Sí | — | Límite |
+| `fecha_finalizacion` | `DATE` | Sí | — | Cierre real |
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `tarea_id` | INT | PK, identidad | Identificador | — |
-| `proyecto_id` | INT | FK → proyectos | Proyecto | — |
-| `responsable_id` | INT | FK → usuarios | Responsable | — |
-| `titulo` | VARCHAR(150) | NOT NULL | Título | — |
-| `descripcion` | VARCHAR(500) | — | Detalle | — |
-| `prioridad` | VARCHAR(20) | CHECK | `Alta`, `Media` o `Baja` | — |
-| `estado` | VARCHAR(20) | CHECK | `Pendiente`, `En proceso`, `Finalizada`, `Confirmada` o `Incompleta` | — |
-| `fecha_inicio`, `fecha_limite`, `fecha_finalizacion` | DATE | — | Plazos | — |
-| `fecha_creacion`, `fecha_actualizacion` | TIMESTAMP | NOT NULL | Auditoría | 🆕 |
+Restricciones `chk_tareas_prioridad` y `chk_tareas_estado`.
 
-### 2.15 `listas_chequeo`
+Flujo de estados (validado en `tareaController` y en la interfaz):
 
-Lista de chequeo de una ficha (una por ficha). **Estado:** Nueva.
+```text
+Pendiente → En proceso → Finalizada → Confirmada
+                                    ↘ Incompleta → En proceso
+```
 
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `lista_id` | INT | PK, identidad | Identificador | 🆕 |
-| `ficha_id` | INT | FK UNIQUE → fichas | Ficha dueña (no el instructor) | 🆕 |
-| `nombre` | VARCHAR(150) | NOT NULL | Nombre | 🆕 |
-| `creada_por` | INT | FK → usuarios | Instructor que la creó | 🆕 |
-| `archivo_origen` | TEXT | — | Referencia al Excel importado | 🆕 |
-| `fecha_creacion`, `fecha_actualizacion` | TIMESTAMP | NOT NULL | Auditoría | 🆕 |
-
-### 2.16 `lista_chequeo_items`
-
-Evidencias esperadas, por fase. **Estado:** Nueva.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `item_id` | INT | PK, identidad | Identificador | 🆕 |
-| `lista_id` | INT | FK → listas_chequeo | Lista | 🆕 |
-| `numero_fase` | INT | CHECK 1–5 | Fase | 🆕 |
-| `nombre_evidencia` | VARCHAR(200) | NOT NULL | Evidencia esperada | 🆕 |
-| `descripcion` | VARCHAR(500) | — | Detalle | 🆕 |
-| `obligatorio` | BOOLEAN | NOT NULL, `true` | Cuenta para el avance | 🆕 |
-| `orden` | INT | NOT NULL | Posición | 🆕 |
-
-### 2.17 `lista_chequeo_evaluaciones`
-
-Resultado de un ítem para un grupo, con historial. **Estado:** Nueva.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `evaluacion_id` | INT | PK, identidad | Identificador | 🆕 |
-| `item_id` | INT | FK → lista_chequeo_items | Ítem | 🆕 |
-| `grupo_id` | INT | FK → grupos | Grupo evaluado | 🆕 |
-| `resultado` | VARCHAR(20) | CHECK | `Aprobado`, `No aprobado` o `Pendiente` | 🆕 |
-| `comentario` | VARCHAR(500) | — | Observación | 🆕 |
-| `evaluador_id` | INT | FK → usuarios | Quién evaluó | 🆕 |
-| `fecha_evaluacion` | TIMESTAMP | NOT NULL | Cuándo | 🆕 |
-| `vigente` | BOOLEAN | única por ítem y grupo | La última es la válida | 🆕 |
-
-### 2.18 `sesiones_refresh`
-
-Tokens de refresco para renovar la sesión. **Estado:** Nueva.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `sesion_id` | INT | PK, identidad | Identificador | 🆕 |
-| `usuario_id` | INT | FK → usuarios | Dueño | 🆕 |
-| `token_hash` | CHAR(64) | UNIQUE | SHA-256; nunca se guarda el token | 🆕 |
-| `fecha_creacion`, `fecha_expiracion` | TIMESTAMP | NOT NULL | Vigencia (7 días) | 🆕 |
-| `revocada` | BOOLEAN | NOT NULL | Cierre de sesión o rotación | 🆕 |
-
-### 2.19 `tokens_verificacion_correo`
-
-Tokens de un solo uso para verificar el correo. **Estado:** Nueva.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `token_id` | INT | PK, identidad | Identificador | 🆕 |
-| `usuario_id` | INT | FK → usuarios | Dueño | 🆕 |
-| `token_hash` | CHAR(64) | UNIQUE | SHA-256 | 🆕 |
-| `fecha_expiracion` | TIMESTAMP | NOT NULL | Vigencia | 🆕 |
-| `usado_en` | TIMESTAMP | — | Cuándo se usó | 🆕 |
-
-### 2.20 `auditoria`
-
-Registro de acciones críticas. **Estado:** Nueva.
-
-| Columna | Tipo | Restricciones | Descripción | Cambio |
-| --- | --- | --- | --- | --- |
-| `auditoria_id` | INT | PK, identidad | Identificador | 🆕 |
-| `usuario_id` | INT | FK → usuarios, NULL | Quién actuó | 🆕 |
-| `accion` | VARCHAR(60) | NOT NULL | p. ej. `CAMBIAR_ROL` | 🆕 |
-| `entidad` | VARCHAR(40) | NOT NULL | Tabla afectada | 🆕 |
-| `entidad_id` | INT | — | Registro afectado | 🆕 |
-| `detalle` | JSONB | — | Datos del cambio | 🆕 |
-| `fecha` | TIMESTAMP | NOT NULL | Cuándo | 🆕 |
+> No existen `fecha_creacion` ni `fecha_actualizacion` en `tareas`.
 
 ---
 
-## 3. Valores permitidos
+## 3. Restricciones e índices
 
-| Campo | Valores |
-| --- | --- |
-| `usuarios.rol` | `APRENDIZ`, `INSTRUCTOR`, `COORDINADOR`, `ADMINISTRADOR` |
-| `usuarios.tipo_documento` | `CC`, `TI`, `CE`, `PA`, `PPT` |
-| `grupos.es_general` | `true`/`false`; índice único parcial por ficha para `true` |
-| `fases.estado_fase`, `carpetas.estado_carpeta` | `Pendiente`, `En revisión`, `Aprobada`, `Desaprobada` |
-| `evidencias.tipo_evidencia` | `ARCHIVO`, `ENLACE` |
-| `evaluaciones.resultado` | `APROBADO`, `REPROBADO` |
-| `tareas.estado` | `Pendiente`, `En proceso`, `Finalizada`, `Confirmada`, `Incompleta` |
-| `tareas.prioridad` | `Alta`, `Media`, `Baja` |
-| `lista_chequeo_evaluaciones.resultado` | `Aprobado`, `No aprobado`, `Pendiente` |
+### 3.1 Restricciones `CHECK`
+
+| Nombre | Tabla | Regla |
+|---|---|---|
+| `chk_grupos_cupo` | `grupos` | `cupo_maximo` entre 1 y 50 |
+| `chk_grupos_general_nombre` | `grupos` | El General se llama `General` |
+| `chk_carpetas_estado` | `carpetas` | Cuatro estados permitidos |
+| `chk_fases_estado` | `fases` | Cuatro estados permitidos |
+| `chk_evaluaciones_resultado` | `evaluaciones` | `APROBADO` / `REPROBADO` |
+| `chk_evidencias_tipo` | `evidencias` | Cuatro tipos permitidos |
+| `chk_evidencias_ubicacion` | `evidencias` | URL `http(s)` de máximo 500 caracteres (`NOT VALID` en datos heredados) |
+| `chk_instructor_ficha_fechas` | `instructor_ficha` | `fecha_fin >= fecha_inicio` |
+| `chk_instructor_ficha_estado` | `instructor_ficha` | `Activo` sin fecha de fin; `Inactivo` con fecha de fin |
+| `chk_tareas_prioridad` | `tareas` | `Alta` / `Media` / `Baja` |
+| `chk_tareas_estado` | `tareas` | Cinco estados del flujo |
+
+### 3.2 Índices
+
+| Índice | Tabla | Columnas / condición |
+|---|---|---|
+| `programas_codigo_programa_key` | `programas` | UNIQUE (`codigo_programa`) |
+| `usuarios_correo_key` | `usuarios` | UNIQUE (`correo`) |
+| `recuperacion_contrasena_token_hash_key` | `recuperacion_contrasena` | UNIQUE (`token_hash`) |
+| `idx_recuperacion_usuario` | `recuperacion_contrasena` | (`usuario_id`, `expira_en DESC`) |
+| `fichas_numero_ficha_key` | `fichas` | UNIQUE (`numero_ficha`) |
+| `idx_fichas_programa` | `fichas` | (`programa_id`) |
+| `uq_instructor_ficha_vigente` | `instructor_ficha` | UNIQUE (`instructor_id`, `ficha_id`) `WHERE fecha_fin IS NULL` |
+| `grupos_codigo_grupo_key` | `grupos` | UNIQUE (`codigo_grupo`) |
+| `uq_grupo_general_por_ficha` | `grupos` | UNIQUE (`ficha_id`) `WHERE es_general` |
+| `idx_grupos_ficha` | `grupos` | (`ficha_id`) |
+| `unq_integrantes_grupo` | `integrantes_grupo` | UNIQUE (`grupo_id`, `usuario_id`) |
+| `idx_integrantes_grupo_grupo` | `integrantes_grupo` | (`grupo_id`) |
+| `idx_integrantes_grupo_usuario` | `integrantes_grupo` | (`usuario_id`) |
+| `proyectos_grupo_id_key` | `proyectos` | UNIQUE (`grupo_id`) |
+| `unq_fases_proyecto` | `fases` | UNIQUE (`proyecto_id`, `numero_fase`) |
+| `idx_fases_proyecto` | `fases` | (`proyecto_id`) |
+| `idx_carpetas_fase` | `carpetas` | (`fase_id`) |
+| `idx_evidencias_carpeta` | `evidencias` | (`carpeta_id`) |
+| `idx_evaluaciones_evidencia` | `evaluaciones` | (`evidencia_id`, `evaluacion_id DESC`) |
+
+Los `*_pkey` de cada tabla son índices únicos implícitos y no se repiten.
 
 ---
 
-## 4. Restricciones de integridad clave
+## 4. Funciones de cascada
 
-| Restricción | Tabla | Qué garantiza | Regla |
-| --- | --- | --- | --- |
-| `uq_instructor_ficha_vigente` | `instructor_ficha` | Un instructor tiene una sola vinculación vigente por ficha, pero puede tener varias históricas. | [RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) |
-| `uq_evaluaciones_vigente` | `evaluaciones` | Una sola evaluación vigente por evidencia; las anteriores quedan como historial. | [RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) |
-| `uq_evidencia_version_vigente` | `evidencia_versiones` | Una sola versión vigente por evidencia. | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
-| `uq_lc_evaluacion_vigente` | `lista_chequeo_evaluaciones` | Una sola evaluación vigente por ítem y grupo. | [RN-027](../requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo) |
-| `chk_grupos_lider` | `grupos` | Todo grupo de proyecto tiene líder; solo el grupo `General` puede no tenerlo. | [RN-008](../requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo) |
-| `chk_grupos_cupo` | `grupos` | El cupo, si existe, es positivo. | [RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo) |
-| `proyectos.grupo_id` UNIQUE | `proyectos` | Un grupo tiene a lo sumo un proyecto. | — |
-| `listas_chequeo.ficha_id` UNIQUE | `listas_chequeo` | Una lista por ficha. | [RN-026](../requisitos/reglas-de-negocio.md#rn-026--lista-de-chequeo-por-ficha) |
+La migración `002_semana2.sql` crea dos funciones `plpgsql`. **No están en
+`zenda_bd.sql`**: una base creada solo desde el esquema base no las tiene
+hasta aplicar la migración.
 
-> **Pendiente:** la regla "un aprendiz, un solo proyecto activo" ([RN-007](../requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz)) abarca dos tablas y hoy solo la valida el backend. Se puede reforzar con un disparador (*trigger*) o con una columna redundante en `integrantes_grupo`; está registrado en [RNF-014.4](../requisitos/RNFs/RNF-014_concurrencia_y_consistencia.md).
+| Función | Entrada | Devuelve | Qué hace |
+|---|---|---|---|
+| `zenda_recalcular_carpeta(p_carpeta_id INT)` | ID de carpeta | `VARCHAR` con el estado | Recalcula `carpetas.estado_carpeta` con la evaluación vigente de cada evidencia |
+| `zenda_recalcular_fase(p_fase_id INT)` | ID de fase | `VARCHAR` con el estado | Recalcula `fases.estado_fase` a partir de todas las evidencias de sus carpetas |
+
+Regla común (RN-018):
+
+| Situación | Estado |
+|---|---|
+| Sin evidencias | `Pendiente` |
+| Alguna evidencia reprobada | `Desaprobada` |
+| Todas las evidencias aprobadas | `Aprobada` |
+| Cualquier evidencia sin evaluar | `En revisión` |
+
+La misma regla está implementada en `backend/src/domain/reglas.js`
+(`calcularEstadoCarpeta`, `calcularEstadoFase`) y la aplica
+`backend/src/services/cascada.js` dentro de la transacción. Las funciones SQL
+se usan en la migración para normalizar datos heredados.
 
 ---
 
-## 5. Índices
+## 5. Migración `002_semana2.sql`
 
-Además de las claves primarias y las restricciones únicas, la migración crea índices sobre las claves foráneas de consulta frecuente: `grupos(ficha_id)`, `integrantes_grupo(usuario_id)`, `instructor_ficha(ficha_id)`, `carpetas(fase_id)`, `evidencias(carpeta_id)`, `evidencias(usuario_id)`, `evaluaciones(instructor_id)`, `observaciones(proyecto_id)`, `tareas(proyecto_id)`, `tareas(responsable_id)`, `lista_chequeo_items(lista_id)` y `auditoria(fecha)`.
+Se aplica sobre una base creada con una versión anterior del esquema. Es
+**idempotente**: puede ejecutarse varias veces sin fallar ni duplicar datos.
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+```
+
+En Docker la ejecuta el servicio `migrate`; en Render, `backend/scripts/migrar.js`
+dentro del `startCommand`.
+
+### 5.1 Qué cambia
+
+| Bloque | Cambio |
+|---|---|
+| **1. Sin sub-roles Scrum** | Elimina `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`; el liderazgo queda en `grupos.lider_id`. |
+| **2. Seguridad** | Añade `usuarios.token_version` y las cuatro aceptaciones legales con `fecha_aceptacion_legal`. |
+| **3. Cupo y General** | Añade `grupos.cupo_maximo` (1–50, 6 por defecto) y `grupos.es_general`; crea el General que falte y su índice único parcial. |
+| **4. Historial** | Añade `carpetas.estado_carpeta` y `instructor_ficha.fecha_inicio`, `fecha_fin`, `estado`; sustituye el único antiguo por el índice parcial vigente. |
+| **5. Normalización** | Pasa `resultado` a mayúsculas y los tipos de evidencia desconocidos a `Enlace`. |
+| **6. Cascada** | Crea `zenda_recalcular_carpeta` y `zenda_recalcular_fase`, y recalcula todos los estados. |
+| **7. Restricciones** | Añade los `CHECK` de estado, resultado, tipo, ubicación e historial, y los índices de consulta. |
+
+### 5.2 Decisiones de seguridad de datos
+
+- **Evidencias heredadas:** las `ubicacion` inválidas **no se reescriben**.
+  Se conservan y `chk_evidencias_ubicacion` queda `NOT VALID`; las filas
+  nuevas sí se validan.
+- **Grupo “General” legado:** solo se promueve un grupo llamado `General`
+  **sin proyecto**. Un grupo de trabajo legado con ese nombre conserva nombre,
+  código, integrantes y proyecto.
+- **Colisión `GEN-<ficha>`:** si un General legado con proyecto ya ocupa ese
+  código, se conserva y el General nuevo recibe un sufijo estable. El
+  *fixture* `Database/fixtures/v11_migracion.sql` reproduce el caso.
+- **Cupo:** nunca se deja por debajo de los integrantes activos existentes.
+- **Orden:** primero columnas y funciones, después el recálculo y solo al final
+  los `CHECK`. Así una base antigua con estados incoherentes no rompe la
+  migración.
+
+### 5.3 Verificación
+
+```bash
+# 1. Base v11 con datos
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion.sql
+
+# 2. Migración dos veces (idempotencia)
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+
+# 3. Assertions del upgrade
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion_assert.sql
+```
+
+Resultado esperado: `V11_MIGRATION_OK`, exactamente un General por ficha y
+ninguna evidencia, grupo o proyecto perdido. La suite de integración
+(`backend/tests/integracion.test.js`) se ejecuta después y debe dar **7/7**.
 
 ---
 
-## 6. Notas de migración
+## 6. Cómo recrear la base
 
-| Tema | Qué hace la migración | Qué debe revisar el equipo |
-| --- | --- | --- |
-| Sub-roles | Elimina `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`. | Quitar su uso en `register`, `crearProyecto`, `unirseAProyecto`, el seed y `Register.jsx`. |
-| Grupo `General` | Lo marca `es_general = true`; conserva un `lider_id` técnico (primer aprendiz) y código `GEN-<número_ficha>`. | Reemplazar `nombre_grupo <> 'General'` por `NOT es_general` en las consultas. |
-| Cupo | Asigna a cada grupo existente el número actual de integrantes. | Definir el rango permitido ([RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)). |
-| Evidencias | Convierte tipos antiguos a `ENLACE` y crea la versión 1 de cada una. | Escribir en `evidencia_versiones` al subir o reemplazar. |
-| Evaluaciones | Marca como no vigentes las duplicadas y deja una vigente por evidencia. | Insertar en lugar de `UPDATE` en `evaluarEvidencia`. |
-| Fases | Convierte el estado `En proceso` en `En revisión`. | Los nombres de fase de los datos de prueba difieren de los que crea `crearProyecto`; unificarlos en el seed. |
-| Instructores | Conserva las vinculaciones y agrega fechas. | Cerrar con `fecha_fin` en lugar de `DELETE` al reasignar. |
-| Usuarios existentes | Marca el correo como verificado. | Pedir la aceptación de los textos legales en el siguiente inicio de sesión (`acepto_legales_en` queda `NULL`). |
+```bash
+# Opción A — Docker (recomendada)
+cp .env.example .env
+docker compose up --build -d
 
-La migración no se ha ejecutado contra una base real en este entorno: pruébala primero sobre una copia (`pg_dump` antes de aplicar).
+# Opción B — PostgreSQL local
+psql -U postgres -h localhost -c "CREATE DATABASE zenda;"
+psql -U postgres -h localhost -d zenda -f Database/zenda_bd.sql
+psql -U postgres -h localhost -d zenda -v ON_ERROR_STOP=1 \
+  -f Database/migrations/002_semana2.sql
+```
+
+> [!WARNING]
+> `Database/zenda_bd.sql` empieza con `DROP TABLE … CASCADE`: **borra** el
+> esquema anterior. No lo ejecutes sobre una base con datos que quieras
+> conservar; para eso existe la migración.
+
+El *seed* incluye usuarios de demostración (`admin@zenda.com` / `Admin123!` y
+cuentas `*.zenda.com` / `Prueba123!`). **No deben usarse en producción.**
+
+---
+
+## 7. Historial de este documento
+
+| Fecha | Cambio |
+|---|---|
+| 23-oct-2026 | Reescrito contra el esquema real: 14 tablas, columnas, restricciones, índices y funciones verificados en PostgreSQL 16. Se eliminaron las tablas y columnas de Semanas 3–6 que nunca existieron. |

@@ -25,28 +25,28 @@
 
 | ID | Hallazgo | Severidad | Dónde | Requisito | Prueba que lo detecta |
 |:---:|---|:---:|---|---|---|
-| **H-01** | La recuperación de contraseña revela si un correo está registrado | Media | `authController` | [RNF-001.6](../requisitos/RNFs/RNF-001_seguridad.md) | PNF-S06 |
-| **H-02** | Secreto JWT por defecto (`zenda_secret_key`) en el código | **Alta** | `authController` | [RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio) | PNF-S11 |
-| **H-03** | El enlace de recuperación apunta a `http://localhost:5173` | Media | `authController` | [RT-007](../requisitos/restricciones.md#rt-007--correo-electrónico-limitado) | IT-09 |
-| **H-04** | CORS abierto: `cors()` acepta cualquier origen | Media | `server.js` | [RNF-001.9](../requisitos/RNFs/RNF-001_seguridad.md) | PNF-S09 |
-| **H-05** | El registro no valida la longitud de la contraseña | Media | `authController` | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) | CP-001 y PU de política |
-| **H-06** | Recalificar una evidencia **sobrescribe** la evaluación y al instructor anterior | **Alta** | `instructorController` | [RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) | IT-05, PNF-I04 |
-| **H-07** | Reasignar instructores **borra y recrea** `instructor_ficha`: se pierde el historial | **Alta** | `coordinadorController`, `userController` | [RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) | IT-07 |
-| **H-08** | Las observaciones no aceptan `evidencia_id` | Baja | `instructorController` | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | CP-026.2 |
-| **H-09** | `GET /programas` está registrado dos veces | Baja | `routes/admin/fichas.js` | [API](../referencia-tecnica/api-endpoints.md#13-inconsistencias-detectadas-en-v11) | Revisión de código |
-| **H-10** | Mensajes de error informales o con groserías | Media | `auth.js`, `server.js`, `userController` | [RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español) | Revisión de código |
-| **H-11** | El *seed* adjunta el proyecto de ejemplo al grupo `General` y usa fases y estados que el sistema no genera | Media | `Database/zenda_bd.sql` | [RN-006](../requisitos/reglas-de-negocio.md#rn-006--grupo-general-por-ficha), [RN-011](../requisitos/reglas-de-negocio.md#rn-011--cinco-fases-fijas) | IT-13 |
-| **H-12** | Dockerfiles: puerto 3000 frente a 4000, falta `nginx.conf`, archivos `dockerignore` sin punto, Node 20 | Media | `dockers.zip` | [RT-008](../requisitos/restricciones.md#rt-008--contenedores-con-docker) | PNF-C03 |
-| **H-13** | El token de sesión vive en `localStorage` | Media | `frontend/src` | [RNF-001.2](../requisitos/RNFs/RNF-001_seguridad.md) | PNF-S21 |
-| **H-14** | `nodemailer` está declarado en el `package.json` del frontend | Baja | `frontend/package.json` | [RNF-005](../requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) | Revisión de código |
-| **H-15** | Saltos de línea mezclados (CRLF en `coordinador.js` y `mailer.js`) | Baja | `routes/`, `utils/` | [RNF-005](../requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) | Revisión de código |
-| **H-16** | Las dependencias usan rangos `^` en lugar de versiones exactas | Baja | `package.json` (21 casos) | [RH-003](../requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) | Revisión de código |
+| **H-01** | La recuperación de contraseña revela si un correo está registrado | Media | `authController` | [RNF-001.6](../Requisitos/RNFs/RNF-001_seguridad.md) | PNF-S06 |
+| **H-02** | Secreto JWT por defecto (`zenda_secret_key`) en el código | **Alta** | `authController` | [RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio) | PNF-S11 |
+| **H-03** | El enlace de recuperación apunta a `http://localhost:5173` | Media | `authController` | [RT-007](../Requisitos/restricciones.md#rt-007--correo-electrónico-limitado) | IT-09 |
+| **H-04** | CORS abierto: `cors()` acepta cualquier origen | Media | `server.js` | [RNF-001.9](../Requisitos/RNFs/RNF-001_seguridad.md) | PNF-S09 |
+| **H-05** | El registro no valida la longitud de la contraseña | Media | `authController` | [RF-001](../Requisitos/RFs/RF-001_registro_de_aprendiz.md) | CP-001 y PU de política |
+| **H-06** | Recalificar una evidencia **sobrescribe** la evaluación y al instructor anterior | **Alta** | `instructorController` | [RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) | IT-05, PNF-I04 |
+| **H-07** | Reasignar instructores **borra y recrea** `instructor_ficha`: se pierde el historial | **Alta** | `coordinadorController`, `userController` | [RN-024](../Requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) | IT-07 |
+| **H-08** | Las observaciones no aceptan `evidencia_id` | Baja | `instructorController` | [RF-026](../Requisitos/RFs/RF-026_observaciones_del_instructor.md) | CP-026.2 |
+| **H-09** | `GET /programas` está registrado dos veces | Baja | `routes/admin/fichas.js` | [API](../Referencia-Tecnica/api-endpoints.md#13-inconsistencias-conocidas-no-bloqueantes) | Revisión de código |
+| **H-10** | Mensajes de error informales o con groserías | Media | `auth.js`, `server.js`, `userController` | [RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español) | Revisión de código |
+| **H-11** | El *seed* adjunta el proyecto de ejemplo al grupo `General` y usa fases y estados que el sistema no genera | Media | `Database/zenda_bd.sql` | [RN-006](../Requisitos/reglas-de-negocio.md#rn-006--grupo-general-por-ficha), [RN-011](../Requisitos/reglas-de-negocio.md#rn-011--cinco-fases-fijas) | IT-13 |
+| **H-12** | Dockerfiles: puerto 3000 frente a 4000, falta `nginx.conf`, archivos `dockerignore` sin punto, Node 20 | Media | `dockers.zip` | [RT-008](../Requisitos/restricciones.md#rt-008--contenedores-con-docker) | PNF-C03 |
+| **H-13** | El token de sesión vive en `localStorage` | Media | `frontend/src` | [RNF-001.2](../Requisitos/RNFs/RNF-001_seguridad.md) | PNF-S21 |
+| **H-14** | `nodemailer` está declarado en el `package.json` del frontend | Baja | `frontend/package.json` | [RNF-005](../Requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) | Revisión de código |
+| **H-15** | Saltos de línea mezclados (CRLF en `coordinador.js` y `mailer.js`) | Baja | `routes/`, `utils/` | [RNF-005](../Requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) | Revisión de código |
+| **H-16** | Las dependencias usan rangos `^` en lugar de versiones exactas | Baja | `package.json` (21 casos) | [RH-003](../Requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) | Revisión de código |
 
 **Por severidad:** Alta 3 · Media 8 · Baja 5.
 
-> **Estado tras la auditoría de Semana 2 (22-oct-2026):** H-01 a H-12, H-14, H-15 y H-16 quedaron corregidos en código/documentación. H-13 sigue **abierto**: la sesión continúa en `localStorage` y dura 24 h; el paso a 15 min + refresh pertenece a HU-004 (Semanas 3–6). H-12 queda pendiente de probar con Docker real.
+> **Estado tras la auditoría de Semana 2 (23-oct-2026):** H-01 a H-12, H-14, H-15 y H-16 quedaron corregidos en código/documentación. H-13 sigue **abierto**: la sesión continúa en `localStorage` y dura 24 h; el paso a 15 min + refresh pertenece a HU-004 (Semanas 3–6).
 
-> **H-12 ya tiene corrección** en la entrega de infraestructura (`docker-compose.yml`, Dockerfiles, `nginx.conf`, `.dockerignore`); queda pendiente que el equipo la pruebe.
+> **H-12 verificado:** `docker compose up --build` construye `zenda-backend` y `zenda-frontend`, y levanta `db`, `migrate`, `backend` y `frontend`. `GET /api/health` responde 200, el frontend 200 y el login de administrador y aprendiz 200.
 
 ---
 
@@ -59,7 +59,7 @@
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:4000/api/auth/forgot-password \
   -H "Content-Type: application/json" -d '{"correo":"no.existe@soy.sena.edu.co"}'
-# Esperado tras la corrección: 200 (igual que con un correo existente). Hoy: 404.
+# Esperado tras la corrección: 200 (igual que con un correo existente). En v11: 404.
 ```
 
 ### H-02 — Secreto JWT por defecto
@@ -73,7 +73,7 @@ grep -rn "zenda_secret_key" backend/src backend/server.js
 
 ### H-03 — Enlace de recuperación fijo
 
-**Qué pasa.** El correo siempre enlaza a `http://localhost:5173`. En producción el enlace no funciona. Se corrige con la variable `FRONTEND_URL` ([variables de entorno](../setup/variables-de-entorno.md)).
+**Qué pasa.** El correo siempre enlaza a `http://localhost:5173`. En producción el enlace no funciona. Se corrige con la variable `FRONTEND_URL` ([variables de entorno](../Setup/variables-de-entorno.md)).
 
 ### H-04 — CORS abierto
 
@@ -96,7 +96,7 @@ curl -i -X OPTIONS http://localhost:4000/api/auth/login \
 ```sql
 -- H-06: tras recalificar la misma evidencia dos veces
 SELECT count(*) FROM evaluaciones WHERE evidencia_id = :id;
--- Esperado tras la corrección: 2 (con una sola vigente). Hoy: 1.
+-- Esperado tras la corrección: 2 (con una sola vigente). En v11: 1.
 ```
 
 ### H-08 — Observaciones sin evidencia
@@ -111,7 +111,7 @@ SELECT count(*) FROM evaluaciones WHERE evidencia_id = :id;
 
 ### H-12 — Dockerfiles
 
-Corregidos en la entrega de infraestructura; ver [con-docker.md](../setup/con-docker.md#9-problemas-frecuentes).
+Corregidos en la entrega de infraestructura; ver [con-docker.md](../Setup/con-docker.md#9-problemas-frecuentes).
 
 ### H-13 — Token en `localStorage`
 
@@ -134,4 +134,4 @@ Corregidos en la entrega de infraestructura; ver [con-docker.md](../setup/con-do
 ## Documentos relacionados
 
 - [Plan de pruebas](plan-de-pruebas.md) · [Pruebas no funcionales](pruebas-no-funcionales.md) · [Pruebas de integración](pruebas-de-integracion.md)
-- [API — inconsistencias detectadas](../referencia-tecnica/api-endpoints.md#13-inconsistencias-detectadas-en-v11)
+- [API — inconsistencias detectadas](../Referencia-Tecnica/api-endpoints.md#13-inconsistencias-conocidas-no-bloqueantes)

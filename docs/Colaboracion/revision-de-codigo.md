@@ -82,30 +82,30 @@ Empieza por lo que más daño hace si falla. El estilo va al final.
 
 | Pregunta | Referencia |
 |---|---|
-| ¿La ruta valida el token y el **rol** (`auth` + `is<Rol>`)? | [RS-004](../requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor) |
-| ¿Verifica además la **pertenencia** (grupo, líder, ficha del instructor)? | [Matriz de permisos](../requisitos/matriz-permisos.md) |
-| ¿Toda consulta usa parámetros (`$1`) y ninguna concatena entradas? | [RS-005](../requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas) |
+| ¿La ruta valida el token y el **rol** (`auth` + `is<Rol>`)? | [RS-004](../Requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor) |
+| ¿Verifica además la **pertenencia** (grupo, líder, ficha del instructor)? | [Matriz de permisos](../Requisitos/matriz-permisos.md) |
+| ¿Toda consulta usa parámetros (`$1`) y ninguna concatena entradas? | [RS-005](../Requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas) |
 | ¿Las operaciones compuestas usan transacción con `ROLLBACK` y `release()` en `finally`? | [Convenciones, sección 5](convenciones-de-codigo.md#5-sql-y-acceso-a-datos) |
-| ¿Valida la entrada: tipo, longitud, formato y límites? | [RF correspondiente](../requisitos/RFs/) |
-| ¿Devuelve el código HTTP correcto y `{ message }` en español? | [RNF-013](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) |
-| ¿El `500` evita filtrar detalles técnicos? | [RNF-001.13](../requisitos/RNFs/RNF-001_seguridad.md) |
-| ¿Respeta las reglas de negocio citadas (por ejemplo, cascada, cupo, historial)? | [Reglas de negocio](../requisitos/reglas-de-negocio.md) |
-| ¿La respuesta **no incluye** contraseñas, hashes ni tokens? | [RS-003](../requisitos/restricciones.md#rs-003--no-exponer-contraseñas) |
-| ¿Se actualizó [api-endpoints.md](../referencia-tecnica/api-endpoints.md) si cambió el contrato? | — |
+| ¿Valida la entrada: tipo, longitud, formato y límites? | [RF correspondiente](../Requisitos/RFs/) |
+| ¿Devuelve el código HTTP correcto y `{ message }` en español? | [RNF-013](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) |
+| ¿El `500` evita filtrar detalles técnicos? | [RNF-001.13](../Requisitos/RNFs/RNF-001_seguridad.md) |
+| ¿Respeta las reglas de negocio citadas (por ejemplo, cascada, cupo, historial)? | [Reglas de negocio](../Requisitos/reglas-de-negocio.md) |
+| ¿La respuesta **no incluye** contraseñas, hashes ni tokens? | [RS-003](../Requisitos/restricciones.md#rs-003--no-exponer-contraseñas) |
+| ¿Se actualizó [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) si cambió el contrato? | — |
 
 ### 5.2 Frontend
 
 | Pregunta | Referencia |
 |---|---|
-| ¿Las llamadas pasan por la capa `api/`? | [Arquitectura](../referencia-tecnica/arquitectura.md#5-frontend) |
-| ¿Se ve bien y con **buen contraste** en tema claro y oscuro? | [RD-001](../requisitos/restricciones.md#rd-001--contraste-mínimo-accesible), [RD-005](../requisitos/restricciones.md#rd-005--tema-claro-y-oscuro) |
-| ¿Hay estados de carga, vacío y error? | [RNF-003.4](../requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
-| ¿Funciona con teclado y los iconos tienen `aria-label`? | [RNF-004](../requisitos/RNFs/RNF-004_accesibilidad.md) |
-| ¿Las animaciones son consistentes con las de componentes equivalentes? | [RD-002](../requisitos/restricciones.md#rd-002--animaciones-consistentes) |
-| ¿Las acciones secundarias están en el menú de tres puntos? | [RD-003](../requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias) |
-| ¿Se usa el rol o permiso solo para **mostrar**, nunca como control de acceso? | [RS-004](../requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor) |
-| ¿Funciona a 360 px sin desplazamiento horizontal? | [RNF-003.6](../requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
-| ¿No hay textos fijos que deban ser dinámicos (por ejemplo, el año)? | [RD-006](../requisitos/restricciones.md#rd-006--pie-de-página-con-año-vigente-y-enlaces-legales) |
+| ¿Las llamadas pasan por la capa `api/`? | [Arquitectura](../Referencia-Tecnica/arquitectura.md#5-frontend) |
+| ¿Se ve bien y con **buen contraste** en tema claro y oscuro? | [RD-001](../Requisitos/restricciones.md#rd-001--contraste-mínimo-accesible), [RD-005](../Requisitos/restricciones.md#rd-005--tema-claro-y-oscuro) |
+| ¿Hay estados de carga, vacío y error? | [RNF-003.4](../Requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
+| ¿Funciona con teclado y los iconos tienen `aria-label`? | [RNF-004](../Requisitos/RNFs/RNF-004_accesibilidad.md) |
+| ¿Las animaciones son consistentes con las de componentes equivalentes? | [RD-002](../Requisitos/restricciones.md#rd-002--animaciones-consistentes) |
+| ¿Las acciones secundarias están en el menú de tres puntos? | [RD-003](../Requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias) |
+| ¿Se usa el rol o permiso solo para **mostrar**, nunca como control de acceso? | [RS-004](../Requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor) |
+| ¿Funciona a 360 px sin desplazamiento horizontal? | [RNF-003.6](../Requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
+| ¿No hay textos fijos que deban ser dinámicos (por ejemplo, el año)? | [RD-006](../Requisitos/restricciones.md#rd-006--pie-de-página-con-año-vigente-y-enlaces-legales) |
 
 ### 5.3 Base de datos y migraciones
 
@@ -113,22 +113,22 @@ Empieza por lo que más daño hace si falla. El estilo va al final.
 |---|---|
 | ¿Es una **migración nueva y numerada**, sin editar una anterior ya fusionada? | [Flujo, sección 8](flujo-github.md#8-versiones-y-publicación) |
 | ¿Usa `IF [NOT] EXISTS` y corre en una transacción? | [`002_semana2.sql`](../../Database/migrations/002_semana2.sql) |
-| ¿Conserva los datos existentes y rellena las columnas nuevas? | [Esquema, notas de migración](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) |
-| ¿Define restricciones (`NOT NULL`, `CHECK`, `UNIQUE`) donde corresponde? | [MR](../diagramas/mer-mr.md) |
-| ¿Crea índices para las claves foráneas que se consultan? | [RNF-002.3](../requisitos/RNFs/RNF-002_rendimiento.md) |
-| ¿Se probó sobre una **copia** de la base? | [IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12) |
+| ¿Conserva los datos existentes y rellena las columnas nuevas? | [Esquema, notas de migración](../Referencia-Tecnica/esquema-bd.md#5-migración-002_semana2sql) |
+| ¿Define restricciones (`NOT NULL`, `CHECK`, `UNIQUE`) donde corresponde? | [MR](../Diagramas/mer-mr.md) |
+| ¿Crea índices para las claves foráneas que se consultan? | [RNF-002.3](../Requisitos/RNFs/RNF-002_rendimiento.md) |
+| ¿Se probó sobre una **copia** de la base? | [IT-13](../Testing/pruebas-de-integracion.md#it-13--migración-de-v11-al-esquema-actual) |
 | ¿Se actualizaron `esquema-bd.md` y `mer-mr.md`? | — |
 
 ### 5.4 Docker, dependencias y configuración
 
 | Pregunta | Referencia |
 |---|---|
-| ¿Las versiones son **exactas** (sin `^`, `~`, `*`)? | [RH-003](../requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) |
-| ¿Se usó **pnpm** y se actualizó el `pnpm-lock.yaml`? | [RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes) |
-| ¿Node es una versión LTS fijada? | [RH-002](../requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija) |
-| ¿El contenedor no corre como `root` y excluye `.env` con `.dockerignore`? | [RT-008](../requisitos/restricciones.md#rt-008--contenedores-con-docker) |
-| ¿Hay variables nuevas? ¿Están en los tres `.env.example` y en su documento? | [Variables de entorno](../setup/variables-de-entorno.md) |
-| ¿La dependencia nueva es necesaria, mantenida y pasa `pnpm audit`? | [Plan de pruebas](../testing/plan-de-pruebas.md) |
+| ¿Las versiones son **exactas** (sin `^`, `~`, `*`)? | [RH-003](../Requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) |
+| ¿Se usó **pnpm** y se actualizó el `pnpm-lock.yaml`? | [RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes) |
+| ¿Node es una versión LTS fijada? | [RH-002](../Requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija) |
+| ¿El contenedor no corre como `root` y excluye `.env` con `.dockerignore`? | [RT-008](../Requisitos/restricciones.md#rt-008--contenedores-con-docker) |
+| ¿Hay variables nuevas? ¿Están en los tres `.env.example` y en su documento? | [Variables de entorno](../Setup/variables-de-entorno.md) |
+| ¿La dependencia nueva es necesaria, mantenida y pasa `pnpm audit`? | [Plan de pruebas](../Testing/plan-de-pruebas.md) |
 
 ### 5.5 Documentación
 
@@ -151,11 +151,11 @@ Si ves alguna, **no se aprueba** hasta resolverla.
 | Concatenación de texto dentro de una consulta SQL | Inyección SQL |
 | Contraseñas, claves o tokens en el código o en un commit | Compromete todo el sistema |
 | `cors()` abierto, `JWT_SECRET` con valor por defecto, `eval` o `dangerouslySetInnerHTML` sin necesidad | Vulnerabilidades conocidas |
-| `UPDATE` o `DELETE` sobre registros que deben conservar historial (evaluaciones, versiones, vinculaciones) | Pérdida de datos irrecuperable ([RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)) |
+| `UPDATE` o `DELETE` sobre registros que deben conservar historial (evaluaciones, versiones, vinculaciones) | Pérdida de datos irrecuperable ([RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)) |
 | Cambio de esquema sin migración o editando una migración vieja | Rompe a quien ya la aplicó |
 | Cambio de una regla de negocio sin tocar `reglas-de-negocio.md` ni las pruebas | Documentación y pruebas mentirosas |
-| `npm install` o un `package-lock.json` | Rompe la reproducibilidad ([RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes)) |
-| Mensajes con groserías o lenguaje inapropiado | Imagen del proyecto ([RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)) |
+| `npm install` o un `package-lock.json` | Rompe la reproducibilidad ([RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes)) |
+| Mensajes con groserías o lenguaje inapropiado | Imagen del proyecto ([RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)) |
 
 ---
 
@@ -224,4 +224,4 @@ El autor revisa su propio PR en GitHub, pestaña *Files changed*, y responde:
 ## Documentos relacionados
 
 - [Flujo de GitHub](flujo-github.md) · [Guía de contribución](guia-de-contribucion.md) · [Convenciones de código](convenciones-de-codigo.md)
-- [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Matriz de permisos](../requisitos/matriz-permisos.md) · [Plan de pruebas](../testing/plan-de-pruebas.md)
+- [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Matriz de permisos](../Requisitos/matriz-permisos.md) · [Plan de pruebas](../Testing/plan-de-pruebas.md)

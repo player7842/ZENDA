@@ -1,4 +1,12 @@
-# Diagrama de clases — ZENDA v12
+# Diagrama de clases — ZENDA
+
+> [!NOTE]
+> **Diseño objetivo.** Este diagrama describe la organización propuesta para
+> las Semanas 3–6. El backend actual ya tiene módulos, controladores y
+> servicios, pero **no** incluye las clases/módulos de listas de chequeo,
+> refresh tokens ni auditoría. Para el estado real consulta el
+> [`esquema-bd.md`](../Referencia-Tecnica/esquema-bd.md) y el
+> [`README.md`](../../README.md).
 
 <!--
   ¿Qué? Diseño de clases del software: entidades con sus atributos y operaciones, servicios, controladores y enumeraciones.
@@ -17,7 +25,7 @@
 | **Se basa en** | [Modelo de dominio](modelo-dominio.md) y [MR](mer-mr.md) |
 | **Fecha** | Octubre 2026 |
 
-> **Cómo leerlo:** el backend de ZENDA está escrito con módulos y funciones (no con clases de JavaScript). Cada "clase" de este diagrama representa una **responsabilidad** (un módulo o archivo) y sus operaciones son las funciones que debe exponer. Es el diseño objetivo de v12; lo que ya existe en v11 se indica en la tabla de la sección 5.
+> **Cómo leerlo:** el backend de ZENDA está escrito con módulos y funciones (no con clases de JavaScript). Cada "clase" de este diagrama representa una **responsabilidad** (un módulo o archivo) y sus operaciones son las funciones que debe exponer. Es el diseño objetivo de las Semanas 3–6; lo que ya existe se indica en la tabla de la sección 5.
 
 ---
 
@@ -245,12 +253,12 @@ classDiagram
 
 | Servicio | Responsabilidad única | Requisito |
 |---|---|---|
-| `CascadaService` | Recalcular estados de carpeta y fase a partir de las evaluaciones vigentes. | [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
-| `AvanceService` | Calcular porcentajes de fase, tareas y lista de chequeo. | [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md), [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) |
-| `PermisosService` | Responder "¿puede este usuario hacer esto aquí?" (grupo, líder, ficha). | [Matriz de permisos](../requisitos/matriz-permisos.md) |
-| `AlmacenamientoService` | Todo lo relativo a archivos: validar, comprimir, guardar y entregar. | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) |
-| `AuditoriaService` | Registrar quién hizo una acción crítica. | [RNF-011](../requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
-| `SesionService` | Emitir, rotar y revocar tokens de sesión. | [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) |
+| `CascadaService` | Recalcular estados de carpeta y fase a partir de las evaluaciones vigentes. | [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
+| `AvanceService` | Calcular porcentajes de fase, tareas y lista de chequeo. | [RF-031](../Requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md), [RF-038](../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) |
+| `PermisosService` | Responder "¿puede este usuario hacer esto aquí?" (grupo, líder, ficha). | [Matriz de permisos](../Requisitos/matriz-permisos.md) |
+| `AlmacenamientoService` | Todo lo relativo a archivos: validar, comprimir, guardar y entregar. | [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md) |
+| `AuditoriaService` | Registrar quién hizo una acción crítica. | [RNF-011](../Requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
+| `SesionService` | Emitir, rotar y revocar tokens de sesión. | [RF-004](../Requisitos/RFs/RF-004_sesion_segura.md) |
 
 ---
 
@@ -316,7 +324,7 @@ classDiagram
     }
 ```
 
-> `EnRevision`, `EnProceso` y `NoAprobado` son los nombres del diagrama; en la base de datos se guardan como `En revisión`, `En proceso` y `No aprobado` ([valores permitidos](../referencia-tecnica/esquema-bd.md#3-valores-permitidos)).
+> `EnRevision`, `EnProceso` y `NoAprobado` son los nombres del diagrama; en la base de datos se guardan como `En revisión`, `En proceso` y `No aprobado` ([valores permitidos](../Referencia-Tecnica/esquema-bd.md#31-restricciones-check)).
 
 ---
 
@@ -324,20 +332,20 @@ classDiagram
 
 | Operación | Clase | Regla | Quién puede |
 |---|---|---|---|
-| `tieneCupo()` | `Grupo` | [RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo) | Sistema, al unirse |
-| `crearFasesFijas()` | `Proyecto` | [RN-011](../requisitos/reglas-de-negocio.md#rn-011--cinco-fases-fijas) | Sistema, al crear el proyecto |
-| `reemplazar()` / `eliminar()` | `Evidencia` | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) | Autor o líder; nunca si está aprobada |
-| `aprobarEnBloque()` | `Carpeta` | [RN-019](../requisitos/reglas-de-negocio.md#rn-019--aprobación-de-carpeta-en-bloque) | Instructor de la ficha |
-| `mover()` | `Tarea` | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) | Responsable de la tarea |
-| `confirmar()` / `marcarIncompleta()` | `Tarea` | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) | Solo el líder |
-| `copiarA()` | `ListaChequeo` | [RN-026](../requisitos/reglas-de-negocio.md#rn-026--lista-de-chequeo-por-ficha) | Instructor de ambas fichas |
-| `recalcularEstado()` | `Fase`, `Carpeta` | [RN-018](../requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados) | Sistema, tras cada evaluación |
+| `tieneCupo()` | `Grupo` | [RN-009](../Requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo) | Sistema, al unirse |
+| `crearFasesFijas()` | `Proyecto` | [RN-011](../Requisitos/reglas-de-negocio.md#rn-011--cinco-fases-fijas) | Sistema, al crear el proyecto |
+| `reemplazar()` / `eliminar()` | `Evidencia` | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) | Autor o líder; nunca si está aprobada |
+| `aprobarEnBloque()` | `Carpeta` | [RN-019](../Requisitos/reglas-de-negocio.md#rn-019--aprobación-de-carpeta-en-bloque) | Instructor de la ficha |
+| `mover()` | `Tarea` | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) | Responsable de la tarea |
+| `confirmar()` / `marcarIncompleta()` | `Tarea` | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) | Solo el líder |
+| `copiarA()` | `ListaChequeo` | [RN-026](../Requisitos/reglas-de-negocio.md#rn-026--lista-de-chequeo-por-ficha) | Instructor de ambas fichas |
+| `recalcularEstado()` | `Fase`, `Carpeta` | [RN-018](../Requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados) | Sistema, tras cada evaluación |
 
 ---
 
 ## 5. Qué existe hoy y qué es nuevo
 
-| Elemento | v11 | Cambio en v12 |
+| Elemento | Estado anterior | Cambio propuesto |
 |---|---|---|
 | Controladores por rol | ✅ Existen (con lógica de negocio dentro) | Se adelgazan: delegan en servicios. |
 | `CascadaService` | La lógica está dentro del controlador del instructor | Se extrae a un servicio compartido. |
@@ -352,4 +360,4 @@ classDiagram
 ## Documentos relacionados
 
 - [Modelo de dominio](modelo-dominio.md) · [Componentes](componentes.md) · [MER y MR](mer-mr.md) · [Estados](estados.md)
-- [Arquitectura](../referencia-tecnica/arquitectura.md) · [Reglas de negocio](../requisitos/reglas-de-negocio.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Reglas de negocio](../Requisitos/reglas-de-negocio.md)

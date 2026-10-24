@@ -1,7 +1,7 @@
 # Scrum y ZENDA — por qué el producto no usa roles Scrum
 
 <!--
-  ¿Qué? Qué es Scrum, qué parte de él usó ZENDA en v11, por qué v12 lo retira del producto y cómo queda el trabajo de los grupos.
+  ¿Qué? Qué es Scrum, qué parte de él usó ZENDA en v11, por qué se retiró del producto en las Semanas 1–2 y cómo queda el trabajo de los grupos.
   ¿Para qué? Dejar documentada la decisión y tener respuestas claras para la sustentación y para el instructor, que cuestionó la idea.
   ¿Impacto? Usar nombres de Scrum sin Scrum induce a error: parece una metodología aplicada y en realidad es solo etiquetas.
 -->
@@ -14,8 +14,8 @@
 |---|---|
 | **Decisión** | El producto **no implementa roles ni ceremonias Scrum**; los grupos tienen un **líder** y todos los integrantes los mismos permisos |
 | **Origen** | Observación del instructor ("los sub-roles no van") y decisión del equipo |
-| **Reglas afectadas** | [RN-005](../requisitos/reglas-de-negocio.md#rn-005--roles-sin-sub-roles), [RN-008](../requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo), [RN-021](../requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder), [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
-| **Restricción** | [RO-003 — Sin metodología Scrum en el producto](../requisitos/restricciones.md#ro-003--sin-metodología-scrum-en-el-producto) |
+| **Reglas afectadas** | [RN-005](../Requisitos/reglas-de-negocio.md#rn-005--roles-sin-sub-roles), [RN-008](../Requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo), [RN-021](../Requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder), [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| **Restricción** | [RO-003 — Sin metodología Scrum en el producto](../Requisitos/restricciones.md#ro-003--sin-metodología-scrum-en-el-producto) |
 | **Fecha** | Octubre 2026 |
 
 ---
@@ -72,9 +72,9 @@ El proyecto formativo del SENA se organiza por **cinco fases fijas** (Análisis,
 
 ---
 
-## 5. Cómo queda en v12
+## 5. Cómo queda en el código actual
 
-| Concepto | Antes (v11) | Ahora (v12) |
+| Concepto | Antes (v11) | Ahora (Semanas 1–2) |
 |---|---|---|
 | Quién crea el proyecto | Scrum Master | **Aprendiz sin proyecto**, que queda como **líder** |
 | Roles en el grupo | Scrum Master, Product Owner, Developer | **Integrante** (todos iguales) y **líder** (uno, fijo) |
@@ -91,9 +91,9 @@ Cómo se refleja en el sistema:
 | Capa | Cambio |
 |---|---|
 | **Base de datos** | Se eliminan `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`; el líder es `grupos.lider_id`; se agregan `grupos.cupo_maximo` y `grupos.es_general` ([migración](../../Database/migrations/002_semana2.sql)) |
-| **API** | `register` ya no recibe `sub_rol`; `unirse` ya no recibe `rol_scrum` ([contrato](../referencia-tecnica/api-endpoints.md#12-cambios-de-contrato-planificados)) |
+| **API** | `register` ya no recibe `sub_rol`; `unirse` ya no recibe `rol_scrum` ([contrato](../Referencia-Tecnica/api-endpoints.md#11-cambios-de-contrato-ya-aplicados-semanas-12)) |
 | **Interfaz** | Desaparece el selector de sub-rol; el equipo muestra "Líder" en lugar de etiquetas Scrum |
-| **Permisos** | [Matriz de permisos](../requisitos/matriz-permisos.md): el líder solo agrega tres permisos al aprendiz |
+| **Permisos** | [Matriz de permisos](../Requisitos/matriz-permisos.md): el líder solo agrega tres permisos al aprendiz |
 
 ---
 
@@ -114,8 +114,8 @@ Sin usar sus nombres, el sistema mantiene las ideas que sí aportan:
 
 | Decisión | Motivo |
 |---|---|
-| **El liderazgo no rota ni se transfiere entre aprendices** | El instructor mencionó que los roles cambian cada semana; **no se aplica** para no complicar el sistema. El grupo define quién lidera, por escrito o de palabra, y ZENDA lo refleja ([RN-008](../requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo)) |
-| **El administrador es la única vía para cambiar de líder** | Evita desorden en la gestión; resuelve el caso de un grupo sin líder ([RN-030](../requisitos/reglas-de-negocio.md#rn-030--reasignación-de-liderazgo-por-el-administrador)) |
+| **El liderazgo no rota ni se transfiere entre aprendices** | El instructor mencionó que los roles cambian cada semana; **no se aplica** para no complicar el sistema. El grupo define quién lidera, por escrito o de palabra, y ZENDA lo refleja ([RN-008](../Requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo)) |
+| **El administrador es la única vía para cambiar de líder** | Evita desorden en la gestión; resuelve el caso de un grupo sin líder ([RN-030](../Requisitos/reglas-de-negocio.md#rn-030--reasignación-de-liderazgo-por-el-administrador)) |
 | **La organización interna del grupo queda fuera del sistema** | Quién sube qué se acuerda en el grupo; todos pueden hacerlo |
 
 **Riesgo conocido:** un líder único puede convertirse en un cuello de botella. Mitigación: la confirmación de tareas es lo único exclusivo del líder; todo lo demás es de todos.
@@ -149,5 +149,5 @@ Sin usar sus nombres, el sistema mantiene las ideas que sí aportan:
 
 ## Documentos relacionados
 
-- [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Matriz de permisos](../requisitos/matriz-permisos.md) · [Restricciones](../requisitos/restricciones.md)
-- [Estados de la tarea](../diagramas/estados.md#1-tarea) · [Requisitos de tareas](../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) · [Esquema de base de datos](../referencia-tecnica/esquema-bd.md)
+- [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Matriz de permisos](../Requisitos/matriz-permisos.md) · [Restricciones](../Requisitos/restricciones.md)
+- [Estados de la tarea](../Diagramas/estados.md#1-tarea) · [Requisitos de tareas](../Requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) · [Esquema de base de datos](../Referencia-Tecnica/esquema-bd.md)

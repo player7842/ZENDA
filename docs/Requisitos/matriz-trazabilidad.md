@@ -12,16 +12,18 @@
 
 | Estado | Cantidad |
 | --- | --- |
-| Implementado | 15 |
-| Parcial | 18 |
-| Planificado | 9 |
+| Implementado | 24 |
+| Parcial | 10 |
+| Planificado | 8 |
 | **Total** | **42** |
 
 | Estado | Significado |
 |---|---|
-| **Implementado** | Ya funciona en la versión v11. |
-| **Parcial** | Funciona, pero requiere cambios aprobados (ver sección "Cambios frente a la versión v11" de cada archivo). |
+| **Implementado** | Funciona en el código actual (v11 + Semanas 1 y 2). |
+| **Parcial** | Funciona en parte o requiere cambios aprobados (ver sección "Cambios frente a la versión v11" de cada archivo). |
 | **Planificado** | Aprobado, aún no construido. |
+
+> **Actualización (23-oct-2026):** las 8 HU cerradas en la Semana 2 (HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025 y HU-026) y HU-028 pasan a **Implementado**. HU-020 sigue **Parcial**: en Semana 2 solo se admiten enlaces; los archivos reales son de la Semana 4.
 
 ---
 
@@ -29,7 +31,7 @@
 
 | Historia | Requisito | Módulo | Rol | Prioridad | Estado | Reglas de negocio |
 | --- | --- | --- | --- | --- | --- | --- |
-| [HU-001](HUs/HU-001_registro_de_aprendiz.md) | [RF-001](RFs/RF-001_registro_de_aprendiz.md) | Autenticación | Aprendiz nuevo | Alta | Parcial | RN-001, RN-002, RN-004, RN-005, RN-006 |
+| [HU-001](HUs/HU-001_registro_de_aprendiz.md) | [RF-001](RFs/RF-001_registro_de_aprendiz.md) | Autenticación | Aprendiz nuevo | Alta | Implementado | RN-001, RN-002, RN-004, RN-005, RN-006 |
 | [HU-002](HUs/HU-002_inicio_de_sesion.md) | [RF-002](RFs/RF-002_inicio_de_sesion.md) | Autenticación | Usuario registrado | Alta | Implementado | RN-002, RN-003 |
 | [HU-003](HUs/HU-003_recuperacion_de_contrasena.md) | [RF-003](RFs/RF-003_recuperacion_de_contrasena.md) | Autenticación | Usuario registrado | Alta | Parcial | RN-002 |
 | [HU-004](HUs/HU-004_sesion_segura.md) | [RF-004](RFs/RF-004_sesion_segura.md) | Autenticación | Usuario autenticado | Alta | Parcial | RN-003 |
@@ -39,11 +41,11 @@
 | [HU-008](HUs/HU-008_carga_masiva_de_usuarios.md) | [RF-008](RFs/RF-008_carga_masiva_de_usuarios.md) | Administración | Administrador | Media | Parcial | RN-001, RN-002, RN-028 |
 | [HU-009](HUs/HU-009_gestion_de_fichas.md) | [RF-009](RFs/RF-009_gestion_de_fichas.md) | Administración | Administrador | Alta | Implementado | RN-028 |
 | [HU-010](HUs/HU-010_aprendices_en_una_ficha.md) | [RF-010](RFs/RF-010_aprendices_en_una_ficha.md) | Administración | Administrador | Media | Implementado | RN-006, RN-029 |
-| [HU-011](HUs/HU-011_asignacion_de_instructores_a_fichas.md) | [RF-011](RFs/RF-011_asignacion_de_instructores_a_fichas.md) | Administración | Administrador | Alta | Parcial | RN-024, RN-025, RN-028 |
+| [HU-011](HUs/HU-011_asignacion_de_instructores_a_fichas.md) | [RF-011](RFs/RF-011_asignacion_de_instructores_a_fichas.md) | Administración | Administrador | Alta | Implementado | RN-024, RN-025, RN-028 |
 | [HU-012](HUs/HU-012_gestion_de_programas_de_formacion.md) | [RF-012](RFs/RF-012_gestion_de_programas_de_formacion.md) | Administración | Administrador | Media | Planificado | RN-028 |
 | [HU-013](HUs/HU-013_diagnostico_y_copia_de_seguridad.md) | [RF-013](RFs/RF-013_diagnostico_y_copia_de_seguridad.md) | Administración | Administrador | Baja | Planificado | RN-028 |
-| [HU-014](HUs/HU-014_creacion_de_proyecto.md) | [RF-014](RFs/RF-014_creacion_de_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Parcial | RN-007, RN-008, RN-009, RN-010, RN-011 |
-| [HU-015](HUs/HU-015_unirse_a_un_proyecto.md) | [RF-015](RFs/RF-015_unirse_a_un_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Parcial | RN-007, RN-009, RN-010 |
+| [HU-014](HUs/HU-014_creacion_de_proyecto.md) | [RF-014](RFs/RF-014_creacion_de_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Implementado | RN-007, RN-008, RN-009, RN-010, RN-011 |
+| [HU-015](HUs/HU-015_unirse_a_un_proyecto.md) | [RF-015](RFs/RF-015_unirse_a_un_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Implementado | RN-007, RN-009, RN-010 |
 | [HU-016](HUs/HU-016_consulta_de_mi_proyecto.md) | [RF-016](RFs/RF-016_consulta_de_mi_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Implementado | RN-007, RN-008, RN-011 |
 | [HU-017](HUs/HU-017_cambio_de_ficha_del_aprendiz.md) | [RF-017](RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | Grupos y proyectos | Aprendiz | Media | Implementado | RN-006, RN-029 |
 | [HU-018](HUs/HU-018_reasignacion_de_liderazgo.md) | [RF-018](RFs/RF-018_reasignacion_de_liderazgo.md) | Grupos y proyectos | Administrador | Media | Planificado | RN-008, RN-028, RN-030 |
@@ -51,12 +53,12 @@
 | [HU-020](HUs/HU-020_subida_de_evidencias.md) | [RF-020](RFs/RF-020_subida_de_evidencias.md) | Fases y evidencias | Aprendiz | Alta | Parcial | RN-012, RN-013, RN-015 |
 | [HU-021](HUs/HU-021_consulta_de_evidencias_y_fases.md) | [RF-021](RFs/RF-021_consulta_de_evidencias_y_fases.md) | Fases y evidencias | Aprendiz | Alta | Implementado | RN-012, RN-016 |
 | [HU-022](HUs/HU-022_versiones_y_eliminacion_de_evidencias.md) | [RF-022](RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | Fases y evidencias | Aprendiz | Media | Planificado | RN-012, RN-014, RN-015, RN-018 |
-| [HU-023](HUs/HU-023_evaluacion_de_evidencias.md) | [RF-023](RFs/RF-023_evaluacion_de_evidencias.md) | Evaluación | Instructor | Alta | Parcial | RN-016, RN-017, RN-018 |
-| [HU-024](HUs/HU-024_aprobacion_de_carpetas_en_bloque.md) | [RF-024](RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) | Evaluación | Instructor | Media | Planificado | RN-016, RN-017, RN-018, RN-019 |
-| [HU-025](HUs/HU-025_estado_y_porcentaje_de_avance.md) | [RF-025](RFs/RF-025_estado_y_porcentaje_de_avance.md) | Evaluación | Aprendiz | Alta | Parcial | RN-018, RN-019, RN-020 |
-| [HU-026](HUs/HU-026_observaciones_del_instructor.md) | [RF-026](RFs/RF-026_observaciones_del_instructor.md) | Evaluación | Instructor | Alta | Parcial | RN-016, RN-023 |
+| [HU-023](HUs/HU-023_evaluacion_de_evidencias.md) | [RF-023](RFs/RF-023_evaluacion_de_evidencias.md) | Evaluación | Instructor | Alta | Implementado | RN-016, RN-017, RN-018 |
+| [HU-024](HUs/HU-024_aprobacion_de_carpetas_en_bloque.md) | [RF-024](RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) | Evaluación | Instructor | Media | Implementado | RN-016, RN-017, RN-018, RN-019 |
+| [HU-025](HUs/HU-025_estado_y_porcentaje_de_avance.md) | [RF-025](RFs/RF-025_estado_y_porcentaje_de_avance.md) | Evaluación | Aprendiz | Alta | Implementado | RN-018, RN-019, RN-020 |
+| [HU-026](HUs/HU-026_observaciones_del_instructor.md) | [RF-026](RFs/RF-026_observaciones_del_instructor.md) | Evaluación | Instructor | Alta | Implementado | RN-016, RN-023 |
 | [HU-027](HUs/HU-027_consulta_de_observaciones.md) | [RF-027](RFs/RF-027_consulta_de_observaciones.md) | Evaluación | Aprendiz | Alta | Implementado | RN-023 |
-| [HU-028](HUs/HU-028_creacion_y_asignacion_de_tareas.md) | [RF-028](RFs/RF-028_creacion_y_asignacion_de_tareas.md) | Tareas | Líder de grupo | Alta | Parcial | RN-008, RN-021 |
+| [HU-028](HUs/HU-028_creacion_y_asignacion_de_tareas.md) | [RF-028](RFs/RF-028_creacion_y_asignacion_de_tareas.md) | Tareas | Líder de grupo | Alta | Implementado | RN-008, RN-021 |
 | [HU-029](HUs/HU-029_avance_de_mis_tareas.md) | [RF-029](RFs/RF-029_avance_de_mis_tareas.md) | Tareas | Aprendiz | Alta | Implementado | RN-022 |
 | [HU-030](HUs/HU-030_confirmacion_de_tareas.md) | [RF-030](RFs/RF-030_confirmacion_de_tareas.md) | Tareas | Líder de grupo | Alta | Parcial | RN-008, RN-022 |
 | [HU-031](HUs/HU-031_tablero_y_progreso_de_tareas.md) | [RF-031](RFs/RF-031_tablero_y_progreso_de_tareas.md) | Tareas | Aprendiz | Alta | Implementado | RN-021, RN-022 |

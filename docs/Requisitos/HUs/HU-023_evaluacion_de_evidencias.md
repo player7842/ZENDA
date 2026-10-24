@@ -16,7 +16,7 @@
 | **Título** | Evaluación de evidencias |
 | **Módulo** | Evaluación |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Instructor |
 | **RF asociado** | RF-023 |
 | **Reglas de negocio** | RN-016, RN-017, RN-018 |
@@ -63,3 +63,7 @@
 
 - Hoy recalificar hace un `UPDATE` sobre la evaluación existente y sobrescribe al instructor anterior; pasa a insertar un registro nuevo (ver [RN-017](../reglas-de-negocio.md#rn-017--historial-de-evaluaciones)).
 - La evaluación pasa a depender de la vinculación vigente `instructor_ficha`.
+
+## Estado en la Semana 2
+
+Implementado: `evaluarEvidencia` valida la asignación vigente del instructor y que la evidencia pertenezca a una carpeta de su fase. Cada evaluación se inserta; la vigente se elige con `LATERAL ... ORDER BY evaluacion_id DESC LIMIT 1`, y después se recalculan carpeta y fase.

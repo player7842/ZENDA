@@ -14,10 +14,10 @@
 |---|---|
 | **Aplica a** | Backend, frontend y Docker Compose |
 | **Archivos de ejemplo** | `.env.example` (raíz), `backend/.env.example`, `frontend/.env.example` |
-| **Regla** | Los archivos `.env` **nunca se suben a GitHub** ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio), [RS-002](../requisitos/restricciones.md#rs-002--archivos-envexample-obligatorios)) |
-| **Fecha** | Octubre 2026 |
+| **Regla** | Los archivos `.env` **nunca se suben a GitHub** ([RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio), [RS-002](../Requisitos/restricciones.md#rs-002--archivos-envexample-obligatorios)) |
+| **Fecha** | 23-oct-2026 |
 
-**Leyenda:** ✅ la lee el código de v11 · 🆕 planificada para v12.
+**Leyenda:** ✅ la lee el código actual · 🆕 planificada para las Semanas 3–6 (aún no se lee).
 
 ---
 
@@ -57,18 +57,20 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `DB_SSL_REJECT_UNAUTHORIZED` | ✅ | No | `true` | Valida el certificado del servidor. Solo se pone en `false` con un proxy local de certificado autofirmado; nunca en producción. |
 | `DATABASE_URL` | ✅ | No | `postgresql://...` | Cadena completa de conexión; si existe, tiene prioridad sobre `DB_*` y usa SSL validado. |
 | `CODIGO_PROGRAMA_COORDINADOR` | ✅ | No | `2338` | Código del programa que administra el coordinador (ADSO por defecto). |
-| `EMAIL_USER` | ✅ | Sí | `cuenta@gmail.com` | Cuenta de Gmail que envía los correos. |
-| `EMAIL_PASS` | ✅ | Sí | *(16 caracteres)* | **Contraseña de aplicación** de Gmail. |
-| `FRONTEND_URL` | ✅ | Sí | `https://zenda.vercel.app` | URL base del frontend. Se usa para CORS y para el enlace de recuperación. Admite varios orígenes separados por coma. |
-| `JWT_ACCESS_EXPIRES` | 🆕 | No | `15m` | Objetivo de HU-004 para el token de acceso; **no se lee todavía** ([RT-004](../requisitos/restricciones.md#rt-004--método-de-autenticación)). |
+| `EMAIL_USER` | ✅ | No | `cuenta@gmail.com` | Cuenta de Gmail que envía los correos. Sin ella, la recuperación de contraseña no envía correo, pero la API arranca. |
+| `EMAIL_PASS` | ✅ | No | *(16 caracteres)* | **Contraseña de aplicación** de Gmail. |
+| `FRONTEND_URL` | ✅ | Recomendada | `https://zenda.vercel.app` | URL base del frontend. Se usa para CORS y para el enlace de recuperación. Admite varios orígenes separados por coma. Por defecto, `http://localhost:5173`. |
+| `JWT_ACCESS_EXPIRES` | 🆕 | No | `15m` | Objetivo de HU-004 para el token de acceso; **no se lee todavía** ([RT-004](../Requisitos/restricciones.md#rt-004--método-de-autenticación)). |
 | `JWT_REFRESH_EXPIRES_DAYS` | 🆕 | No | `7` | Objetivo de HU-004; **no se lee todavía**. |
-| `S3_ENDPOINT` | 🆕 | Sí (archivos) | `http://minio:9000` | Servicio compatible con S3 ([RT-006](../requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). |
+| `S3_ENDPOINT` | 🆕 | Sí (archivos) | `http://minio:9000` | Servicio compatible con S3 ([RT-006](../Requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). |
 | `S3_BUCKET` | 🆕 | Sí (archivos) | `zenda-evidencias` | Bucket de las evidencias. |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY` | 🆕 | Sí (archivos) | *(secretos)* | Credenciales del almacenamiento. |
-| `MAX_UPLOAD_MB` | 🆕 | No | `10` | Tamaño máximo por archivo ([RNF-012.1](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md)). |
+| `MAX_UPLOAD_MB` | 🆕 | No | `10` | Tamaño máximo por archivo ([RNF-012.1](../Requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md)). |
 | `PROJECT_QUOTA_MB` | 🆕 | No | `200` | Cuota de almacenamiento por proyecto (por confirmar). |
 
-> **Corregido en v12:** ya no existe el respaldo `zenda_secret_key`; `JWT_SECRET` es obligatorio y el servidor falla al iniciar si falta ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)). `FRONTEND_URL` también alimenta CORS, por lo que `CORS_ORIGIN` dejó de ser necesaria.
+> **Seguridad:** ya no existe el respaldo `zenda_secret_key`. `JWT_SECRET` es
+> obligatorio y el servidor falla al iniciar si falta ([RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)).
+> `FRONTEND_URL` también alimenta CORS, por lo que `CORS_ORIGIN` no existe.
 
 ---
 
@@ -92,7 +94,7 @@ cp frontend/.env.example frontend/.env            # frontend local
 | `JWT_SECRET` | Sí | `backend` | Clave de firma de tokens. |
 | `JWT_SESSION_EXPIRES` | No | `backend` | Duración de la sesión actual (`24h` por defecto). |
 | `CODIGO_PROGRAMA_COORDINADOR` | No | `backend` | Programa del coordinador (`2338` por defecto). |
-| `EMAIL_USER`, `EMAIL_PASS` | Sí | `backend` | Cuenta de Gmail y contraseña de aplicación. |
+| `EMAIL_USER`, `EMAIL_PASS` | No | `backend` | Cuenta de Gmail y contraseña de aplicación. Sin ellas el correo de recuperación no se envía. |
 | `FRONTEND_URL` | No | `backend` | Origen del frontend para CORS y para el enlace de recuperación. Por defecto, `http://localhost:8080`. |
 | `VITE_API_URL` | No | `frontend` (build) | URL pública del backend. Por defecto, `http://localhost:4000`. |
 
@@ -158,5 +160,5 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Documentos relacionados
 
 - [Instalación sin Docker](sin-docker.md) · [Instalación con Docker](con-docker.md)
-- [Restricciones](../requisitos/restricciones.md) · [RNF-001 Seguridad](../requisitos/RNFs/RNF-001_seguridad.md)
-- [Arquitectura](../referencia-tecnica/arquitectura.md)
+- [Restricciones](../Requisitos/restricciones.md) · [RNF-001 Seguridad](../Requisitos/RNFs/RNF-001_seguridad.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md)

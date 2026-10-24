@@ -12,13 +12,13 @@
 
 | Campo | Valor |
 |---|---|
-| **Sistema** | ZENDA v12 (sobre la base real de v11) |
+| **Sistema** | ZENDA (base v11 + Semanas 1 y 2) |
 | **Alcance** | Backend (API REST), frontend (SPA), base de datos, contenedores |
 | **Requisitos que cubre** | 42 RF, 15 RNF y 30 reglas de negocio |
 | **Casos escritos** | 160 funcionales + escenarios de integración, unitarios y no funcionales |
 | **Fecha** | Octubre 2026 |
 
-> **Estado de partida:** el repositorio de v11 **no tenía pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). En Semana 2 se agregaron Vitest + Supertest: 9 pruebas unitarias y 6 de integración, ejecutadas contra PostgreSQL 18.6 el 22-oct-2026. El resto de los 160 casos sigue documentado para las semanas 3–6.
+> **Estado de partida:** el repositorio de v11 **no tenía pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). En Semana 2 se agregaron Vitest + Supertest: **9 pruebas unitarias y 7 de integración (16/16)**, ejecutadas contra PostgreSQL 16 el 23-oct-2026. En CI se ejecutan con `REQUIRE_DB=1`. El resto de los 160 casos sigue documentado para las semanas 3–6.
 
 ---
 
@@ -35,7 +35,7 @@
 |---|---|
 | API REST, reglas de negocio, autorización por rol | Pruebas de Gmail ni de proveedores externos (se simulan) |
 | Flujos de interfaz de los 4 roles | Pruebas de carga masiva (más de 100 usuarios concurrentes) |
-| Migración de la base de datos v11 → v12 | Funcionalidades descartadas (chatbot, calendario, anuncios) |
+| Migración de la base de datos v11 → esquema actual | Funcionalidades descartadas (chatbot, calendario, anuncios) |
 | Imágenes Docker y despliegue local | Infraestructura del proveedor en producción |
 
 ---
@@ -59,7 +59,7 @@ flowchart TB
 | **Funcionales** | Criterios de aceptación de cada HU | [Casos funcionales](casos/) | API: Supertest · UI: Playwright | 160 |
 | **E2E** | Los 3 recorridos críticos en el navegador | Casos con nivel `E2E` | Playwright | 3 recorridos |
 | **No funcionales** | Seguridad, rendimiento, accesibilidad, compatibilidad, disponibilidad | [Pruebas no funcionales](pruebas-no-funcionales.md) | k6, axe-core, ZAP, Lighthouse | 82 |
-| **Humo** | Que el sistema arranca y lo esencial funciona | [Lista de humo](../setup/sin-docker.md#8-lista-de-humo-comprobación-rápida) | Manual (10 min) | 7 |
+| **Humo** | Que el sistema arranca y lo esencial funciona | [Lista de humo](../Setup/sin-docker.md#8-lista-de-humo-comprobación-rápida) | Manual (10 min) | 7 |
 
 Los tres recorridos E2E críticos: **(1)** registro → crear proyecto → unirse, **(2)** subir evidencia → evaluar → ver estado de la fase, **(3)** crear tarea → mover → confirmar.
 
@@ -67,7 +67,7 @@ Los tres recorridos E2E críticos: **(1)** registro → crear proyecto → unirs
 
 ## 3. Herramientas
 
-> Todas se instalan con **pnpm** y con versión **exacta** ([RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes), [RH-003](../requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias)). Son una propuesta del equipo de documentación; el equipo de desarrollo confirma la elección.
+> Todas se instalan con **pnpm** y con versión **exacta** ([RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes), [RH-003](../Requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias)). Son una propuesta del equipo de documentación; el equipo de desarrollo confirma la elección.
 
 | Herramienta | Uso | Dónde |
 |---|---|---|
@@ -88,35 +88,26 @@ Los tres recorridos E2E críticos: **(1)** registro → crear proyecto → unirs
 
 | Entorno | Base de datos | Uso |
 |---|---|---|
-| **Desarrollo** | `zenda` local | Pruebas manuales y depuración |
-| **Pruebas automáticas** | `zenda_test`, **aislada y efímera** | Unitarias de integración y E2E |
-| **Pre-despliegue** | Copia de una base con datos reales (sin datos personales) | Probar la migración v12 y las copias de seguridad |
+| **Desarrollo** | `zenda` local (Docker o instalación directa) | Pruebas manuales y depuración |
+| **Pruebas automáticas** | La base configurada por `DB_*`; en CI, `zenda` sobre PostgreSQL 16 | Unitarias e integración |
+| **Pre-despliegue** | Copia de una base con datos reales (sin datos personales) | Probar la migración y las copias de seguridad |
 
-Base de datos efímera para pruebas (se agrega a `docker-compose.yml` con un perfil, para que no arranque en uso normal):
-
-```yaml
-  db-test:
-    image: postgres:16-alpine
-    profiles: ["test"]
-    environment:
-      POSTGRES_USER: zenda_test
-      POSTGRES_PASSWORD: zenda_test
-      POSTGRES_DB: zenda_test
-    ports: ["5433:5432"]
-    tmpfs: ["/var/lib/postgresql/data"]   # se borra al detenerla
-```
+No existe un servicio `db-test` en `docker-compose.yml`: la suite usa la misma base que configure `backend/.env` (o las variables de entorno) y espera que ya tenga `zenda_bd.sql` y la migración aplicados.
 
 ```bash
-docker compose --profile test up -d db-test
+cd backend
+REQUIRE_DB=1 pnpm test      # falla si la base no está disponible
 ```
+
+> En Docker el puerto 5432 no se publica al host, así que `pnpm test` desde tu equipo se omite salvo que uses una instalación local de PostgreSQL o expongas el puerto de forma temporal. En CI el servicio PostgreSQL sí es accesible y `REQUIRE_DB=1` impide que la suite se salte.
 
 | Tema | Regla |
 |---|---|
-| **Aislamiento** | Cada suite parte del esquema limpio (`zenda_bd.sql` + `002_semana2.sql`) y limpia lo que crea. Ninguna prueba depende del resultado de otra. |
-| **Datos** | Los usuarios y fichas del *seed* ([lista](../setup/sin-docker.md#6-usuarios-de-prueba)); cada prueba crea sus propios proyectos y evidencias. |
-| **Correo** | Se simula el transporte; para ver correos reales de prueba se necesita configurar el servidor SMTP por variable (cambio propuesto). |
-| **Archivos** | MinIO local en pruebas; nunca el almacenamiento de producción. |
-| **Reloj** | Las pruebas de expiración (token de reset de 15 min, sesión actual de 24 h e inactividad de 30 min) usan un reloj simulado, no esperas reales. |
+| **Aislamiento** | Cada escenario crea sus propios datos con un sufijo único (`Date.now()`) y limpia lo que crea. Ninguna prueba depende del resultado de otra; la suite no recrea el esquema. |
+| **Datos** | Los usuarios y fichas del *seed* ([lista](../Setup/sin-docker.md#6-usuarios-de-prueba)); cada prueba crea sus propios proyectos y evidencias. |
+| **Correo** | La suite no envía correos reales; `EMAIL_USER` y `EMAIL_PASS` pueden estar vacíos. |
+| **Archivos** | En Semana 2 las evidencias son enlaces `http/https`: no se suben archivos ni se usa MinIO. |
+| **Reloj** | Los tokens de recuperación se insertan con una expiración calculada; no hay esperas reales de 15 minutos. |
 
 ---
 
@@ -130,6 +121,8 @@ docker compose --profile test up -d db-test
 | raíz | `pnpm e2e` | Playwright contra el entorno levantado |
 | raíz | `pnpm perf` | Escenarios k6 |
 
+> Hoy existen `pnpm test`, `pnpm lint` y `pnpm build`; `test:cov`, `pnpm e2e` y `pnpm perf` son propuestas que aún no están en los `package.json`.
+
 ---
 
 ## 6. Criterios de entrada y de salida
@@ -137,7 +130,7 @@ docker compose --profile test up -d db-test
 | Criterio | Condición |
 |---|---|
 | **Entrada** | El código compila (`pnpm build`), el lint pasa (`pnpm lint`), la base de pruebas arranca y los requisitos de la historia están aprobados. |
-| **Salida de una historia** | Todos sus casos con `Aplica a v11 = Sí` ejecutados y aprobados; sin defectos Crítico ni Alto abiertos. |
+| **Salida de una historia** | Todos sus casos ejecutables (`Aplica a v11` = `Sí` o `Parcial`) ejecutados y aprobados; sin defectos Crítico ni Alto abiertos. |
 | **Salida de la versión** | Lista de humo aprobada; unitarias e integración al 100 %; 3 recorridos E2E aprobados; sin defectos Críticos; Altos con plan documentado. |
 
 ### Metas de cobertura (propuesta)
@@ -161,7 +154,7 @@ El riesgo manda: se prueba primero lo que, si falla, hace más daño.
 | 2 | Unitarias de la cascada y transiciones de tarea | Son las reglas centrales y es lo que más cambia al refactorizar. |
 | 3 | Permisos por rol (matriz) | Un error aquí expone datos de otros grupos. |
 | 4 | Integración de entrega y evaluación | Es el flujo que da sentido al sistema. |
-| 5 | Migración v11 → v12 sobre una copia | Un fallo puede perder datos. |
+| 5 | Migración v11 → esquema actual sobre una copia | Un fallo puede perder datos. |
 | 6 | E2E de los 3 recorridos | Valida lo que ve el usuario. |
 | 7 | Seguridad básica (ZAP, secretos, JWT) | Antes de cualquier despliegue. |
 | 8 | Accesibilidad y rendimiento | Pedidos por el instructor (contraste, carga). |
@@ -227,7 +220,7 @@ Los defectos ya conocidos de v11 están en [hallazgos.md](hallazgos.md).
 | Riesgo | Efecto | Mitigación |
 |---|---|---|
 | No hay pruebas automáticas hoy | Un refactor puede romper algo sin aviso. | Empezar por las unitarias de cascada y la matriz de permisos. |
-| La lógica está dentro de los controladores | Cuesta probarla sin base de datos. | Extraer funciones puras a `services/` ([clases](../diagramas/clases.md)). |
+| La lógica está dentro de los controladores | Cuesta probarla sin base de datos. | Extraer funciones puras a `services/` ([clases](../Diagramas/clases.md)). |
 | La migración no se probó en una base real | Pérdida de datos. | Probarla siempre sobre una copia. |
 | Los datos de prueba son inconsistentes | Pruebas que fallan por el *seed*, no por el código. | Corregir el *seed* ([H-11](hallazgos.md)). |
 | Falta de tiempo antes de la entrega | Se salta la suite. | Respetar el [orden recomendado](#7-orden-recomendado-de-ejecución). |
@@ -247,5 +240,5 @@ Los defectos ya conocidos de v11 están en [hallazgos.md](hallazgos.md).
 
 ## Documentos relacionados
 
-- [Requisitos](../requisitos/matriz-trazabilidad.md) · [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Matriz de permisos](../requisitos/matriz-permisos.md)
-- [Arquitectura](../referencia-tecnica/arquitectura.md) · [Instalación sin Docker](../setup/sin-docker.md)
+- [Requisitos](../Requisitos/matriz-trazabilidad.md) · [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Matriz de permisos](../Requisitos/matriz-permisos.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Instalación sin Docker](../Setup/sin-docker.md)

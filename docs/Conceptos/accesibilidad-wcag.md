@@ -12,9 +12,9 @@
 
 | Campo | Valor |
 |---|---|
-| **Estándar objetivo** | **WCAG 2.1 nivel AA** ([RD-001](../requisitos/restricciones.md#rd-001--contraste-mínimo-accesible), [RNF-004](../requisitos/RNFs/RNF-004_accesibilidad.md)) |
+| **Estándar objetivo** | **WCAG 2.1 nivel AA** ([RD-001](../Requisitos/restricciones.md#rd-001--contraste-mínimo-accesible), [RNF-004](../Requisitos/RNFs/RNF-004_accesibilidad.md)) |
 | **Origen del requisito** | Observación del instructor: mejorar contrastes sin perder iconos ni espaciado |
-| **Pruebas** | [PNF-A01 a A15](../testing/pruebas-no-funcionales.md#2-pruebas) |
+| **Pruebas** | [PNF-A01 a A15](../Testing/pruebas-no-funcionales.md#2-pruebas) |
 | **Marco normativo en Colombia** | NTC 5854 y los lineamientos de accesibilidad web del MinTIC para entidades públicas (Resolución 1519 de 2020), que se apoyan en WCAG. *Referencias informativas: confirmar con el SENA cuál aplica al proyecto.* |
 | **Fecha** | Octubre 2026 |
 
@@ -91,7 +91,7 @@ export const contraste = (a, b) => {
 | Regla | Detalle |
 |---|---|
 | Definir los colores como **variables** del tema | Se prueban una vez y se usan en todas partes |
-| Probar **ambos temas** | Claro y oscuro, incluidas las gráficas ([RD-005](../requisitos/restricciones.md#rd-005--tema-claro-y-oscuro)) |
+| Probar **ambos temas** | Claro y oscuro, incluidas las gráficas ([RD-005](../Requisitos/restricciones.md#rd-005--tema-claro-y-oscuro)) |
 | **No comunicar solo con color** | Aprobado, reprobado y pendiente llevan texto o icono además del color |
 | Probar también los **estados** | `hover`, `focus`, deshabilitado y seleccionado |
 
@@ -161,18 +161,18 @@ export const contraste = (a, b) => {
 
 | Componente | Qué cuidar | Requisito |
 |---|---|---|
-| **Registro e inicio de sesión** | Etiquetas visibles; errores junto al campo y anunciados; medidor con texto (no solo barra de color); casillas legales con su enlace; botón "Volver al inicio" | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-002](../requisitos/RFs/RF-002_inicio_de_sesion.md) |
-| **Barra lateral colapsable** | `aria-expanded`; con solo iconos, cada uno con `aria-label` o descripción emergente; el elemento activo con `aria-current` | [RF-040](../requisitos/RFs/RF-040_tema_e_interfaz_del_panel.md) |
-| **Menú de tres puntos** | Botón con `aria-haspopup="menu"` y `aria-expanded`; navegable con flechas; `Esc` lo cierra y devuelve el foco | [RD-003](../requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias) |
-| **Tablero de tareas** | Alternativa por teclado al arrastre (botones "Mover a…"); el estado de cada tarjeta con texto | [RF-029](../requisitos/RFs/RF-029_avance_de_mis_tareas.md) |
-| **Estados de fase y evidencia** | Aprobada, reprobada, pendiente: texto **más** icono **más** color | [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
-| **Gráficas (Recharts)** | Resumen en texto o tabla equivalente; colores con 3 : 1 y distinguibles sin color | [RF-032](../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) |
-| **Subida de archivos** | Campo con etiqueta; resultado y errores anunciados; progreso con `aria-live` | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) |
-| **Modales y confirmaciones** | Foco al abrir, foco atrapado dentro, `Esc` para cerrar, devolver el foco | [RN-028](../requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña) |
-| **Avisos y mensajes temporales** | `aria-live`; los errores no desaparecen solos; los informativos, a los 10 s | [RNF-003.12](../requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
-| **Cierre por inactividad** | Aviso previo con tiempo suficiente y opción de continuar | [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) |
-| **Aviso de cookies** | No tapa el contenido ni atrapa el foco; se puede cerrar con teclado | [RF-039](../requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
-| **Animaciones** | Respetan `prefers-reduced-motion`; consistentes entre componentes equivalentes | [RD-002](../requisitos/restricciones.md#rd-002--animaciones-consistentes) |
+| **Registro e inicio de sesión** | Etiquetas visibles; errores junto al campo y anunciados; medidor con texto (no solo barra de color); casillas legales con su enlace; botón "Volver al inicio" | [RF-001](../Requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-002](../Requisitos/RFs/RF-002_inicio_de_sesion.md) |
+| **Barra lateral colapsable** | `aria-expanded`; con solo iconos, cada uno con `aria-label` o descripción emergente; el elemento activo con `aria-current` | [RF-040](../Requisitos/RFs/RF-040_tema_e_interfaz_del_panel.md) |
+| **Menú de tres puntos** | Botón con `aria-haspopup="menu"` y `aria-expanded`; navegable con flechas; `Esc` lo cierra y devuelve el foco | [RD-003](../Requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias) |
+| **Tablero de tareas** | Alternativa por teclado al arrastre (botones "Mover a…"); el estado de cada tarjeta con texto | [RF-029](../Requisitos/RFs/RF-029_avance_de_mis_tareas.md) |
+| **Estados de fase y evidencia** | Aprobada, reprobada, pendiente: texto **más** icono **más** color | [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
+| **Gráficas (Recharts)** | Resumen en texto o tabla equivalente; colores con 3 : 1 y distinguibles sin color | [RF-032](../Requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) |
+| **Subida de archivos** | Campo con etiqueta; resultado y errores anunciados; progreso con `aria-live` | [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md) |
+| **Modales y confirmaciones** | Foco al abrir, foco atrapado dentro, `Esc` para cerrar, devolver el foco | [RN-028](../Requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña) |
+| **Avisos y mensajes temporales** | `aria-live`; los errores no desaparecen solos; los informativos, a los 10 s | [RNF-003.12](../Requisitos/RNFs/RNF-003_usabilidad_ux_ui.md) |
+| **Cierre por inactividad** | Aviso previo con tiempo suficiente y opción de continuar | [RF-004](../Requisitos/RFs/RF-004_sesion_segura.md) |
+| **Aviso de cookies** | No tapa el contenido ni atrapa el foco; se puede cerrar con teclado | [RF-039](../Requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
+| **Animaciones** | Respetan `prefers-reduced-motion`; consistentes entre componentes equivalentes | [RD-002](../Requisitos/restricciones.md#rd-002--animaciones-consistentes) |
 
 ---
 
@@ -221,6 +221,6 @@ export const contraste = (a, b) => {
 
 ## Documentos relacionados
 
-- [RNF-004 Accesibilidad](../requisitos/RNFs/RNF-004_accesibilidad.md) · [RNF-003 Usabilidad](../requisitos/RNFs/RNF-003_usabilidad_ux_ui.md)
-- [Restricciones de diseño visual](../requisitos/restricciones.md#3-restricciones-de-diseño-visual) · [Pruebas no funcionales](../testing/pruebas-no-funcionales.md)
-- [Convenciones de código — frontend](../colaboracion/convenciones-de-codigo.md#6-frontend-react)
+- [RNF-004 Accesibilidad](../Requisitos/RNFs/RNF-004_accesibilidad.md) · [RNF-003 Usabilidad](../Requisitos/RNFs/RNF-003_usabilidad_ux_ui.md)
+- [Restricciones de diseño visual](../Requisitos/restricciones.md#3-restricciones-de-diseño-visual) · [Pruebas no funcionales](../Testing/pruebas-no-funcionales.md)
+- [Convenciones de código — frontend](../Colaboracion/convenciones-de-codigo.md#6-frontend-react)

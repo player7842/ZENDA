@@ -13,8 +13,8 @@
 | Campo | Valor |
 |---|---|
 | **Archivos** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `frontend/nginx.conf`, `.dockerignore` de cada servicio |
-| **Guía práctica** | [Instalación con Docker](../setup/con-docker.md) |
-| **Requisito** | [RT-008](../requisitos/restricciones.md#rt-008--contenedores-con-docker) · [RNF-006](../requisitos/RNFs/RNF-006_compatibilidad_y_portabilidad.md) · [RNF-008](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) |
+| **Guía práctica** | [Instalación con Docker](../Setup/con-docker.md) |
+| **Requisito** | [RT-008](../Requisitos/restricciones.md#rt-008--contenedores-con-docker) · [RNF-006](../Requisitos/RNFs/RNF-006_compatibilidad_y_portabilidad.md) · [RNF-008](../Requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md) |
 | **Estado** | Sintaxis validada; la ejecución completa la prueba el equipo |
 | **Fecha** | Octubre 2026 |
 
@@ -77,7 +77,7 @@ Instalar dependencias es lo más lento. Al copiar **primero** solo los archivos 
 
 | Línea | Qué hace | Por qué |
 |---|---|---|
-| `ARG NODE_VERSION=22` y `FROM node:${NODE_VERSION}-alpine` | Imagen base de Node.js LTS en Alpine | La versión se cambia en **un solo lugar** ([RH-002](../requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)); Alpine pesa poco |
+| `ARG NODE_VERSION=22` y `FROM node:${NODE_VERSION}-alpine` | Imagen base de Node.js LTS en Alpine | La versión se cambia en **un solo lugar** ([RH-002](../Requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)); Alpine pesa poco |
 | `ENV NODE_ENV=production` | Modo producción | Menos registros de depuración, mejor rendimiento |
 | `RUN corepack enable` | Activa pnpm | pnpm viene con Node vía Corepack |
 | `COPY package.json pnpm-lock.yaml ./` y `RUN pnpm install --frozen-lockfile --prod` | Instala solo lo de ejecución, igual al lockfile | Instalación reproducible y sin herramientas de desarrollo |
@@ -103,7 +103,7 @@ flowchart LR
 |---|---|
 | `ARG VITE_API_URL` + `ENV VITE_API_URL=$VITE_API_URL` | Vite **incrusta** esa URL dentro del JavaScript al compilar: es un valor de **construcción**, no de ejecución. Cambiarla exige reconstruir el frontend. |
 | `nginx.conf` con `try_files $uri $uri/ /index.html` | React Router maneja las rutas en el navegador; si alguien recarga `/aprendiz`, Nginx debe devolver `index.html` y no un `404`. |
-| Cabeceras de seguridad en `nginx.conf` | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` ([RNF-001.10](../requisitos/RNFs/RNF-001_seguridad.md)). |
+| Cabeceras de seguridad en `nginx.conf` | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` ([RNF-001.10](../Requisitos/RNFs/RNF-001_seguridad.md)). |
 
 ### El archivo `.dockerignore`
 
@@ -139,14 +139,14 @@ flowchart TB
 | `environment` | `DB_HOST: db`, `JWT_SECRET: ${JWT_SECRET}` | Pasa configuración; `${…}` se lee del `.env` de la raíz |
 | `volumes` | `pgdata` y `./Database/zenda_bd.sql:/docker-entrypoint-initdb.d/…` | Conserva los datos y carga el esquema **solo la primera vez** |
 | `ports` | `"4000:4000"`, `"8080:80"` | `puerto del equipo : puerto del contenedor` |
-| `restart` | `unless-stopped` | Se reinicia solo tras un fallo ([RNF-008.4](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)) |
+| `restart` | `unless-stopped` | Se reinicia solo tras un fallo ([RNF-008.4](../Requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)) |
 | `args` (build) | `VITE_API_URL` | Entrega el valor de construcción al frontend |
 
 ### Detalles que causan problemas
 
 | Detalle | Explicación |
 |---|---|
-| **`db` no publica puerto** | Solo el backend la alcanza por la red interna: la base de datos no queda expuesta ([RNF-008](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)). |
+| **`db` no publica puerto** | Solo el backend la alcanza por la red interna: la base de datos no queda expuesta ([RNF-008](../Requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)). |
 | **`DB_HOST` es `db`, no `localhost`** | Dentro de un contenedor, `localhost` es **el propio contenedor**. Los servicios se hablan por el nombre del servicio. |
 | **El script SQL corre una sola vez** | Solo cuando el volumen está **vacío**. Si cambias `zenda_bd.sql`, hay que borrar el volumen (`docker compose down -v`, que **borra los datos**). |
 | **Cambiar la contraseña de la base no surte efecto** | `POSTGRES_PASSWORD` solo se aplica al crear el volumen. |
@@ -181,7 +181,7 @@ flowchart TB
 | Datos de prueba | Cargados con el *seed* | **Nunca** |
 | Puertos expuestos | Backend y frontend | Solo el proxy inverso |
 
-Los pasos de despliegue están en [Instalación con Docker, sección 8](../setup/con-docker.md#8-llevarlo-a-producción).
+Los pasos de despliegue están en [Instalación con Docker, sección 8](../Setup/con-docker.md#8-llevarlo-a-producción).
 
 ---
 
@@ -198,7 +198,7 @@ Los pasos de despliegue están en [Instalación con Docker, sección 8](../setup
 | Consola SQL | `docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` |
 | Limpiar imágenes sin uso | `docker image prune` |
 
-La lista completa y los problemas frecuentes están en [Instalación con Docker](../setup/con-docker.md#6-comandos-del-día-a-día).
+La lista completa y los problemas frecuentes están en [Instalación con Docker](../Setup/con-docker.md#6-comandos-del-día-a-día).
 
 ---
 
@@ -219,5 +219,5 @@ La lista completa y los problemas frecuentes están en [Instalación con Docker]
 
 ## Documentos relacionados
 
-- [Instalación con Docker](../setup/con-docker.md) · [Variables de entorno](../setup/variables-de-entorno.md) · [Arquitectura — despliegue](../referencia-tecnica/arquitectura.md#3-contenedores-y-despliegue)
-- [Dependencias y cadena de suministro](dependencias-y-cadena-de-suministro.md) · [Seguridad y OWASP](seguridad-owasp.md) · [Hallazgos — Docker](../testing/hallazgos.md)
+- [Instalación con Docker](../Setup/con-docker.md) · [Variables de entorno](../Setup/variables-de-entorno.md) · [Arquitectura — despliegue](../Referencia-Tecnica/arquitectura.md#3-contenedores-y-despliegue)
+- [Dependencias y cadena de suministro](dependencias-y-cadena-de-suministro.md) · [Seguridad y OWASP](seguridad-owasp.md) · [Hallazgos — Docker](../Testing/hallazgos.md)

@@ -16,7 +16,7 @@
 | **Título** | Estado y porcentaje de avance |
 | **Módulo** | Evaluación |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Aprendiz |
 | **RF asociado** | RF-025 |
 | **Reglas de negocio** | RN-018, RN-019, RN-020 |
@@ -63,3 +63,7 @@
 
 - Hoy la cascada recorre todas las evidencias de la fase; no existe el estado de carpeta ni el porcentaje.
 - Se agrega `estado_carpeta` a `carpetas`.
+
+## Estado en la Semana 2
+
+Implementado: `carpetas.estado_carpeta` y `fases.estado_fase` se recalculan en cascada a partir de la evaluación vigente; el porcentaje se calcula sobre evidencias aprobadas y se expone en la consulta del proyecto.

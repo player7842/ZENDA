@@ -37,7 +37,7 @@ Cada servicio tiene su `Dockerfile` y un `docker-compose.yml` levanta base de da
 
 ### RNF-006.3 — Ejecución sin Docker
 
-El sistema se puede ejecutar localmente con Node.js LTS, pnpm y PostgreSQL 14 o superior.
+El sistema se puede ejecutar localmente con Node.js LTS, pnpm y PostgreSQL 16.
 
 **Estado:** Vigente
 

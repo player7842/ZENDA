@@ -13,7 +13,7 @@
 | Campo | Valor |
 |---|---|
 | **Aplica a** | Backend (Node.js + Express), frontend (React), SQL y documentación |
-| **Origen** | Restricciones del proyecto y observaciones del instructor ([RI-001](../requisitos/restricciones.md#ri-001--código-y-base-de-datos-en-español-de-dominio), [RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español), [RNF-005](../requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md)) |
+| **Origen** | Restricciones del proyecto y observaciones del instructor ([RI-001](../Requisitos/restricciones.md#ri-001--código-y-base-de-datos-en-español-de-dominio), [RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español), [RNF-005](../Requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md)) |
 | **Herramientas** | `oxlint` (ya en el frontend), `.editorconfig` y `.gitattributes` entregados; formateador propuesto: Prettier |
 | **Fecha** | Octubre 2026 |
 
@@ -51,7 +51,7 @@
 | Hooks | Prefijo `use` | `useInactividad.js` |
 | Archivos de backend | `<módulo>.<rol>.js` | `proyecto.controller.js`, `cascada.service.js`, `fichas.routes.js` |
 | Carpetas | minúsculas, sin tildes ni espacios | `controllers`, `lista-chequeo` |
-| Tablas y columnas de la base de datos | `snake_case`, español, plural en tablas | `evidencia_versiones`, `fecha_creacion` |
+| Tablas y columnas de la base de datos | `snake_case`, español, plural en tablas | `integrantes_grupo`, `fecha_creacion` |
 | Clave primaria | `<tabla en singular>_id` | `evidencia_id` |
 | Rutas de la API | `kebab-case`, sustantivos en plural | `/api/lista-chequeo/:listaId` |
 | Variables de entorno | `MAYUSCULAS_CON_GUION_BAJO` | `DB_PASSWORD`, `VITE_API_URL` |
@@ -70,7 +70,7 @@
 
 ## 3. Estructura del backend
 
-Las capas y su responsabilidad están en [Arquitectura, sección 4](../referencia-tecnica/arquitectura.md#41-capas).
+Las capas y su responsabilidad están en [Arquitectura, sección 4](../Referencia-Tecnica/arquitectura.md#41-capas).
 
 | Capa | Hace | No hace |
 |---|---|---|
@@ -108,7 +108,7 @@ export async function crearCarpeta(req, res) {
 
 | Regla | Detalle |
 |---|---|
-| Formato de error | `{ "message": "texto en español" }` ([RNF-013.3](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)) |
+| Formato de error | `{ "message": "texto en español" }` ([RNF-013.3](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)) |
 | Código HTTP correcto | `400` datos inválidos · `401` sin sesión · `403` sin permiso · `404` no existe · `409` conflicto · `500` fallo interno |
 | El `500` no filtra detalles | Mensaje genérico al usuario; el detalle va solo al registro del servidor |
 | Todo `try` tiene su `catch` | Ninguna promesa sin manejar |
@@ -130,7 +130,7 @@ try {
 
 | Regla | Detalle |
 |---|---|
-| **Siempre parametrizado** | `WHERE usuario_id = $1`. Nunca concatenar entradas del usuario ([RS-005](../requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas)). |
+| **Siempre parametrizado** | `WHERE usuario_id = $1`. Nunca concatenar entradas del usuario ([RS-005](../Requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas)). |
 | Palabras clave en MAYÚSCULAS | `SELECT`, `FROM`, `WHERE`, `JOIN` |
 | Nombres de columnas explícitos | Evitar `SELECT *` salvo en pruebas |
 | Transacciones en operaciones compuestas | `BEGIN` → pasos → `COMMIT`; `ROLLBACK` en el `catch` |
@@ -166,15 +166,15 @@ try {
 | **Llamadas a la API** | Solo a través de la capa `api/`; las pantallas no usan `fetch` directo. |
 | **Estado** | `useState` local; `ThemeContext` y `AuthContext` para lo global. |
 | **Componentes** | Pequeños y con un propósito; si pasan de ~150 líneas, dividir. |
-| **Permisos** | Ocultar un botón es comodidad, no seguridad: el servidor decide ([RS-004](../requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor)). |
+| **Permisos** | Ocultar un botón es comodidad, no seguridad: el servidor decide ([RS-004](../Requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor)). |
 | **Tailwind** | Clases en el orden: disposición → espaciado → tipografía → color → estado. Los colores salen de las variables del tema, no de valores sueltos. |
-| **Tema** | Todo componente se ve bien en claro y oscuro ([RD-005](../requisitos/restricciones.md#rd-005--tema-claro-y-oscuro)). |
-| **Contraste** | Texto e iconos cumplen WCAG AA ([RD-001](../requisitos/restricciones.md#rd-001--contraste-mínimo-accesible)). |
+| **Tema** | Todo componente se ve bien en claro y oscuro ([RD-005](../Requisitos/restricciones.md#rd-005--tema-claro-y-oscuro)). |
+| **Contraste** | Texto e iconos cumplen WCAG AA ([RD-001](../Requisitos/restricciones.md#rd-001--contraste-mínimo-accesible)). |
 | **Accesibilidad** | `label` en cada campo, `aria-label` en iconos sin texto, foco visible, navegación por teclado. |
-| **Animaciones** | Las mismas en componentes equivalentes de una misma página ([RD-002](../requisitos/restricciones.md#rd-002--animaciones-consistentes)). |
-| **Acciones secundarias** | En el menú de tres puntos ([RD-003](../requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias)). |
+| **Animaciones** | Las mismas en componentes equivalentes de una misma página ([RD-002](../Requisitos/restricciones.md#rd-002--animaciones-consistentes)). |
+| **Acciones secundarias** | En el menú de tres puntos ([RD-003](../Requisitos/restricciones.md#rd-003--menú-de-tres-puntos-para-acciones-secundarias)). |
 | **Iconos** | `lucide-react`. |
-| **Año del pie de página** | `new Date().getFullYear()`, nunca fijo ([RD-006](../requisitos/restricciones.md#rd-006--pie-de-página-con-año-vigente-y-enlaces-legales)). |
+| **Año del pie de página** | `new Date().getFullYear()`, nunca fijo ([RD-006](../Requisitos/restricciones.md#rd-006--pie-de-página-con-año-vigente-y-enlaces-legales)). |
 | **Lenguaje** | JavaScript (`.jsx`); `Tareas.tsx` se unifica a `.jsx`. |
 
 ```jsx
@@ -225,7 +225,7 @@ export function calcularEstadoCarpeta(resultados) { /* ... */ }
 | Análisis estático | Sin errores de `pnpm lint` | `oxlint` |
 | Importaciones | Primero externas, luego internas; sin importaciones sin usar | `oxlint` |
 
-> Los archivos `coordinador.js` y `mailer.js` de v11 usan saltos de línea CRLF; el `.gitattributes` los unifica ([H-15](../testing/hallazgos.md)).
+> Los archivos `coordinador.js` y `mailer.js` de v11 usan saltos de línea CRLF; el `.gitattributes` los unifica ([H-15](../Testing/hallazgos.md)).
 
 ---
 
@@ -233,7 +233,7 @@ export function calcularEstadoCarpeta(resultados) { /* ... */ }
 
 | Regla | Detalle |
 |---|---|
-| Ningún secreto en el código | Variables de entorno ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)) |
+| Ningún secreto en el código | Variables de entorno ([RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)) |
 | Sin valores por defecto sensibles | Si falta `JWT_SECRET`, el servidor **no arranca** |
 | No registrar datos sensibles | Nada de contraseñas, tokens ni documentos en `console.log` |
 | Validar toda entrada | Tipo, longitud y formato, en el servidor |
@@ -246,7 +246,7 @@ export function calcularEstadoCarpeta(resultados) { /* ... */ }
 
 | Regla | Detalle |
 |---|---|
-| Una regla de negocio nueva nace con su prueba | Primero rojo, luego verde ([TDD](../testing/pruebas-unitarias.md#1-cómo-se-escribe-una-prueba-tdd)) |
+| Una regla de negocio nueva nace con su prueba | Primero rojo, luego verde ([TDD](../Testing/pruebas-unitarias.md#1-cómo-se-escribe-una-prueba-tdd)) |
 | Las pruebas viven junto al código | `backend/tests/` y `*.test.js` en el frontend |
 | Un nombre de prueba describe el comportamiento | `rechaza un archivo de más de 10 MB` |
 | Una prueba no depende de otra | Cada una crea sus datos |
@@ -263,4 +263,4 @@ Entregado en el paquete de colaboración y se copia a la raíz del repositorio.
 ## Documentos relacionados
 
 - [Flujo de GitHub](flujo-github.md) · [Guía de contribución](guia-de-contribucion.md) · [Revisión de código](revision-de-codigo.md)
-- [Arquitectura](../referencia-tecnica/arquitectura.md) · [Restricciones](../requisitos/restricciones.md) · [Pruebas unitarias](../testing/pruebas-unitarias.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Restricciones](../Requisitos/restricciones.md) · [Pruebas unitarias](../Testing/pruebas-unitarias.md)

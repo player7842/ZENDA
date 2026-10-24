@@ -13,8 +13,8 @@
 | Campo | Valor |
 |---|---|
 | **Estilo** | API REST sobre HTTP con cuerpos JSON bajo el prefijo `/api` |
-| **Contrato vigente** | [api-endpoints.md](../referencia-tecnica/api-endpoints.md) |
-| **Requisito** | [RNF-013 Interoperabilidad y API](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) |
+| **Contrato vigente** | [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) |
+| **Requisito** | [RNF-013 Interoperabilidad y API](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) |
 | **Fecha** | Octubre 2026 |
 
 ---
@@ -47,7 +47,7 @@
 | **Seguro** | No modifica datos: se puede repetir sin consecuencias |
 | **Idempotente** | Repetirlo da el mismo resultado final que hacerlo una vez |
 
-> **Por qué importa la idempotencia:** si el cliente no recibe respuesta (red caída) y reintenta, un `PUT` o `DELETE` no causa daño; un `POST` podría crear **dos** evidencias. Por eso el botón de envío se deshabilita mientras se procesa y las subidas repetidas se detectan por el hash del archivo ([RNF-014.3](../requisitos/RNFs/RNF-014_concurrencia_y_consistencia.md)).
+> **Por qué importa la idempotencia:** si el cliente no recibe respuesta (red caída) y reintenta, un `PUT` o `DELETE` no causa daño; un `POST` podría crear **dos** evidencias. Por eso el botón de envío se deshabilita mientras se procesa y las subidas repetidas se detectan por el hash del archivo ([RNF-014.3](../Requisitos/RNFs/RNF-014_concurrencia_y_consistencia.md)).
 
 ---
 
@@ -90,7 +90,7 @@
 | Una acción que no es CRUD, como subrecurso | `POST /evidencias/:id/versiones`, `POST /carpetas/:id/aprobar` | `POST /aprobarCarpeta` |
 | Los permisos por prefijo de rol | `/api/instructor/…`, `/api/coordinador/…` | Mezclar roles en la misma ruta |
 
-**Deuda conocida de v11:** el prefijo `/api/aprendiz/proyectos` también contiene ficha, tareas y resumen. A futuro se mueve a `/api/aprendiz` conservando un alias ([inconsistencia 2](../referencia-tecnica/api-endpoints.md#13-inconsistencias-detectadas-en-v11)).
+**Deuda conocida de v11:** el prefijo `/api/aprendiz/proyectos` también contiene ficha, tareas y resumen. A futuro se mueve a `/api/aprendiz` conservando un alias ([inconsistencia 2](../Referencia-Tecnica/api-endpoints.md#13-inconsistencias-conocidas-no-bloqueantes)).
 
 ---
 
@@ -110,11 +110,11 @@
 | Regla del mensaje | Detalle |
 |---|---|
 | Claro y en español profesional | Dice qué pasó y, si se puede, qué hacer |
-| No revela detalles internos | Nada de SQL, rutas del servidor ni trazas ([RNF-001.13](../requisitos/RNFs/RNF-001_seguridad.md)) |
+| No revela detalles internos | Nada de SQL, rutas del servidor ni trazas ([RNF-001.13](../Requisitos/RNFs/RNF-001_seguridad.md)) |
 | No distingue lo que no debe | "Credenciales incorrectas", no "el correo no existe" |
-| Sin groserías ni coloquialismos | [RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español) |
+| Sin groserías ni coloquialismos | [RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español) |
 
-**Datos que nunca salen en una respuesta:** `contrasena`, `token_hash`, tokens de otros usuarios, rutas internas de almacenamiento ([RS-003](../requisitos/restricciones.md#rs-003--no-exponer-contraseñas)).
+**Datos que nunca salen en una respuesta:** `contrasena`, `token_hash`, tokens de otros usuarios, rutas internas de almacenamiento ([RS-003](../Requisitos/restricciones.md#rs-003--no-exponer-contraseñas)).
 
 ### Formatos de datos
 
@@ -159,7 +159,7 @@ flowchart LR
     D -- "Sí" --> F["Ejecutar"]
 ```
 
-El detalle por rol y condición está en la [matriz de permisos](../requisitos/matriz-permisos.md); su verificación, en las [30 pruebas de autorización](../testing/pruebas-de-integracion.md#3-pruebas-de-autorización-desde-la-matriz-de-permisos).
+El detalle por rol y condición está en la [matriz de permisos](../Requisitos/matriz-permisos.md); su verificación, en las [30 pruebas de autorización](../Testing/pruebas-de-integracion.md#3-pruebas-de-autorización-desde-la-matriz-de-permisos).
 
 ---
 
@@ -167,7 +167,7 @@ El detalle por rol y condición está en la [matriz de permisos](../requisitos/m
 
 | Tema | Convención |
 |---|---|
-| **Paginación** | Los listados que pueden crecer (usuarios, evidencias, fichas) se devuelven por páginas: `?pagina=1&limite=25` ([RNF-002.4](../requisitos/RNFs/RNF-002_rendimiento.md)) |
+| **Paginación** | Los listados que pueden crecer (usuarios, evidencias, fichas) se devuelven por páginas: `?pagina=1&limite=25` ([RNF-002.4](../Requisitos/RNFs/RNF-002_rendimiento.md)) |
 | **Forma** | `{ "datos": [...], "pagina": 1, "limite": 25, "total": 130 }` (propuesta) |
 | **Orden** | Un criterio estable (por ejemplo, fecha descendente e identificador) |
 | **Filtros** | En la consulta (`?ficha=2724285`) y validados |
@@ -182,11 +182,11 @@ El detalle por rol y condición está en la [matriz de permisos](../requisitos/m
 |---|---|
 | **Campo nuevo opcional** | Compatible: los clientes viejos lo ignoran |
 | **Campo que se elimina** (`sub_rol`, `rol_scrum`) | Primero el backend lo **ignora**, después el frontend deja de enviarlo, al final se elimina |
-| **Cambio de comportamiento** (token de 15 min) | Se anuncia como cambio de contrato ([tabla de cambios](../referencia-tecnica/api-endpoints.md#12-cambios-de-contrato-planificados)) |
+| **Cambio de comportamiento** (token de 15 min) | Se anuncia como cambio de contrato ([tabla de cambios](../Referencia-Tecnica/api-endpoints.md#11-cambios-de-contrato-ya-aplicados-semanas-12)) |
 | **Ruta que cambia de nombre** | Se mantiene la antigua como alias durante un tiempo |
 | **Versionado en la ruta** (`/api/v2`) | No se usa durante el proyecto formativo; se reconsidera si hay clientes externos |
 
-> **Regla de oro:** un cambio de contrato se hace en **un solo PR** que actualice el backend, `api/` del frontend, [api-endpoints.md](../referencia-tecnica/api-endpoints.md) y las pruebas. Se marca como `feat(api)!` ([flujo de GitHub](../colaboracion/flujo-github.md#4-commits)).
+> **Regla de oro:** un cambio de contrato se hace en **un solo PR** que actualice el backend, `api/` del frontend, [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) y las pruebas. Se marca como `feat(api)!` ([flujo de GitHub](../Colaboracion/flujo-github.md#4-commits)).
 
 ---
 
@@ -202,12 +202,12 @@ El detalle por rol y condición está en la [matriz de permisos](../requisitos/m
 | 6 | ¿El error es `{ message }`, en español y sin detalles técnicos? | ☐ |
 | 7 | ¿La respuesta excluye contraseñas, hashes y datos de otros? | ☐ |
 | 8 | ¿Las consultas son parametrizadas y las operaciones compuestas, transaccionales? | ☐ |
-| 9 | ¿Se documentó en [api-endpoints.md](../referencia-tecnica/api-endpoints.md) y su RF? | ☐ |
+| 9 | ¿Se documentó en [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) y su RF? | ☐ |
 | 10 | ¿Tiene prueba de integración y de autorización? | ☐ |
 
 ---
 
 ## Documentos relacionados
 
-- [Referencia de la API](../referencia-tecnica/api-endpoints.md) · [Arquitectura](../referencia-tecnica/arquitectura.md) · [Seguridad y OWASP](seguridad-owasp.md)
-- [Autenticación y JWT](autenticacion-jwt.md) · [Convenciones de código](../colaboracion/convenciones-de-codigo.md) · [Pruebas de integración](../testing/pruebas-de-integracion.md)
+- [Referencia de la API](../Referencia-Tecnica/api-endpoints.md) · [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Seguridad y OWASP](seguridad-owasp.md)
+- [Autenticación y JWT](autenticacion-jwt.md) · [Convenciones de código](../Colaboracion/convenciones-de-codigo.md) · [Pruebas de integración](../Testing/pruebas-de-integracion.md)

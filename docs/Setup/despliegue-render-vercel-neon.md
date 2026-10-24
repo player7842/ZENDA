@@ -56,9 +56,10 @@ primer despliegue.
    `Database/zenda_bd.sql`. Ese script crea el esquema y los datos de prueba.
    - Es destructivo (`DROP TABLE ... CASCADE`): úsalo solo en una base nueva.
    - Para una base que ya tiene datos, aplicar solo las migraciones de
-     `Database/migrations/` en orden. En Render, `preDeployCommand` ejecuta
-     `backend/scripts/migrar.js` antes de arrancar y aplica `002_semana2.sql`
-     de forma idempotente.
+     `Database/migrations/` en orden. En Render, el `startCommand` ejecuta
+     `node scripts/migrar.js` antes de arrancar `server.js` y aplica
+     `002_semana2.sql` de forma idempotente. El plan **free** no admite
+     `preDeployCommand`, por eso la migración va en el arranque.
 5. Verificar que existan datos:
 
    ```sql
@@ -77,7 +78,10 @@ primer despliegue.
 ### 3.1 Con el blueprint (`render.yaml`)
 
 1. En Render: **New → Blueprint** y conectar el repositorio de GitHub.
-2. Render detecta `render.yaml` y propone el servicio `zenda-api`.
+2. Render detecta `render.yaml` y propone el servicio `zenda-api`. Si el
+   blueprint no fija `branch`, Render usa la rama por defecto del repositorio
+   (`main`). Para desplegar el código de las Semanas 1–2, selecciona
+   `develop` en el servicio o fusiona `develop` en `main` antes de desplegar.
 3. Completar las variables marcadas con `sync: false`:
 
    | Variable | Valor |
@@ -89,6 +93,14 @@ primer despliegue.
 
    `JWT_SECRET` lo genera Render automáticamente. `PORT` lo inyecta Render;
    el valor 4000 del blueprint es solo una referencia y no estorba.
+
+   > **SMTP en Render Free:** las instancias gratuitas bloquean las salidas a
+   > los puertos **25, 465 y 587**, que son los que usa Gmail. En ese plan la
+   > recuperación de contraseña **no puede enviar correos**. Opciones:
+   > usar un plan pago de Render, un proveedor de correo por API HTTPS (por
+   > ejemplo Resend o SendGrid) o dejar `EMAIL_USER`/`EMAIL_PASS` vacíos y
+   > probar el flujo solo en local. El resto de la aplicación no depende del
+   > correo.
 
 4. Esperar el primer despliegue y comprobar:
 
@@ -104,11 +116,14 @@ Crear **New → Web Service**, seleccionar el repositorio y configurar:
 | Campo | Valor |
 |---|---|
 | Runtime | Docker |
+| Branch | `develop` (o `main` si ya se fusionó) |
 | Dockerfile path | `backend/Dockerfile` |
-| Docker context | `backend` |
+| Docker context | `.` (raíz del repositorio, para incluir `Database/migrations/`) |
 | Health check path | `/api/health` |
+| Start command | `sh -c "node scripts/migrar.js && node server.js"` |
 
-Agregar a mano las variables de la tabla 3.1.
+Agregar a mano las variables de la tabla 3.1. El contexto **debe** ser `.`:
+con `backend` la imagen no incluye la migración y `scripts/migrar.js` falla.
 
 ### 3.3 Comprobar el login del seed
 
@@ -120,6 +135,11 @@ curl -X POST https://<servicio>.onrender.com/api/auth/login \
 
 Debe responder `200` con un `token`. Si responde `500`, revisar los logs:
 casi siempre es `DATABASE_URL` mal copiada o el esquema sin cargar.
+
+> **Seguridad:** `Database/zenda_bd.sql` incluye usuarios de demostración con
+> contraseñas conocidas (`admin@zenda.com` / `Admin123!`, entre otros). En un
+> entorno público hay que cambiarlas o crear un administrador propio y
+> desactivar las cuentas de prueba antes de compartir la URL.
 
 ---
 
@@ -183,6 +203,9 @@ casi siempre es `DATABASE_URL` mal copiada o el esquema sin cargar.
 | El enlace del correo abre localhost | `FRONTEND_URL` sin actualizar | Actualizarla y redesplegar el backend |
 | El backend tarda 30–60 s en responder | Suspensión del plan gratuito de Render | Esperar la primera petición o cambiar de plan |
 | El despliegue de Render falla en `pnpm install` | `pnpm-lock.yaml` desactualizado | Ejecutar `pnpm install` en `backend/` y commitear el lockfile |
+| El despliegue de Render no incluye los cambios de Semana 2 | El servicio está desplegando `main` y los cambios están en `develop` | Cambiar la rama del servicio a `develop` o fusionar en `main` |
+| `psql: ... No such file or directory` o `migrar.js` no encuentra la migración | El contexto de Docker es `backend` | Cambiar el contexto a `.` y redesplegar |
+| La recuperación de contraseña no envía correo | Render Free bloquea SMTP 25/465/587 | Usar un plan pago o un proveedor por API HTTPS; probar el flujo en local |
 
 ---
 
@@ -192,11 +215,13 @@ casi siempre es `DATABASE_URL` mal copiada o el esquema sin cargar.
 |---|---|---|
 | Render Free | Suspensión por inactividad | Primera petición lenta |
 | Render Free | 512 MB de RAM | Suficiente para la API, no para procesar archivos grandes |
+| Render Free | SMTP 25/465/587 bloqueado | La recuperación de contraseña no envía correo en ese plan |
+| Render Free | Sin `preDeployCommand` | La migración va en `startCommand` |
 | Neon Free | 0.5 GB de almacenamiento | Alcanza para el proyecto; las evidencias son enlaces, no archivos |
 | Vercel Hobby | Uso no comercial | Aceptable para el proyecto formativo |
 
-Las evidencias como archivo (S3 o volumen) quedan para la semana 3 según el
-roadmap; hoy se guardan como enlace.
+Las evidencias como archivo (almacenamiento compatible con S3) quedan para la
+**Semana 4** según el roadmap; hoy se guardan como enlace.
 
 ---
 

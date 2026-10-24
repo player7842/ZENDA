@@ -16,7 +16,7 @@
 | **Título** | Creación de proyecto |
 | **Módulo** | Grupos y proyectos |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Aprendiz |
 | **RF asociado** | RF-014 |
 | **Reglas de negocio** | RN-007, RN-008, RN-009, RN-010, RN-011 |
@@ -70,3 +70,7 @@
 - Se agrega `grupos.cupo_maximo` (1–50, por defecto 6), editable por el líder con `PUT /api/aprendiz/proyectos/mio/cupo`.
 - El líder deja de depender de un sub-rol Scrum: es quien crea el proyecto.
 - Las fases se siguen creando con los nombres `FASE 1 - ANALISIS` a `FASE 5 - CIERRE/ENTREGA`.
+
+## Estado en la Semana 2
+
+Implementado: `crearProyecto` valida el cupo (1–50, 6 por defecto), crea el grupo y las 5 fases, deja al creador como líder (`grupos.lider_id`) y rechaza un segundo proyecto activo. El líder puede cambiar el cupo sin bajar del total de integrantes activos.

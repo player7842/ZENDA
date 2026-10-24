@@ -16,7 +16,7 @@
 | **Título** | Asignación de instructores a fichas |
 | **Módulo** | Administración |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Administrador |
 | **RF asociado** | RF-011 |
 | **Reglas de negocio** | RN-024, RN-025, RN-028 |
@@ -63,3 +63,7 @@
 
 - Hoy `instructor_ficha` se borra y se vuelve a insertar, por lo que no queda historial.
 - Se agregan `fecha_inicio`, `fecha_fin` y estado a `instructor_ficha`.
+
+## Estado en la Semana 2
+
+Implementado: `instructor_ficha` conserva `fecha_inicio`, `fecha_fin` y `estado`; el cierre es lógico (sin `DELETE`) y el índice único parcial garantiza una sola asignación vigente por ficha. El administrador y el coordinador usan el mismo historial.

@@ -13,9 +13,9 @@
 | Campo | Valor |
 |---|---|
 | **Origen** | Observaciones del instructor: usar **pnpm**, quitar los comodines de los `.json`, usar una versión **LTS** de Node.js |
-| **Restricciones** | [RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes), [RH-002](../requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija), [RH-003](../requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) |
+| **Restricciones** | [RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes), [RH-002](../Requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija), [RH-003](../Requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias) |
 | **Riesgo OWASP** | [A03:2025 — Fallas en la cadena de suministro de software](seguridad-owasp.md#a03--fallas-en-la-cadena-de-suministro-de-software) |
-| **Hallazgos** | [H-14](../testing/hallazgos.md), [H-16](../testing/hallazgos.md) |
+| **Hallazgos** | [H-14](../Testing/hallazgos.md), [H-16](../Testing/hallazgos.md) |
 | **Fecha** | Octubre 2026 |
 
 ---
@@ -62,7 +62,7 @@ Una **dependencia** es una librería que el proyecto usa en lugar de escribirla 
 | `"~4.21.2"` | Cualquier `4.21.x` posterior | ❌ |
 | `"*"`, `"latest"` | Cualquier versión | ❌ |
 
-**Por qué se prohíben:** con un rango, dos personas (o un servidor) pueden instalar versiones distintas el mismo día, y una versión nueva —con un error o con código malicioso— entra **sin que nadie la haya revisado**. Con versiones exactas, el código que se prueba es el que se despliega ([RH-003](../requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias)). Hoy hay **21 dependencias con `^`** ([H-16](../testing/hallazgos.md)).
+**Por qué se prohíben:** con un rango, dos personas (o un servidor) pueden instalar versiones distintas el mismo día, y una versión nueva —con un error o con código malicioso— entra **sin que nadie la haya revisado**. Con versiones exactas, el código que se prueba es el que se despliega ([RH-003](../Requisitos/restricciones.md#rh-003--versiones-exactas-de-dependencias)). Hoy hay **21 dependencias con `^`** ([H-16](../Testing/hallazgos.md)).
 
 ---
 
@@ -82,7 +82,7 @@ Una **dependencia** es una librería que el proyecto usa en lugar de escribirla 
 
 | Regla | Detalle |
 |---|---|
-| **Solo pnpm** | Nada de `npm install` ni `yarn`: crean otros archivos de bloqueo ([RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes)) |
+| **Solo pnpm** | Nada de `npm install` ni `yarn`: crean otros archivos de bloqueo ([RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes)) |
 | **Lockfile siempre en Git** | `pnpm-lock.yaml` de `backend/` y de `frontend/` |
 | **Instalación reproducible** | `pnpm install --frozen-lockfile` en CI y Docker: falla si el lockfile no coincide con `package.json` |
 | **Declarar el gestor** | Campo `packageManager` en cada `package.json` |
@@ -116,10 +116,10 @@ Las versiones mayores de Node.js de número par pasan a **LTS** (*Long Term Supp
 
 | Pregunta | Respuesta |
 |---|---|
-| **¿Por qué LTS?** | Mantenimiento periódico y estabilidad: es lo que el instructor pidió ([RH-002](../requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)). |
+| **¿Por qué LTS?** | Mantenimiento periódico y estabilidad: es lo que el instructor pidió ([RH-002](../Requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)). |
 | **¿Qué versión fijar?** | La LTS vigente que indique [nodejs.org](https://nodejs.org/) y que cumpla el instructor. Hay que revisar el calendario: una línea en mantenimiento llega a su fin de vida en una fecha conocida. |
 | **¿Dónde se fija?** | `.nvmrc`, `engines` de cada `package.json` y el argumento `NODE_VERSION` de cada `Dockerfile`. **Los tres deben coincidir.** |
-| **¿Y los Dockerfiles actuales?** | Usaban `node:20-alpine`; se actualizan a la LTS elegida ([RT-008](../requisitos/restricciones.md#rt-008--contenedores-con-docker)). |
+| **¿Y los Dockerfiles actuales?** | Usaban `node:20-alpine`; hoy usan `node:22-alpine` ([RT-008](../Requisitos/restricciones.md#rt-008--contenedores-con-docker)). |
 
 ```bash
 node -v                    # versión instalada
@@ -143,7 +143,7 @@ Antes de ejecutar `pnpm add`, responde:
 | 7 | ¿Se instalará con **versión exacta** y de **backend** o **frontend** según corresponda? | ☐ |
 | 8 | ¿La versión tiene al menos **dos semanas** de publicada? | ☐ |
 
-> **Una librería de servidor no va en el frontend.** `nodemailer` aparece hoy en el `package.json` del frontend: sobra y ensancha la superficie de ataque ([H-14](../testing/hallazgos.md)).
+> **Una librería de servidor no va en el frontend.** `nodemailer` aparece hoy en el `package.json` del frontend: sobra y ensancha la superficie de ataque ([H-14](../Testing/hallazgos.md)).
 
 ### Señales de alerta
 
@@ -163,7 +163,7 @@ Quedarse sin actualizar es un riesgo; actualizar a ciegas, otro. El equilibrio:
 
 | Práctica | Cómo |
 |---|---|
-| **Revisar vulnerabilidades** | `pnpm audit --prod` en `backend/` y `frontend/`; también en el CI ([plan de pruebas](../testing/plan-de-pruebas.md)) |
+| **Revisar vulnerabilidades** | `pnpm audit --prod` en `backend/` y `frontend/`; también en el CI ([plan de pruebas](../Testing/plan-de-pruebas.md)) |
 | **Ver lo desactualizado** | `pnpm outdated` |
 | **Actualizar de a una** | Una rama `chore/…` por dependencia importante, con sus pruebas |
 | **Saltos mayores** | Leer las notas de la versión; probar con la lista de humo |
@@ -198,13 +198,13 @@ Detalle en [Contenedores y Docker](contenedores-docker.md).
 
 ## 8. Estado actual y pendientes
 
-| Tema | v11 | v12 |
+| Tema | Antes (v11) | Actual (Semanas 1–2) |
 |---|---|---|
-| Gestor de paquetes | `pnpm` (hay `pnpm-lock.yaml`) | `pnpm` obligatorio y declarado en `packageManager` |
-| Versiones | 21 con `^` | Exactas |
-| Node.js | `node:20-alpine` en Docker | LTS vigente fijada en `.nvmrc`, `engines` y Docker |
+| Gestor de paquetes | `pnpm` (hay `pnpm-lock.yaml`) | `pnpm@11.24.0` declarado en `packageManager` |
+| Versiones | 21 con `^` | Exactas en backend y frontend |
+| Node.js | `node:20-alpine` en Docker | `node:22-alpine` y `engines: node >=22` |
 | `nodemailer` | Declarado en el frontend | Solo en el backend |
-| Auditoría | No hay | `pnpm audit` y `gitleaks` en el CI |
+| Auditoría | No hay | `pnpm audit` en el CI |
 | Aviso de actualizaciones | No hay | Dependabot (propuesta) |
 
 ---
@@ -212,5 +212,5 @@ Detalle en [Contenedores y Docker](contenedores-docker.md).
 ## Documentos relacionados
 
 - [Seguridad y OWASP](seguridad-owasp.md) · [Contenedores y Docker](contenedores-docker.md)
-- [Restricciones de herramientas](../requisitos/restricciones.md#2-restricciones-de-herramientas-y-entorno) · [Guía de contribución](../colaboracion/guia-de-contribucion.md)
-- [Hallazgos](../testing/hallazgos.md) · [Revisión de código — dependencias](../colaboracion/revision-de-codigo.md#54-docker-dependencias-y-configuración)
+- [Restricciones de herramientas](../Requisitos/restricciones.md#2-restricciones-de-herramientas-y-entorno) · [Guía de contribución](../Colaboracion/guia-de-contribucion.md)
+- [Hallazgos](../Testing/hallazgos.md) · [Revisión de código — dependencias](../Colaboracion/revision-de-codigo.md#54-docker-dependencias-y-configuración)

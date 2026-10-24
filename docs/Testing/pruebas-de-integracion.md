@@ -13,11 +13,11 @@
 | Campo | Valor |
 | --- | --- |
 | **Escenarios documentados** | 13 |
-| **Escenarios automatizados en Semana 2** | 6 (`backend/tests/integracion.test.js`) |
+| **Escenarios automatizados en Semana 2** | 7 (`backend/tests/integracion.test.js`) |
 | **Pruebas de autorización** | 30 (documentadas; se amplían en Semana 3) |
-| **Herramienta** | Vitest + Supertest contra la base `zenda_test` ([entorno](plan-de-pruebas.md#4-entornos-y-datos)) |
+| **Herramienta** | Vitest + Supertest contra PostgreSQL real ([entorno](plan-de-pruebas.md#4-entornos-y-datos)) |
 | **Plan** | [Plan de pruebas](plan-de-pruebas.md) |
-| **Fecha** | Octubre 2026 |
+| **Fecha** | 23-oct-2026 |
 
 ---
 
@@ -25,13 +25,14 @@
 
 `backend/tests/integracion.test.js` usa Vitest + Supertest contra PostgreSQL real. Se omite si no hay base de datos o si falta el esquema actual, y en CI se ejecuta después de cargar `zenda_bd.sql` y aplicar dos veces la migración.
 
-**Resultado local (22-oct-2026):** 6/6 escenarios aprobados sobre PostgreSQL 18.6, después de cargar `Database/zenda_bd.sql` y ejecutar `Database/migrations/002_semana2.sql` dos veces. Las 9 pruebas unitarias también pasaron (15/15 en total).
+**Resultado local (23-oct-2026):** 7/7 escenarios aprobados sobre PostgreSQL 16, después de cargar `Database/zenda_bd.sql` y ejecutar `Database/migrations/002_semana2.sql` dos veces. Las 9 pruebas unitarias también pasaron (**16/16 en total**).
 
 | Bloque | Qué comprueba |
 |---|---|
 | HU-001 | Registro con cuatro aceptaciones, correo institucional, tipo de documento y documento. |
 | HU-014/HU-015 | Código `PRY-*`, cupo 1, rechazo por cupo lleno, edición de cupo por el líder y rechazo de un aprendiz de otra ficha. |
 | HU-023/024/025 | Cascada, aprobación en bloque, historial de evaluaciones (4 filas), reprobación, re-aprobación y progreso 100 %. |
+| RN-018 | Una carpeta con evidencia mixta queda `En revisión`, no `Aprobada`. |
 | HU-026 | Observación asociada a `evidencia_id`, con nombre de evidencia en la consulta. |
 | HU-011 | Creación de instructor, reasignación de fichas y conservación de una fila inactiva. |
 | C-01 | Token de sesión rechazado en reset, token de reset de un solo uso, invalidación de sesión y login con la clave nueva. |
@@ -52,7 +53,7 @@
 
 ### IT-01 — Alta del aprendiz y acceso
 
-**Requisitos:** [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-002](../requisitos/RFs/RF-002_inicio_de_sesion.md)
+**Requisitos:** [RF-001](../Requisitos/RFs/RF-001_registro_de_aprendiz.md), [RF-002](../Requisitos/RFs/RF-002_inicio_de_sesion.md)
 
 **Objetivo:** Verificar que un aprendiz nuevo queda inscrito en su ficha y puede entrar.
 
@@ -80,7 +81,7 @@ SELECT g.codigo_grupo, i.estado_integrante FROM integrantes_grupo i JOIN grupos 
 
 ### IT-02 — Conformación del grupo y cupo
 
-**Requisitos:** [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md), [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md)
+**Requisitos:** [RF-014](../Requisitos/RFs/RF-014_creacion_de_proyecto.md), [RF-015](../Requisitos/RFs/RF-015_unirse_a_un_proyecto.md)
 
 **Objetivo:** Verificar que el líder crea el proyecto y que el cupo y la regla de un solo proyecto se respetan.
 
@@ -101,7 +102,7 @@ SELECT g.codigo_grupo, i.estado_integrante FROM integrantes_grupo i JOIN grupos 
 
 ### IT-03 — Atomicidad al crear un proyecto
 
-**Requisitos:** [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md)
+**Requisitos:** [RF-014](../Requisitos/RFs/RF-014_creacion_de_proyecto.md)
 
 **Objetivo:** Verificar que un fallo a mitad de la creación no deja datos huérfanos.
 
@@ -120,7 +121,7 @@ SELECT g.codigo_grupo, i.estado_integrante FROM integrantes_grupo i JOIN grupos 
 
 ### IT-04 — Entrega, evaluación y cascada
 
-**Requisitos:** [RF-019](../requisitos/RFs/RF-019_carpetas_de_una_fase.md), [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md)
+**Requisitos:** [RF-019](../Requisitos/RFs/RF-019_carpetas_de_una_fase.md), [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-023](../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md)
 
 **Objetivo:** Verificar el flujo central: entregar, evaluar y recalcular estados.
 
@@ -147,7 +148,7 @@ SELECT estado_fase FROM fases WHERE proyecto_id = :id AND numero_fase = 1;
 
 ### IT-05 — Corrección tras una reprobación
 
-**Requisitos:** [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md), [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md)
+**Requisitos:** [RF-022](../Requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md), [RF-023](../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md)
 
 **Objetivo:** Verificar versiones, historial de evaluaciones y protección de lo aprobado.
 
@@ -175,7 +176,7 @@ SELECT resultado, vigente FROM evaluaciones WHERE evidencia_id = :id ORDER BY fe
 
 ### IT-06 — Ciclo completo de tareas
 
-**Requisitos:** [RF-028](../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md), [RF-029](../requisitos/RFs/RF-029_avance_de_mis_tareas.md), [RF-030](../requisitos/RFs/RF-030_confirmacion_de_tareas.md), [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md)
+**Requisitos:** [RF-028](../Requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md), [RF-029](../Requisitos/RFs/RF-029_avance_de_mis_tareas.md), [RF-030](../Requisitos/RFs/RF-030_confirmacion_de_tareas.md), [RF-031](../Requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md)
 
 **Objetivo:** Verificar el flujo de estados y quién puede mover cada tarea.
 
@@ -197,7 +198,7 @@ SELECT resultado, vigente FROM evaluaciones WHERE evidencia_id = :id ORDER BY fe
 
 ### IT-07 — Cambio de instructor conserva el historial
 
-**Requisitos:** [RF-011](../requisitos/RFs/RF-011_asignacion_de_instructores_a_fichas.md), [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md)
+**Requisitos:** [RF-011](../Requisitos/RFs/RF-011_asignacion_de_instructores_a_fichas.md), [RF-023](../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md)
 
 **Objetivo:** Verificar que reasignar una ficha no borra lo evaluado.
 
@@ -224,7 +225,7 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 
 ### IT-08 — Lista de chequeo de una ficha
 
-**Requisitos:** [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md), [RF-037](../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md), [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md)
+**Requisitos:** [RF-036](../Requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md), [RF-037](../Requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md), [RF-038](../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md)
 
 **Objetivo:** Verificar la creación, importación, evaluación por grupo y herencia entre instructores.
 
@@ -247,7 +248,7 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 
 ### IT-09 — Recuperación de contraseña
 
-**Requisitos:** [RF-003](../requisitos/RFs/RF-003_recuperacion_de_contrasena.md)
+**Requisitos:** [RF-003](../Requisitos/RFs/RF-003_recuperacion_de_contrasena.md)
 
 **Objetivo:** Verificar el flujo de recuperación y sus protecciones.
 
@@ -269,7 +270,7 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 
 ### IT-10 — Reasignación de liderazgo
 
-**Requisitos:** [RF-018](../requisitos/RFs/RF-018_reasignacion_de_liderazgo.md), [RF-007](../requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)
+**Requisitos:** [RF-018](../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md), [RF-007](../Requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)
 
 **Objetivo:** Verificar que un grupo sin líder se recupera por la vía del administrador.
 
@@ -291,7 +292,7 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 
 ### IT-11 — Sesión con refresco
 
-**Requisitos:** [RF-004](../requisitos/RFs/RF-004_sesion_segura.md)
+**Requisitos:** [RF-004](../Requisitos/RFs/RF-004_sesion_segura.md)
 
 **Objetivo:** Verificar la rotación de tokens y el cierre de sesión.
 
@@ -314,7 +315,7 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 
 ### IT-12 — Concurrencia del último cupo
 
-**Requisitos:** [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md)
+**Requisitos:** [RF-015](../Requisitos/RFs/RF-015_unirse_a_un_proyecto.md)
 
 **Objetivo:** Verificar que dos uniones simultáneas no superen el cupo.
 
@@ -336,9 +337,9 @@ SELECT instructor_id, fecha_inicio, fecha_fin FROM instructor_ficha WHERE ficha_
 SELECT count(*) FROM integrantes_grupo WHERE grupo_id = :id AND estado_integrante = 'Activo';
 ```
 
-### IT-13 — Migración de v11 a v12
+### IT-13 — Migración de v11 al esquema actual
 
-**Requisito:** [esquema](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) y [migración](../../Database/migrations/002_semana2.sql)
+**Requisito:** [esquema](../Referencia-Tecnica/esquema-bd.md#5-migración-002_semana2sql) y [migración](../../Database/migrations/002_semana2.sql)
 
 **Objetivo:** Verificar que la migración conserva los datos y deja el esquema esperado.
 
@@ -350,7 +351,7 @@ SELECT count(*) FROM integrantes_grupo WHERE grupo_id = :id AND estado_integrant
 2. Aplicar `002_semana2.sql`.
 3. Comprobar el esquema y los datos.
 4. Aplicar `002_semana2.sql` por segunda vez.
-5. Arrancar el backend v12 y ejecutar la lista de humo.
+5. Arrancar el backend actual y ejecutar la lista de humo.
 
 **Resultado esperado**
 
@@ -363,22 +364,25 @@ SELECT count(*) FROM integrantes_grupo WHERE grupo_id = :id AND estado_integrant
 **Verificación en la base de datos**
 
 ```sql
-SELECT count(*) FROM evidencias e WHERE NOT EXISTS (SELECT 1 FROM evidencia_versiones v WHERE v.evidencia_id = e.evidencia_id);  -- debe ser 0
+-- Cada evidencia conserva su carpeta y su autor: no debe haber huérfanas.
+SELECT count(*) FROM evidencias e
+WHERE NOT EXISTS (SELECT 1 FROM carpetas c WHERE c.carpeta_id = e.carpeta_id)
+   OR NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.usuario_id = e.usuario_id);  -- debe ser 0
 ```
 
 ---
 
 ## 3. Pruebas de autorización desde la matriz de permisos
 
-Cada fila es una celda ❌ (o una condición) de la [matriz de permisos](../requisitos/matriz-permisos.md) convertida en una petición que **debe ser rechazada**. Se ejecutan con tokens de usuarios del *seed*; cuando la ruta no existe aún (v12), la prueba queda pendiente.
+Cada fila es una celda ❌ (o una condición) de la [matriz de permisos](../Requisitos/matriz-permisos.md) convertida en una petición que **debe ser rechazada**. Se ejecutan con tokens de usuarios del *seed*; cuando la ruta aún no existe (Semanas 3–6), la prueba queda pendiente.
 
 | ID | Quién | Petición | Respuesta esperada | Regla o requisito |
 | --- | --- | --- | --- | --- |
 | PI-01 | Sin token | `GET /api/aprendiz/proyectos/mio` | 401 | Sin sesión |
 | PI-02 | Token manipulado | `GET /api/users` | 401 | Firma inválida |
 | PI-03 | Token vencido (reloj + 24 h) | `GET /api/aprendiz/proyectos/mio` | 401 | Sesión actual de 24 h; HU-004 la reducirá a 15 min |
-| PI-04 | Aprendiz | `GET /api/users` | 403 | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) |
-| PI-05 | Aprendiz | `POST /api/fichas` | 403 | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) |
+| PI-04 | Aprendiz | `GET /api/users` | 403 | [RF-006](../Requisitos/RFs/RF-006_gestion_de_usuarios.md) |
+| PI-05 | Aprendiz | `POST /api/fichas` | 403 | [RF-009](../Requisitos/RFs/RF-009_gestion_de_fichas.md) |
 | PI-06 | Aprendiz | `GET /api/instructor/fichas` | 403 | Panel del instructor |
 | PI-07 | Aprendiz | `GET /api/coordinador/dashboard` | 403 | Panel del coordinador |
 | PI-08 | Instructor | `POST /api/aprendiz/proyectos` | 403 | Solo aprendices crean proyectos |
@@ -387,23 +391,23 @@ Cada fila es una celda ❌ (o una condición) de la [matriz de permisos](../requ
 | PI-11 | Coordinador | `POST /api/instructor/evidencias/:id/evaluar` | 403 | Solo el instructor evalúa |
 | PI-12 | Administrador | `POST /api/aprendiz/proyectos` | 403 | Solo aprendices |
 | PI-13 | Administrador | `POST /api/instructor/evidencias/:id/evaluar` | 403 | Solo el instructor evalúa |
-| PI-14 | Aprendiz integrante que no es líder | `POST /api/aprendiz/proyectos/tareas` | 403 | [RN-021](../requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
-| PI-15 | Aprendiz que no es líder | `PUT .../tareas/:id/estado` a `Confirmada` | 403 | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| PI-14 | Aprendiz integrante que no es líder | `POST /api/aprendiz/proyectos/tareas` | 403 | [RN-021](../Requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
+| PI-15 | Aprendiz que no es líder | `PUT .../tareas/:id/estado` a `Confirmada` | 403 | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
 | PI-16 | Aprendiz que no es el responsable | `PUT .../tareas/:id/estado` a `En proceso` | 403 | Solo el responsable mueve |
 | PI-17 | Aprendiz de otro grupo | `GET .../fases/:faseId/carpetas` | 403 | Datos de otro grupo |
-| PI-18 | Aprendiz de otro grupo | `POST .../fases/:faseId/carpetas` | 403 | [RN-012](../requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante) |
-| PI-19 | Aprendiz de otro grupo | `POST .../carpetas/:id/evidencias` | 403 | [RN-012](../requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante) |
+| PI-18 | Aprendiz de otro grupo | `POST .../fases/:faseId/carpetas` | 403 | [RN-012](../Requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante) |
+| PI-19 | Aprendiz de otro grupo | `POST .../carpetas/:id/evidencias` | 403 | [RN-012](../Requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante) |
 | PI-20 | Integrante que salió del grupo (inactivo) | `POST .../carpetas/:id/evidencias` | 403 | Debe ser integrante **activo** |
-| PI-21 | Integrante que no es autor ni líder | `DELETE .../evidencias/:id` | 403 | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
+| PI-21 | Integrante que no es autor ni líder | `DELETE .../evidencias/:id` | 403 | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
 | PI-22 | Autor o líder sobre evidencia aprobada | `DELETE .../evidencias/:id` | 409 | Evidencia protegida |
-| PI-23 | Instructor de otra ficha | `POST /api/instructor/evidencias/:id/evaluar` | 403 | [RN-016](../requisitos/reglas-de-negocio.md#rn-016--evaluación-por-el-instructor-asignado) |
+| PI-23 | Instructor de otra ficha | `POST /api/instructor/evidencias/:id/evaluar` | 403 | [RN-016](../Requisitos/reglas-de-negocio.md#rn-016--evaluación-por-el-instructor-asignado) |
 | PI-24 | Instructor de otra ficha | `GET /api/instructor/fases/:faseId/carpetas` | 403 | Fuera de sus fichas |
-| PI-25 | Instructor de otra ficha | `POST /api/instructor/proyectos/:id/observaciones` | 403 | [RN-023](../requisitos/reglas-de-negocio.md#rn-023--observaciones-del-instructor) |
-| PI-26 | Instructor desvinculado (con `fecha_fin`) | `POST /api/instructor/evidencias/:id/evaluar` | 403 | [RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) |
-| PI-27 | Coordinador | `PUT /api/coordinador/instructores/:id/fichas` con ficha de otro programa | 400 o 403 | [RN-025](../requisitos/reglas-de-negocio.md#rn-025--alcance-del-coordinador) |
-| PI-28 | Coordinador | `GET /api/coordinador/proyectos/:id/seguimiento` de otro programa | 403 o 404 | [RN-025](../requisitos/reglas-de-negocio.md#rn-025--alcance-del-coordinador) |
-| PI-29 | Administrador sin contraseña de confirmación | `DELETE /api/users/:id` | 400 o 403 | [RN-028](../requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña) |
-| PI-30 | Administrador sobre su propio rol | `PUT /api/users/:miId/rol` | 400 | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) |
+| PI-25 | Instructor de otra ficha | `POST /api/instructor/proyectos/:id/observaciones` | 403 | [RN-023](../Requisitos/reglas-de-negocio.md#rn-023--observaciones-del-instructor) |
+| PI-26 | Instructor desvinculado (con `fecha_fin`) | `POST /api/instructor/evidencias/:id/evaluar` | 403 | [RN-024](../Requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) |
+| PI-27 | Coordinador | `PUT /api/coordinador/instructores/:id/fichas` con ficha de otro programa | 400 o 403 | [RN-025](../Requisitos/reglas-de-negocio.md#rn-025--alcance-del-coordinador) |
+| PI-28 | Coordinador | `GET /api/coordinador/proyectos/:id/seguimiento` de otro programa | 403 o 404 | [RN-025](../Requisitos/reglas-de-negocio.md#rn-025--alcance-del-coordinador) |
+| PI-29 | Administrador sin contraseña de confirmación | `DELETE /api/users/:id` | 400 o 403 | [RN-028](../Requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña) |
+| PI-30 | Administrador sobre su propio rol | `PUT /api/users/:miId/rol` | 400 | [RF-006](../Requisitos/RFs/RF-006_gestion_de_usuarios.md) |
 
 > **Regla de oro:** además de comprobar el código, verificar que **no cambió nada en la base de datos** (la petición rechazada no debe dejar efectos).
 
@@ -412,4 +416,4 @@ Cada fila es una celda ❌ (o una condición) de la [matriz de permisos](../requ
 ## Documentos relacionados
 
 - [Plan de pruebas](plan-de-pruebas.md) · [Pruebas unitarias](pruebas-unitarias.md) · [Casos funcionales](casos/)
-- [Matriz de permisos](../requisitos/matriz-permisos.md) · [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [API](../referencia-tecnica/api-endpoints.md)
+- [Matriz de permisos](../Requisitos/matriz-permisos.md) · [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [API](../Referencia-Tecnica/api-endpoints.md)

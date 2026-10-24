@@ -16,7 +16,7 @@
 | **Título** | Observaciones del instructor |
 | **Módulo** | Evaluación |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Instructor |
 | **RF asociado** | RF-026 |
 | **Reglas de negocio** | RN-016, RN-023 |
@@ -56,3 +56,7 @@
 ## Cambios frente a la versión v11
 
 - **Corregido en Semana 2:** el endpoint acepta `evidencia_id` opcional, valida que la evidencia pertenezca al proyecto y la consulta devuelve `nombre_evidencia`. La UI permite asociarla.
+
+## Estado en la Semana 2
+
+Implementado: el endpoint acepta `evidencia_id` opcional, valida que la evidencia pertenezca al proyecto y la consulta devuelve `nombre_evidencia`. La interfaz permite asociar la observación a una evidencia.

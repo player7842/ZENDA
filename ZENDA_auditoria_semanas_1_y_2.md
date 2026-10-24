@@ -4,6 +4,24 @@
 > **Material revisado:** `ZENDA.zip` (repo `player7842/ZENDA`, rama `develop` al día con `origin/develop`)
 > **Contraste:** roadmap y plan (`docs/gestion/*`), hallazgos H-01 a H-16 (`docs/Testing/hallazgos.md`), backlog, reparto del equipo y criterios de aceptación de cada HU.
 
+> [!NOTE]
+> **Actualización de resolución — 23-oct-2026.** El texto original se conserva como registro histórico. Esta sección resume qué se corrigió después y remite al detalle en [`SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`](SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md) y en el [`CHANGELOG.md`](CHANGELOG.md).
+>
+> | Hallazgo | Estado actual |
+> |---|---|
+> | **C-01** (token de reset intercambiable) | Resuelto: `purpose: 'reset'`, hash SHA-256 de un solo uso y `token_version`. |
+> | **C-02** (plan sin `helmet` ni rate-limit) | Resuelto: `helmet`, `express-rate-limit`, `trust proxy` y `/api/health` existen y están documentados. |
+> | **C-03** (sin pruebas de integración) | Resuelto: 7 escenarios con Supertest contra PostgreSQL 16 y CI que los ejecuta con `REQUIRE_DB=1`. |
+> | **C-04** (migración destructiva) | Resuelto: migración idempotente, probada dos veces y sobre una base v11 con datos (`V11_MIGRATION_OK`). |
+> | **C-05** (General por nombre) | Resuelto: `grupos.es_general`, índice único parcial y conservación de grupos legados llamados “General”. |
+> | **C-06** (carreras y bloqueos) | Resuelto: bloqueos en cascada, RN-007, cupo y evaluaciones con `clock_timestamp()`. |
+> | **C-07** (URLs `javascript:`) | Resuelto en backend y frontend. |
+> | **H-12** (Docker sin verificar) | Resuelto: `docker compose up --build` construye y levanta `db`, `migrate`, `backend` y `frontend`. |
+> | **H-13** (token en `localStorage`) | **Abierto**: se mantiene la sesión de 24 h; la solución es HU-004 (Semanas 3–6). |
+> | **Documentación vs. código** | Corregida: README, CHANGELOG, esquema, endpoints, pruebas, backlog y matriz de trazabilidad reflejan el código actual. |
+>
+> El despliegue público de Render/Vercel sigue sirviendo la versión v11; el código de las Semanas 1–2 está en `develop` pero aún no se ha desplegado.
+
 ## 0. Alcance y límites de esta revisión
 
 - Es una **lectura de código y documentos**. No ejecuté el backend, la base de datos ni el CI.

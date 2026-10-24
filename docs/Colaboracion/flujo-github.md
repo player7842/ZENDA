@@ -15,7 +15,7 @@
 | **Repositorio** | `player7842/ZENDA` |
 | **Ramas permanentes** | `main` (estable) y `develop` (integración) |
 | **Modelo** | Ramas de trabajo cortas que se fusionan en `develop` mediante Pull Request |
-| **Origen del requisito** | Observación del instructor: documentación en `docs/`, `main` estable y rama `develop` ([RO-005](../requisitos/restricciones.md#ro-005--flujo-de-ramas-en-git)) |
+| **Origen del requisito** | Observación del instructor: documentación en `docs/`, `main` estable y rama `develop` ([RO-005](../Requisitos/restricciones.md#ro-005--flujo-de-ramas-en-git)) |
 | **Plantillas listas** | `.github/` (PR, issues, CI), `.gitattributes`, `.editorconfig` |
 | **Fecha** | Octubre 2026 |
 
@@ -171,7 +171,7 @@ Se usa **Conventional Commits**, escritos en español y en tiempo imperativo.
 | ✅ Bien | ❌ Mal |
 |---|---|
 | `fix(evidencias): impedir eliminar una evidencia aprobada` | `arreglos` |
-| `feat(bd): agregar la tabla evidencia_versiones` | `cambios varios` |
+| `feat(bd): agregar el historial de instructor_ficha` | `cambios varios` |
 | `docs(rf): corregir el campo codigo_grupo en RF-015` | `listo` |
 
 **Reglas**
@@ -220,7 +220,7 @@ Todo trabajo empieza en un issue. Hay cuatro tipos con plantilla: **Defecto**, *
 
 **Cómo enlazar con la documentación:** en el título o la descripción, cita el requisito (`RF-014`, `RN-009`) o el hallazgo (`H-02`). Así se puede ir del issue al requisito y de vuelta.
 
-> Para un defecto, pega el **caso de prueba** (`CP-014.2`) o el hallazgo que lo describe, y los pasos para reproducirlo ([plan de pruebas](../testing/plan-de-pruebas.md#8-gestión-de-defectos)).
+> Para un defecto, pega el **caso de prueba** (`CP-014.2`) o el hallazgo que lo describe, y los pasos para reproducirlo ([plan de pruebas](../Testing/plan-de-pruebas.md#8-gestión-de-defectos)).
 
 ---
 
@@ -259,20 +259,20 @@ Se usa **versionado semántico**: `vMAYOR.MENOR.PARCHE`.
 |:---:|---|---|
 | 1 | `develop` está estable y con la CI en verde | — |
 | 2 | Actualizar `CHANGELOG.md` y las versiones de los `package.json` | PR `chore(release): v12.0.0` a `develop` |
-| 3 | Probar: lista de humo y pruebas de integración | [Plan de pruebas](../testing/plan-de-pruebas.md) |
-| 4 | Hacer una **copia de seguridad** de la base de datos | `pg_dump` ([RNF-008.8](../requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)) |
+| 3 | Probar: lista de humo y pruebas de integración | [Plan de pruebas](../Testing/plan-de-pruebas.md) |
+| 4 | Hacer una **copia de seguridad** de la base de datos | `pg_dump` ([RNF-008.8](../Requisitos/RNFs/RNF-008_disponibilidad_y_despliegue.md)) |
 | 5 | Abrir PR de `develop` a `main` y fusionar **sin squash** (para conservar la historia) | "Create a merge commit" |
 | 6 | Etiquetar | `git tag -a v12.0.0 -m "ZENDA v12.0.0"` y `git push origin v12.0.0` |
 | 7 | Crear la *Release* en GitHub con el texto del changelog | GitHub → Releases |
-| 8 | Desplegar | [Con Docker](../setup/con-docker.md#8-llevarlo-a-producción) |
+| 8 | Desplegar | [Con Docker](../Setup/con-docker.md#8-llevarlo-a-producción) |
 
-> **Migraciones de base de datos:** van numeradas (`001_…`, `002_semana2.sql`, `003_…`) y **nunca se editan una vez fusionadas**; los cambios nuevos van en una migración nueva. La base inicial completa vive en `Database/zenda_bd.sql`; las migraciones incrementales, en `Database/migrations/`. La migración del lanzamiento debe probarse antes sobre una copia ([IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)).
+> **Migraciones de base de datos:** van numeradas (`001_…`, `002_semana2.sql`, `003_…`) y **nunca se editan una vez fusionadas**; los cambios nuevos van en una migración nueva. La base inicial completa vive en `Database/zenda_bd.sql`; las migraciones incrementales, en `Database/migrations/`. La migración del lanzamiento debe probarse antes sobre una copia ([IT-13](../Testing/pruebas-de-integracion.md#it-13--migración-de-v11-al-esquema-actual)).
 
 ---
 
 ## 9. Corrección urgente (`hotfix`)
 
-Para un defecto grave ya publicado (por ejemplo, [H-02](../testing/hallazgos.md)):
+Para un defecto grave ya publicado (por ejemplo, [H-02](../Testing/hallazgos.md)):
 
 ```bash
 git checkout main && git pull origin main
@@ -312,11 +312,11 @@ git push --force-with-lease     # SOLO en tu rama de trabajo, nunca en develop n
 
 | Tipo de cambio | Qué hacer además |
 |---|---|
-| **Base de datos** | Nueva migración numerada; actualizar [esquema-bd.md](../referencia-tecnica/esquema-bd.md) y [mer-mr.md](../diagramas/mer-mr.md); probar sobre una copia. |
-| **Endpoint nuevo o modificado** | Actualizar [api-endpoints.md](../referencia-tecnica/api-endpoints.md) y su RF; si cambia el contrato, avisarlo en el PR (`feat(api)!`). |
-| **Regla de negocio** | Actualizar [reglas-de-negocio.md](../requisitos/reglas-de-negocio.md) y los RF y pruebas que la citan. |
-| **Permisos** | Actualizar la [matriz de permisos](../requisitos/matriz-permisos.md) y las pruebas de autorización. |
-| **Variable de entorno** | Actualizar los tres `.env.example` y [variables-de-entorno.md](../setup/variables-de-entorno.md). |
+| **Base de datos** | Nueva migración numerada; actualizar [esquema-bd.md](../Referencia-Tecnica/esquema-bd.md) y [mer-mr.md](../Diagramas/mer-mr.md); probar sobre una copia. |
+| **Endpoint nuevo o modificado** | Actualizar [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) y su RF; si cambia el contrato, avisarlo en el PR (`feat(api)!`). |
+| **Regla de negocio** | Actualizar [reglas-de-negocio.md](../Requisitos/reglas-de-negocio.md) y los RF y pruebas que la citan. |
+| **Permisos** | Actualizar la [matriz de permisos](../Requisitos/matriz-permisos.md) y las pruebas de autorización. |
+| **Variable de entorno** | Actualizar los tres `.env.example` y [variables-de-entorno.md](../Setup/variables-de-entorno.md). |
 | **Dependencia** | Versión **exacta**; solo con `pnpm`; revisar `pnpm audit`. |
 | **Docker o despliegue** | Probar `docker compose up --build` desde cero. |
 
@@ -328,10 +328,10 @@ La documentación es parte del cambio, no una tarea posterior.
 
 | Si cambias… | Actualiza… |
 |---|---|
-| El comportamiento visible de una función | HU y RF correspondientes; estado en la [matriz de trazabilidad](../requisitos/matriz-trazabilidad.md) |
-| La estructura de carpetas | [Arquitectura](../referencia-tecnica/arquitectura.md), sección 8, y el árbol del `README.md` |
-| Un diagrama (flujo, estado, clase) | El archivo de [diagramas](../diagramas/) que lo contiene |
-| Un defecto de la lista de hallazgos | Marcarlo como corregido en [hallazgos.md](../testing/hallazgos.md) |
+| El comportamiento visible de una función | HU y RF correspondientes; estado en la [matriz de trazabilidad](../Requisitos/matriz-trazabilidad.md) |
+| La estructura de carpetas | [Arquitectura](../Referencia-Tecnica/arquitectura.md), sección 8, y el árbol del `README.md` |
+| Un diagrama (flujo, estado, clase) | El archivo de [diagramas](../Diagramas/) que lo contiene |
+| Un defecto de la lista de hallazgos | Marcarlo como corregido en [hallazgos.md](../Testing/hallazgos.md) |
 
 > **Pregunta de revisión:** "¿Qué documento de `docs/` quedaría mentiroso si se fusiona este PR?"
 
@@ -367,7 +367,7 @@ El flujo `.github/workflows/ci.yml` se ejecuta en cada PR y en cada `push` a `de
 | **frontend** | `pnpm install --frozen-lockfile`, `pnpm lint`, pruebas (si existen) y `pnpm build` |
 | **docker** | Que las dos imágenes se construyan |
 
-Un PR con la CI en rojo **no se fusiona**. Más adelante se agregan las pruebas de integración con una base de datos de servicio y el escaneo de secretos ([plan de pruebas](../testing/plan-de-pruebas.md)).
+Un PR con la CI en rojo **no se fusiona**. Más adelante se agregan las pruebas de integración con una base de datos de servicio y el escaneo de secretos ([plan de pruebas](../Testing/plan-de-pruebas.md)).
 
 ---
 
@@ -388,4 +388,4 @@ Un PR con la CI en rojo **no se fusiona**. Más adelante se agregan las pruebas 
 ## Documentos relacionados
 
 - [Guía de contribución](guia-de-contribucion.md) · [Convenciones de código](convenciones-de-codigo.md) · [Revisión de código](revision-de-codigo.md)
-- [Restricciones](../requisitos/restricciones.md) · [Plan de pruebas](../testing/plan-de-pruebas.md) · [Instalación con Docker](../setup/con-docker.md)
+- [Restricciones](../Requisitos/restricciones.md) · [Plan de pruebas](../Testing/plan-de-pruebas.md) · [Instalación con Docker](../Setup/con-docker.md)

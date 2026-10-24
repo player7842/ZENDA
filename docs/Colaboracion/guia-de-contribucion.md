@@ -26,14 +26,14 @@ Lee en este orden. En unas dos horas entenderás qué es ZENDA y cómo está hec
 | # | Documento | Qué aprendes | Tiempo |
 |:---:|---|---|:---:|
 | 1 | [README](../../README.md) | Qué es ZENDA y su estado | 10 min |
-| 2 | [Modelo de dominio](../diagramas/modelo-dominio.md) | Los conceptos del negocio (ficha, fase, evidencia, líder…) | 15 min |
-| 3 | [Reglas de negocio](../requisitos/reglas-de-negocio.md) | Qué reglas no se pueden romper | 20 min |
-| 4 | [Matriz de permisos](../requisitos/matriz-permisos.md) | Quién puede hacer qué | 10 min |
-| 5 | [Arquitectura](../referencia-tecnica/arquitectura.md) | Cómo está construido y dónde va cada cosa | 25 min |
-| 6 | [Restricciones](../requisitos/restricciones.md) | Lo que **no** negociamos (pnpm, Node LTS, español…) | 15 min |
+| 2 | [Modelo de dominio](../Diagramas/modelo-dominio.md) | Los conceptos del negocio (ficha, fase, evidencia, líder…) | 15 min |
+| 3 | [Reglas de negocio](../Requisitos/reglas-de-negocio.md) | Qué reglas no se pueden romper | 20 min |
+| 4 | [Matriz de permisos](../Requisitos/matriz-permisos.md) | Quién puede hacer qué | 10 min |
+| 5 | [Arquitectura](../Referencia-Tecnica/arquitectura.md) | Cómo está construido y dónde va cada cosa | 25 min |
+| 6 | [Restricciones](../Requisitos/restricciones.md) | Lo que **no** negociamos (pnpm, Node LTS, español…) | 15 min |
 | 7 | [Convenciones de código](convenciones-de-codigo.md) | Cómo escribimos el código | 15 min |
 
-> Si trabajas en un módulo concreto, lee además sus RF en [`docs/requisitos/RFs/`](../requisitos/RFs/) y sus casos en [`docs/testing/casos/`](../testing/casos/).
+> Si trabajas en un módulo concreto, lee además sus RF en [`docs/Requisitos/RFs/`](../Requisitos/RFs/) y sus casos en [`docs/Testing/casos/`](../Testing/casos/).
 
 ---
 
@@ -41,16 +41,16 @@ Lee en este orden. En unas dos horas entenderás qué es ZENDA y cómo está hec
 
 | Paso | Qué hacer | Comprobación |
 |:---:|---|---|
-| 1 | Instalar **Node.js LTS**, **pnpm**, **PostgreSQL 14+** y **Git** | `node -v`, `pnpm -v`, `psql --version`, `git --version` |
+| 1 | Instalar **Node.js LTS**, **pnpm**, **PostgreSQL 16** y **Git** | `node -v`, `pnpm -v`, `psql --version`, `git --version` |
 | 2 | Clonar el repositorio y cambiar a `develop` | `git branch` muestra `develop` |
-| 3 | Crear la base de datos y cargar el esquema | [Instalación sin Docker, sección 3](../setup/sin-docker.md#3-base-de-datos) |
-| 4 | Crear tus archivos `.env` desde los `.env.example` | [Variables de entorno](../setup/variables-de-entorno.md) |
+| 3 | Crear la base de datos y cargar el esquema | [Instalación sin Docker, sección 3](../Setup/sin-docker.md#3-base-de-datos) |
+| 4 | Crear tus archivos `.env` desde los `.env.example` | [Variables de entorno](../Setup/variables-de-entorno.md) |
 | 5 | Instalar dependencias y arrancar backend y frontend | `pnpm install` y `pnpm dev` en cada carpeta |
-| 6 | Ejecutar la **lista de humo** | [Lista de humo](../setup/sin-docker.md#8-lista-de-humo-comprobación-rápida) |
+| 6 | Ejecutar la **lista de humo** | [Lista de humo](../Setup/sin-docker.md#8-lista-de-humo-comprobación-rápida) |
 
-Si prefieres contenedores: [Instalación con Docker](../setup/con-docker.md).
+Si prefieres contenedores: [Instalación con Docker](../Setup/con-docker.md).
 
-> **Solo `pnpm`.** Nunca `npm install` ni `yarn`: generan otro archivo de bloqueo y el CI falla ([RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes)).
+> **Solo `pnpm`.** Nunca `npm install` ni `yarn`: generan otro archivo de bloqueo y el CI falla ([RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes)).
 
 ---
 
@@ -61,7 +61,7 @@ Si prefieres contenedores: [Instalación con Docker](../setup/con-docker.md).
 | 1 | **Elige un issue** | Busca uno con la etiqueta `listo-para-trabajar` o crea uno con la plantilla. Asígnatelo. |
 | 2 | **Lee su contexto** | El requisito (`RF-…`), las reglas (`RN-…`) y los casos de prueba (`CP-…`) que cita. |
 | 3 | **Crea la rama** | `git checkout develop && git pull && git checkout -b feat/42-descripcion` |
-| 4 | **Escribe primero la prueba** | Si el cambio toca una regla de negocio, empieza por el caso que falla ([TDD](../testing/pruebas-unitarias.md#1-cómo-se-escribe-una-prueba-tdd)). |
+| 4 | **Escribe primero la prueba** | Si el cambio toca una regla de negocio, empieza por el caso que falla ([TDD](../Testing/pruebas-unitarias.md#1-cómo-se-escribe-una-prueba-tdd)). |
 | 5 | **Programa** | Siguiendo las [convenciones](convenciones-de-codigo.md). Commits pequeños y claros. |
 | 6 | **Verifica en local** | `pnpm lint`, `pnpm build` (frontend), pruebas y la lista de humo. |
 | 7 | **Actualiza la documentación** | Qué documento quedaría desactualizado: [tabla](flujo-github.md#12-documentación-dentro-del-pr). |
@@ -108,7 +108,7 @@ Si prefieres contenedores: [Instalación con Docker](../setup/con-docker.md).
 | **Se pregunta antes de reescribir** | Si vas a cambiar algo grande de otra persona, hablen primero |
 | **Los errores no se esconden** | Un defecto encontrado se reporta como issue aunque lo corrijas tú |
 | **Idioma** | Español profesional en código, comentarios, commits, issues y documentación |
-| **Sin groserías ni bromas en el código** | Los mensajes de error los lee el usuario ([RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)) |
+| **Sin groserías ni bromas en el código** | Los mensajes de error los lee el usuario ([RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)) |
 | **Los secretos jamás se comparten** por chat ni se suben | Cada quien tiene su `.env` |
 | **No se modifican los datos de otras personas** | Las pruebas usan su propia base `zenda_test` |
 
@@ -132,9 +132,9 @@ Si prefieres contenedores: [Instalación con Docker](../setup/con-docker.md).
 
 | Pregunta | Respuesta |
 |---|---|
-| ¿Qué hago si no sé qué issue tomar? | Empieza por los de `prioridad-alta` y por los [hallazgos](../testing/hallazgos.md) marcados como Alta. |
+| ¿Qué hago si no sé qué issue tomar? | Empieza por los de `prioridad-alta` y por los [hallazgos](../Testing/hallazgos.md) marcados como Alta. |
 | ¿Puedo trabajar en dos issues a la vez? | Mejor no: termina uno y fusiónalo. Si te bloqueas, deja el primero en `Draft` y cambia. |
-| ¿Mi cambio toca la base de datos? | Entonces va con una migración y con la actualización del [esquema](../referencia-tecnica/esquema-bd.md). Avísalo en el PR. |
+| ¿Mi cambio toca la base de datos? | Entonces va con una migración y con la actualización del [esquema](../Referencia-Tecnica/esquema-bd.md). Avísalo en el PR. |
 | ¿Cuánto debe durar una rama? | Menos de una semana. |
 | ¿Qué hago si el CI falla y no entiendo por qué? | Abre el detalle del trabajo en la pestaña *Checks*; si no se aclara, pide ayuda con el enlace. |
 | ¿Dónde pregunto dudas del negocio? | En el issue, mencionando al instructor o al responsable del requisito. |
@@ -145,4 +145,4 @@ Si prefieres contenedores: [Instalación con Docker](../setup/con-docker.md).
 ## Documentos relacionados
 
 - [Flujo de GitHub](flujo-github.md) · [Convenciones de código](convenciones-de-codigo.md) · [Revisión de código](revision-de-codigo.md)
-- [Plan de pruebas](../testing/plan-de-pruebas.md) · [Arquitectura](../referencia-tecnica/arquitectura.md) · [README](../../README.md)
+- [Plan de pruebas](../Testing/plan-de-pruebas.md) · [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [README](../../README.md)

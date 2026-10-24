@@ -31,7 +31,7 @@ gh auth status
 
 1. En GitHub, abre el repositorio `player7842/ZENDA`.
 2. Ve a **Projects → New project**.
-3. Elige la plantilla **Team planning** (o **Board**) y ponle **ZENDA — Backlog v12**.
+3. Elige la plantilla **Team planning** (o **Board**) y ponle **ZENDA — Backlog**.
 4. En **Settings → Custom fields**, crea estos campos con el tipo indicado:
 
 | Campo | Tipo | Opciones |
@@ -185,7 +185,7 @@ En **Settings → Branches**, crea reglas para `main` y `develop`:
 
 ## 7. Lista de verificación de la Semana 1
 
-- [ ] Project **ZENDA — Backlog v12** creado con los campos de la sección 2.
+- [ ] Project **ZENDA — Backlog** creado con los campos de la sección 2.
 - [ ] Backlog importado (42 HU visibles).
 - [ ] Etiquetas e hitos creados.
 - [ ] Issues reales creados con el script (si se eligió la opción B).

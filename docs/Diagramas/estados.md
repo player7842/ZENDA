@@ -13,7 +13,7 @@
 | Campo | Valor |
 |---|---|
 | **Notación** | Mermaid `stateDiagram-v2` (máquina de estados UML) |
-| **Fuentes** | [Reglas de negocio](../requisitos/reglas-de-negocio.md), [esquema](../referencia-tecnica/esquema-bd.md#3-valores-permitidos) y el código de v11 |
+| **Fuentes** | [Reglas de negocio](../Requisitos/reglas-de-negocio.md), [esquema](../Referencia-Tecnica/esquema-bd.md#31-restricciones-check) y el código de v11 |
 | **Fecha** | Octubre 2026 |
 
 **Lectura:** cada flecha es una transición; su etiqueta dice qué la provoca. Los nombres sin espacios de los diagramas (`EnProceso`, `EnRevision`) se guardan en la base de datos como `En proceso` y `En revisión`.
@@ -37,12 +37,12 @@ stateDiagram-v2
 
 | Transición | Quién | Condición | Regla |
 |---|---|---|---|
-| Crear → `Pendiente` | Líder | Responsable integrante activo del grupo | [RN-021](../requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
-| `Pendiente` → `En proceso` → `Finalizada` | Responsable | Solo su propia tarea | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
-| `Finalizada` → `Confirmada` / `Incompleta` | Líder | La tarea está `Finalizada` | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
-| `Incompleta` → `En proceso` | Responsable | Se borra la fecha de finalización | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| Crear → `Pendiente` | Líder | Responsable integrante activo del grupo | [RN-021](../Requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
+| `Pendiente` → `En proceso` → `Finalizada` | Responsable | Solo su propia tarea | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| `Finalizada` → `Confirmada` / `Incompleta` | Líder | La tarea está `Finalizada` | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| `Incompleta` → `En proceso` | Responsable | Se borra la fecha de finalización | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
 
-Cualquier otra transición (por ejemplo, de `Pendiente` a `Finalizada`) se rechaza con `400`. Requisitos: [RF-028](../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) a [RF-030](../requisitos/RFs/RF-030_confirmacion_de_tareas.md).
+Cualquier otra transición (por ejemplo, de `Pendiente` a `Finalizada`) se rechaza con `400`. Requisitos: [RF-028](../Requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) a [RF-030](../Requisitos/RFs/RF-030_confirmacion_de_tareas.md).
 
 ---
 
@@ -71,7 +71,7 @@ stateDiagram-v2
 | `Aprobada` | Todas las evidencias vigentes están aprobadas. | El instructor aprueba la última o aprueba la carpeta en bloque. |
 | `Desaprobada` | Al menos una evidencia está reprobada. | El instructor reprueba una evidencia. |
 
-**Cascada:** evidencia → carpeta → fase ([RN-018](../requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados)). Ninguna transición bloquea la subida de nuevas evidencias ([RN-015](../requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase)). El cálculo lo hace `CascadaService` ([clases](clases.md#2-servicios-y-controladores)). Requisitos: [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-024](../requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md), [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md).
+**Cascada:** evidencia → carpeta → fase ([RN-018](../Requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados)). Ninguna transición bloquea la subida de nuevas evidencias ([RN-015](../Requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase)). El cálculo lo hace `CascadaService` ([clases](clases.md#2-servicios-y-controladores)). Requisitos: [RF-023](../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-024](../Requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md), [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md).
 
 ---
 
@@ -90,12 +90,12 @@ stateDiagram-v2
 
 | Transición | Quién | Condición | Regla |
 |---|---|---|---|
-| Subir → `Activa` | Integrante activo | Archivo válido o enlace | [RN-012](../requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante), [RN-013](../requisitos/reglas-de-negocio.md#rn-013--tipos-de-evidencia-y-límites) |
-| `Activa` → `Activa` (reemplazo) | Autor o líder | La evidencia **no** está aprobada | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
-| `Activa` → `Aprobada` | Instructor de la ficha | Evaluación vigente `APROBADO` | [RN-016](../requisitos/reglas-de-negocio.md#rn-016--evaluación-por-el-instructor-asignado) |
-| `Activa` → `Eliminada` | Autor o líder | No aprobada; borrado lógico | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
+| Subir → `Activa` | Integrante activo | Archivo válido o enlace | [RN-012](../Requisitos/reglas-de-negocio.md#rn-012--carpetas-y-evidencias-por-cualquier-integrante), [RN-013](../Requisitos/reglas-de-negocio.md#rn-013--tipos-de-evidencia-y-límites) |
+| `Activa` → `Activa` (reemplazo) | Autor o líder | La evidencia **no** está aprobada | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
+| `Activa` → `Aprobada` | Instructor de la ficha | Evaluación vigente `APROBADO` | [RN-016](../Requisitos/reglas-de-negocio.md#rn-016--evaluación-por-el-instructor-asignado) |
+| `Activa` → `Eliminada` | Autor o líder | No aprobada; borrado lógico | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
 
-Una evidencia **aprobada** no se puede reemplazar ni eliminar. Requisitos: [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md).
+Una evidencia **aprobada** no se puede reemplazar ni eliminar. Requisitos: [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-022](../Requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md).
 
 ---
 
@@ -112,12 +112,12 @@ stateDiagram-v2
 
 | Registro | Se vuelve histórico cuando | Garantiza | Regla |
 |---|---|---|---|
-| Evaluación de evidencia | El instructor recalifica | Autoría del instructor anterior | [RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) |
-| Versión de evidencia | Se sube una versión nueva | Conservar versiones anteriores | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
-| Evaluación de ítem de lista | El instructor reevalúa | Historial al cambiar de instructor | [RN-027](../requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo) |
-| Vinculación instructor–ficha | Se reasigna la ficha (`fecha_fin`) | Saber quién atendió la ficha y cuándo | [RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) |
+| Evaluación de evidencia | El instructor recalifica | Autoría del instructor anterior | [RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) |
+| Versión de evidencia | Se sube una versión nueva | Conservar versiones anteriores | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
+| Evaluación de ítem de lista | El instructor reevalúa | Historial al cambiar de instructor | [RN-027](../Requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo) |
+| Vinculación instructor–ficha | Se reasigna la ficha (`fecha_fin`) | Saber quién atendió la ficha y cuándo | [RN-024](../Requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial) |
 
-En la base de datos esto se garantiza con índices únicos parciales ([restricciones de integridad](../referencia-tecnica/esquema-bd.md#4-restricciones-de-integridad-clave)).
+En la base de datos esto se garantiza con índices únicos parciales ([restricciones de integridad](../Referencia-Tecnica/esquema-bd.md#3-restricciones-e-índices)).
 
 ---
 
@@ -133,7 +133,7 @@ stateDiagram-v2
     NoAprobado --> Aprobado : reevaluación
 ```
 
-Cada cambio inserta un registro nuevo (sección 4). El avance cuenta solo los ítems **obligatorios** en `Aprobado` ([RN-027](../requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo)). Requisito: [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md).
+Cada cambio inserta un registro nuevo (sección 4). El avance cuenta solo los ítems **obligatorios** en `Aprobado` ([RN-027](../Requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo)). Requisito: [RF-038](../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md).
 
 ---
 
@@ -153,11 +153,11 @@ stateDiagram-v2
 
 | Estado | Puede iniciar sesión | Nota |
 |---|:---:|---|
-| `Sin verificar` | No | Estado de v12; las cuentas existentes se consideran verificadas en la migración. |
-| `Activo` | Sí | Único estado que permite iniciar sesión ([RN-003](../requisitos/reglas-de-negocio.md#rn-003--solo-las-cuentas-activas-inician-sesión)). |
-| `Inactivo` | No | Conserva su historial; es la vía recomendada frente a eliminar ([RF-007](../requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)). |
+| `Sin verificar` | No | Estado **propuesto** (RS-006); no existe en el esquema actual. |
+| `Activo` | Sí | Único estado que permite iniciar sesión ([RN-003](../Requisitos/reglas-de-negocio.md#rn-003--solo-las-cuentas-activas-inician-sesión)). |
+| `Inactivo` | No | Conserva su historial; es la vía recomendada frente a eliminar ([RF-007](../Requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)). |
 
-Las cuentas de instructor, coordinador y administrador las crea un administrador y nacen `Activo`. Si un líder pasa a `Inactivo`, el sistema avisa que el grupo necesita un líder nuevo ([RF-018](../requisitos/RFs/RF-018_reasignacion_de_liderazgo.md)).
+Las cuentas de instructor, coordinador y administrador las crea un administrador y nacen `Activo`. Si un líder pasa a `Inactivo`, el sistema avisa que el grupo necesita un líder nuevo ([RF-018](../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md)).
 
 ---
 
@@ -176,7 +176,7 @@ stateDiagram-v2
     Activa --> SinSesion : cierre manual o refresco vencido
 ```
 
-Requisito: [RF-004](../requisitos/RFs/RF-004_sesion_segura.md). Hoy (v11) existe un único token de 24 horas.
+Requisito: [RF-004](../Requisitos/RFs/RF-004_sesion_segura.md). Hoy (v11) existe un único token de 24 horas.
 
 ---
 
@@ -203,13 +203,13 @@ stateDiagram-v2
 
 | Aspecto | Estado |
 |---|---|
-| Cupo | Definido ([RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)); el rango permitido está por definir. |
+| Cupo | Definido ([RN-009](../Requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo)); el rango permitido está por definir. |
 | Estados del proyecto | Los valores `Activo`, `Pausado` y `Finalizado` existen en la base de datos, pero **ningún requisito define quién cambia el estado ni cuándo**. Propuesta: `Finalizado` cuando la Fase 5 queda aprobada. **Por confirmar.** |
-| Un solo proyecto activo | Mientras el proyecto esté `Activo`, sus integrantes no pueden unirse a otro ([RN-007](../requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz)). |
+| Un solo proyecto activo | Mientras el proyecto esté `Activo`, sus integrantes no pueden unirse a otro ([RN-007](../Requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz)). |
 
 ---
 
 ## Documentos relacionados
 
 - [Clases](clases.md) · [Modelo de dominio](modelo-dominio.md) · [Actividades](actividades.md)
-- [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Esquema de base de datos](../referencia-tecnica/esquema-bd.md)
+- [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Esquema de base de datos](../Referencia-Tecnica/esquema-bd.md)

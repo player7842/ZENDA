@@ -13,10 +13,10 @@
 | Campo | Valor |
 |---|---|
 | **Alcance** | Backend, frontend y datos |
-| **Se aplica en** | [Arquitectura](../referencia-tecnica/arquitectura.md) · [Clases](../diagramas/clases.md) · [Componentes](../diagramas/componentes.md) |
+| **Se aplica en** | [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Clases](../Diagramas/clases.md) · [Componentes](../Diagramas/componentes.md) |
 | **Fecha** | Octubre 2026 |
 
-**Leyenda:** ✅ ya existe en v11 · 🔄 se reorganiza en v12 · 🆕 nuevo en v12.
+**Leyenda:** ✅ ya existe en el código actual · 🔄 se reorganiza · 🆕 propuesto para las Semanas 3–6.
 
 > **Regla de oro:** un patrón se adopta cuando hay un problema real. En un proyecto formativo, *menos estructura bien aplicada* vale más que mucha estructura a medias.
 
@@ -79,7 +79,7 @@ router.post('/evidencias/:evidenciaId/evaluar', auth, isInstructor, evaluarEvide
 
 ### 2.3 Funciones puras y capa de servicios
 
-Una **función pura** devuelve siempre lo mismo para los mismos datos y no toca la base de datos. Son las más fáciles de probar ([pruebas unitarias](../testing/pruebas-unitarias.md)).
+Una **función pura** devuelve siempre lo mismo para los mismos datos y no toca la base de datos. Son las más fáciles de probar ([pruebas unitarias](../Testing/pruebas-unitarias.md)).
 
 ```js
 // Pura: no lee la base de datos; recibe los resultados ya consultados
@@ -103,7 +103,7 @@ Cuando una operación toca varias tablas, todas se guardan o ninguna.
 | Evaluar evidencia | `evaluaciones`, `carpetas`, `fases` | `ROLLBACK`: el estado nunca queda incoherente |
 | Reasignar instructor | `instructor_ficha`, `auditoria` | `ROLLBACK` |
 
-Esqueleto con `BEGIN`, `COMMIT`, `ROLLBACK` y `release()` en `finally`: [convenciones, sección 5](../colaboracion/convenciones-de-codigo.md#5-sql-y-acceso-a-datos). Prueba: [IT-03](../testing/pruebas-de-integracion.md#it-03--atomicidad-al-crear-un-proyecto).
+Esqueleto con `BEGIN`, `COMMIT`, `ROLLBACK` y `release()` en `finally`: [convenciones, sección 5](../Colaboracion/convenciones-de-codigo.md#5-sql-y-acceso-a-datos). Prueba: [IT-03](../Testing/pruebas-de-integracion.md#it-03--atomicidad-al-crear-un-proyecto).
 
 ### 2.5 Máquina de estados
 
@@ -122,7 +122,7 @@ export const puedeTransicionar = (de, a, actor) =>
   (TRANSICIONES_TAREA[de] ?? []).some((t) => t.a === a && t.actor === actor);
 ```
 
-Los diagramas están en [estados](../diagramas/estados.md); las reglas, en [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea).
+Los diagramas están en [estados](../Diagramas/estados.md); las reglas, en [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea).
 
 ### 2.6 Registro con historial (*append-only*)
 
@@ -130,13 +130,13 @@ En lugar de **actualizar** un registro, se **agrega uno nuevo** y el anterior qu
 
 | Registro | Marca de vigencia | Garantiza |
 |---|---|---|
-| Evaluación de evidencia | `vigente` | Autoría del instructor anterior ([RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)) |
-| Versión de evidencia | `vigente` | Versiones anteriores a salvo ([RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico)) |
-| Vinculación instructor–ficha | `fecha_fin` | Quién atendió cada ficha y cuándo ([RN-024](../requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial)) |
+| Evaluación de evidencia | `vigente` | Autoría del instructor anterior ([RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)) |
+| Versión de evidencia | `vigente` | Versiones anteriores a salvo ([RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico)) |
+| Vinculación instructor–ficha | `fecha_fin` | Quién atendió cada ficha y cuándo ([RN-024](../Requisitos/reglas-de-negocio.md#rn-024--asignación-instructorficha-con-historial)) |
 
-La base de datos lo refuerza con **índices únicos parciales** (`WHERE vigente`): imposible tener dos evaluaciones vigentes para la misma evidencia ([esquema](../referencia-tecnica/esquema-bd.md#4-restricciones-de-integridad-clave)).
+La base de datos lo refuerza con **índices únicos parciales** (`WHERE vigente`): imposible tener dos evaluaciones vigentes para la misma evidencia ([esquema](../Referencia-Tecnica/esquema-bd.md#3-restricciones-e-índices)).
 
-> **Qué problema evita:** hoy un `UPDATE` sobrescribe la evaluación y al instructor anterior ([H-06](../testing/hallazgos.md)).
+> **Qué problema evita:** hoy un `UPDATE` sobrescribe la evaluación y al instructor anterior ([H-06](../Testing/hallazgos.md)).
 
 ### 2.7 Borrado lógico
 
@@ -144,7 +144,7 @@ Eliminar una evidencia marca `eliminada = true`, con quién y cuándo; las consu
 
 ### 2.8 Agregados
 
-Un **agregado** es un grupo de objetos que se modifican juntos a través de su raíz ([modelo de dominio, sección 4](../diagramas/modelo-dominio.md#4-agregados)).
+Un **agregado** es un grupo de objetos que se modifican juntos a través de su raíz ([modelo de dominio, sección 4](../Diagramas/modelo-dominio.md#4-agregados)).
 
 | Agregado | Raíz | Regla que protege |
 |---|---|---|
@@ -163,7 +163,7 @@ El resto del sistema habla con una **interfaz** (`guardar`, `urlDeDescarga`, `el
 const ruta = await almacenamiento.guardar(archivo);
 ```
 
-**Beneficio:** cambiar de proveedor es cambiar configuración, no código ([RT-006](../requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). Es también lo que permite probar subidas con un adaptador en memoria.
+**Beneficio:** cambiar de proveedor es cambiar configuración, no código ([RT-006](../Requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). Es también lo que permite probar subidas con un adaptador en memoria.
 
 ### 2.10 Control optimista de concurrencia
 
@@ -174,7 +174,7 @@ UPDATE tareas SET titulo = $1, fecha_actualizacion = now()
  WHERE tarea_id = $2 AND fecha_actualizacion = $3;   -- si no afecta filas: hubo un cambio ajeno
 ```
 
-Prueba: [PNF-I09](../testing/pruebas-no-funcionales.md#2-pruebas). Para el cupo del grupo se usa **bloqueo de fila** (`SELECT … FOR UPDATE`), porque ahí un conflicto no debe resolverse con un aviso sino con exclusión ([RNF-014.1](../requisitos/RNFs/RNF-014_concurrencia_y_consistencia.md)).
+Prueba: [PNF-I09](../Testing/pruebas-no-funcionales.md#2-pruebas). Para el cupo del grupo se usa **bloqueo de fila** (`SELECT … FOR UPDATE`), porque ahí un conflicto no debe resolverse con un aviso sino con exclusión ([RNF-014.1](../Requisitos/RNFs/RNF-014_concurrencia_y_consistencia.md)).
 
 ---
 
@@ -197,7 +197,7 @@ Conjunto de buenas prácticas para aplicaciones desplegables. Los que más pesan
 
 | Factor | En ZENDA |
 |---|---|
-| **Configuración** en el entorno | Variables en `.env`, nunca en el código ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)) |
+| **Configuración** en el entorno | Variables en `.env`, nunca en el código ([RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)) |
 | **Dependencias** declaradas | `package.json` con versiones exactas y `pnpm-lock.yaml` |
 | **Servicios de apoyo** como recursos | Base de datos, correo y almacenamiento se cambian por configuración |
 | **Procesos sin estado** | El backend no guarda sesiones ni archivos en disco: se puede replicar |
@@ -239,6 +239,6 @@ Conjunto de buenas prácticas para aplicaciones desplegables. Los que más pesan
 
 ## Documentos relacionados
 
-- [Arquitectura](../referencia-tecnica/arquitectura.md) · [Clases](../diagramas/clases.md) · [Componentes](../diagramas/componentes.md) · [Modelo de dominio](../diagramas/modelo-dominio.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Clases](../Diagramas/clases.md) · [Componentes](../Diagramas/componentes.md) · [Modelo de dominio](../Diagramas/modelo-dominio.md)
 - [Modelo relacional y SQL](modelo-relacional-y-sql.md) · [Contenedores y Docker](contenedores-docker.md)
-- [Convenciones de código](../colaboracion/convenciones-de-codigo.md)
+- [Convenciones de código](../Colaboracion/convenciones-de-codigo.md)

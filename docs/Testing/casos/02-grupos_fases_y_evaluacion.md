@@ -25,15 +25,15 @@
 | **ID** | `CP-<número de RF>.<número de criterio>`; coincide con el criterio `CA-<RF>.<n>` de la historia. |
 | **Tipo** | *Positivo*: el camino feliz. *Negativo*: un dato o permiso inválido que debe rechazarse. |
 | **Nivel** | Dónde conviene automatizarlo: `API` (petición HTTP) o `E2E` (navegador). |
-| **Aplica a v11** | `Sí` se puede ejecutar hoy · `Parcial` el requisito cambia en v12 (ejecutar y comparar con "Cambios frente a la versión v11") · `No` la funcionalidad aún no existe. |
+| **Aplica a v11** | `Sí` se puede ejecutar hoy · `Parcial` el requisito cambia en Semanas 1–2 (ejecutar y comparar con "Cambios frente a la versión v11") · `No` la funcionalidad aún no existe. |
 
-> Los usuarios y fichas de prueba están en [Instalación sin Docker](../../setup/sin-docker.md#6-usuarios-de-prueba).
+> Los usuarios y fichas de prueba están en [Instalación sin Docker](../../Setup/sin-docker.md#6-usuarios-de-prueba).
 
 ---
 
 ### RF-014 — Creación de proyecto
 
-**Historia:** [HU-014](../../requisitos/HUs/HU-014_creacion_de_proyecto.md) · **Requisito:** [RF-014](../../requisitos/RFs/RF-014_creacion_de_proyecto.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-014](../../Requisitos/HUs/HU-014_creacion_de_proyecto.md) · **Requisito:** [RF-014](../../Requisitos/RFs/RF-014_creacion_de_proyecto.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -45,7 +45,7 @@
 
 ### RF-015 — Unirse a un proyecto
 
-**Historia:** [HU-015](../../requisitos/HUs/HU-015_unirse_a_un_proyecto.md) · **Requisito:** [RF-015](../../requisitos/RFs/RF-015_unirse_a_un_proyecto.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-015](../../Requisitos/HUs/HU-015_unirse_a_un_proyecto.md) · **Requisito:** [RF-015](../../Requisitos/RFs/RF-015_unirse_a_un_proyecto.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,7 +56,7 @@
 
 ### RF-016 — Consulta de mi proyecto
 
-**Historia:** [HU-016](../../requisitos/HUs/HU-016_consulta_de_mi_proyecto.md) · **Requisito:** [RF-016](../../requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-016](../../Requisitos/HUs/HU-016_consulta_de_mi_proyecto.md) · **Requisito:** [RF-016](../../Requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@
 
 ### RF-017 — Cambio de ficha del aprendiz
 
-**Historia:** [HU-017](../../requisitos/HUs/HU-017_cambio_de_ficha_del_aprendiz.md) · **Requisito:** [RF-017](../../requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-017](../../Requisitos/HUs/HU-017_cambio_de_ficha_del_aprendiz.md) · **Requisito:** [RF-017](../../Requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -77,7 +77,7 @@
 
 ### RF-018 — Reasignación de liderazgo
 
-**Historia:** [HU-018](../../requisitos/HUs/HU-018_reasignacion_de_liderazgo.md) · **Requisito:** [RF-018](../../requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-018](../../Requisitos/HUs/HU-018_reasignacion_de_liderazgo.md) · **Requisito:** [RF-018](../../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -87,7 +87,7 @@
 
 ### RF-019 — Carpetas de una fase
 
-**Historia:** [HU-019](../../requisitos/HUs/HU-019_carpetas_de_una_fase.md) · **Requisito:** [RF-019](../../requisitos/RFs/RF-019_carpetas_de_una_fase.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-019](../../Requisitos/HUs/HU-019_carpetas_de_una_fase.md) · **Requisito:** [RF-019](../../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -98,7 +98,7 @@
 
 ### RF-020 — Subida de evidencias
 
-**Historia:** [HU-020](../../requisitos/HUs/HU-020_subida_de_evidencias.md) · **Requisito:** [RF-020](../../requisitos/RFs/RF-020_subida_de_evidencias.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-020](../../Requisitos/HUs/HU-020_subida_de_evidencias.md) · **Requisito:** [RF-020](../../Requisitos/RFs/RF-020_subida_de_evidencias.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -110,7 +110,7 @@
 
 ### RF-021 — Consulta de evidencias y fases
 
-**Historia:** [HU-021](../../requisitos/HUs/HU-021_consulta_de_evidencias_y_fases.md) · **Requisito:** [RF-021](../../requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-021](../../Requisitos/HUs/HU-021_consulta_de_evidencias_y_fases.md) · **Requisito:** [RF-021](../../Requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -121,7 +121,7 @@
 
 ### RF-022 — Versiones y eliminación de evidencias
 
-**Historia:** [HU-022](../../requisitos/HUs/HU-022_versiones_y_eliminacion_de_evidencias.md) · **Requisito:** [RF-022](../../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-022](../../Requisitos/HUs/HU-022_versiones_y_eliminacion_de_evidencias.md) · **Requisito:** [RF-022](../../Requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -133,7 +133,7 @@
 
 ### RF-023 — Evaluación de evidencias
 
-**Historia:** [HU-023](../../requisitos/HUs/HU-023_evaluacion_de_evidencias.md) · **Requisito:** [RF-023](../../requisitos/RFs/RF-023_evaluacion_de_evidencias.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-023](../../Requisitos/HUs/HU-023_evaluacion_de_evidencias.md) · **Requisito:** [RF-023](../../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -144,7 +144,7 @@
 
 ### RF-024 — Aprobación de carpetas en bloque
 
-**Historia:** [HU-024](../../requisitos/HUs/HU-024_aprobacion_de_carpetas_en_bloque.md) · **Requisito:** [RF-024](../../requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) · **Estado del requisito:** Planificado
+**Historia:** [HU-024](../../Requisitos/HUs/HU-024_aprobacion_de_carpetas_en_bloque.md) · **Requisito:** [RF-024](../../Requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) · **Estado del requisito:** Planificado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -154,7 +154,7 @@
 
 ### RF-025 — Estado y porcentaje de avance
 
-**Historia:** [HU-025](../../requisitos/HUs/HU-025_estado_y_porcentaje_de_avance.md) · **Requisito:** [RF-025](../../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-025](../../Requisitos/HUs/HU-025_estado_y_porcentaje_de_avance.md) · **Requisito:** [RF-025](../../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -165,7 +165,7 @@
 
 ### RF-026 — Observaciones del instructor
 
-**Historia:** [HU-026](../../requisitos/HUs/HU-026_observaciones_del_instructor.md) · **Requisito:** [RF-026](../../requisitos/RFs/RF-026_observaciones_del_instructor.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-026](../../Requisitos/HUs/HU-026_observaciones_del_instructor.md) · **Requisito:** [RF-026](../../Requisitos/RFs/RF-026_observaciones_del_instructor.md) · **Estado del requisito:** Parcial
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -175,7 +175,7 @@
 
 ### RF-027 — Consulta de observaciones
 
-**Historia:** [HU-027](../../requisitos/HUs/HU-027_consulta_de_observaciones.md) · **Requisito:** [RF-027](../../requisitos/RFs/RF-027_consulta_de_observaciones.md) · **Estado del requisito:** Implementado
+**Historia:** [HU-027](../../Requisitos/HUs/HU-027_consulta_de_observaciones.md) · **Requisito:** [RF-027](../../Requisitos/RFs/RF-027_consulta_de_observaciones.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

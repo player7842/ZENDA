@@ -16,7 +16,7 @@
 | **Título** | Unirse a un proyecto |
 | **Módulo** | Grupos y proyectos |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Aprendiz |
 | **RF asociado** | RF-015 |
 | **Reglas de negocio** | RN-007, RN-009, RN-010 |
@@ -63,3 +63,7 @@
 
 - Se elimina la selección de rol Scrum al unirse y la validación "Este grupo ya tiene un Product Owner".
 - Se agrega la validación del cupo.
+
+## Estado en la Semana 2
+
+Implementado: `unirseAProyecto` valida que el grupo sea de la misma ficha, que haya cupo, que el grupo esté activo y que el usuario no tenga otro proyecto. Ya no existe el sub-rol Scrum ni la validación de Product Owner.

@@ -1,9 +1,12 @@
 # Referencia de la API — ZENDA
 
 <!--
-  ¿Qué? Contrato de la API REST de ZENDA: rutas, autorización, cuerpos de petición y respuestas.
-  ¿Para qué? Que frontend, backend y pruebas trabajen contra el mismo contrato y que un cambio de ruta no rompa nada sin avisar.
-  ¿Impacto? El frontend llama a la API desde un solo módulo (`api.js`); una ruta que cambia sin documentarse deja pantallas rotas.
+  ¿Qué? Contrato de la API REST de ZENDA: rutas, autorización, cuerpos de
+  petición y respuestas.
+  ¿Para qué? Que frontend, backend y pruebas trabajen contra el mismo contrato
+  y que un cambio de ruta no rompa nada sin avisar.
+  ¿Impacto? El frontend llama a la API desde un solo módulo (`api.js`); una
+  ruta que cambia sin documentarse deja pantallas rotas.
 -->
 
 ---
@@ -13,14 +16,20 @@
 | Campo | Valor |
 |---|---|
 | **Estilo** | REST sobre HTTP, cuerpos JSON |
-| **URL base** | `http://localhost:4000` en desarrollo (variable `VITE_API_URL` en el frontend) |
-| **Prefijo** | Todas las rutas empiezan por `/api` |
-| **Endpoints existentes (v11)** | 52 |
-| **Endpoints propuestos (v12)** | 22 |
-| **Fuente** | Código de `ZENDA-develop` (`server.js` y `src/routes/`) |
-| **Fecha** | Octubre 2026 |
+| **URL base** | `http://localhost:4000` en desarrollo (el frontend usa `VITE_API_URL`) |
+| **Prefijo** | Las rutas de negocio empiezan por `/api`; la salud también existe en `/health` |
+| **Endpoints existentes** | **55** = 53 rutas de negocio + `/health` + `/api/health` |
+| **Rutas declaradas en routers** | 53 |
+| **Fuente** | [`backend/src/app.js`](../../backend/src/app.js) y [`backend/src/routes/`](../../backend/src/routes/) |
+| **Fecha** | 23-oct-2026 |
 
-**Leyenda de estado:** ✅ existe en v11 · 🔄 existe y su contrato cambia en v12 · 🆕 propuesto (aún no existe).
+**Leyenda de estado:** ✅ existe y está verificado en el código actual ·
+🟡 existe con una limitación conocida · 🆕 aprobado pero **aún no implementado**
+(Semanas 3–6).
+
+> La versión anterior de este documento hablaba de “52 endpoints de v11 y 22 de
+> v12”. Esa cuenta ya no aplica: el código actual tiene 53 rutas de negocio y
+> 2 de salud. Las rutas no implementadas se listan aparte en la sección 12.
 
 ---
 
@@ -29,52 +38,73 @@
 | Tema | Regla |
 |---|---|
 | **Autenticación** | Cabecera `Authorization: Bearer <token>` en toda ruta no pública. |
-| **Formato de error** | `{ "message": "texto en español" }` ([RNF-013.3](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)). |
-| **Códigos usados** | `200` éxito · `201` creado · `400` datos inválidos · `401` sin sesión o token inválido · `403` sin permiso · `404` no encontrado · `409` conflicto · `500` error del servidor. |
-| **Roles** | `JWT` = cualquier usuario autenticado. `JWT · ROL` = además exige ese rol (middlewares `isAdmin`, `isCoordinador`, `isInstructor`, `isAprendiz`). |
-| **Confirmación** | Las rutas marcadas con 🔑 exigen el campo `password` con la contraseña de quien actúa ([RN-028](../requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña)). |
-| **Fechas** | `YYYY-MM-DD` para fechas y ISO 8601 para marcas de tiempo. |
-| **Identificadores** | Enteros en la ruta (`:id`, `:faseId`, `:carpetaId`…). |
+| **Token** | JWT de sesión con `usuario_id`, `correo`, `rol` y `token_version`; dura 24 h (`JWT_SESSION_EXPIRES`). |
+| **Formato de error** | `{ "message": "texto en español" }` ([RNF-013.3](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)). |
+| **Códigos usados** | `200` éxito · `201` creado · `400` datos inválidos · `401` sin sesión o token inválido · `403` sin permiso o cuenta inactiva · `404` no encontrado · `409` conflicto · `500` error del servidor. |
+| **Roles** | `JWT` = cualquier usuario autenticado. `JWT · ROL` = además exige ese rol (`isAdmin`, `isCoordinador`, `isInstructor`, `isAprendiz`). |
+| **Confirmación** | Las rutas marcadas con 🔑 exigen `password` con la contraseña de quien actúa ([RN-028](../Requisitos/reglas-de-negocio.md#rn-028--confirmación-con-contraseña)). |
+| **Fechas** | `YYYY-MM-DD` para `DATE` e ISO 8601 para `TIMESTAMP`. |
+| **Identificadores** | Enteros en la ruta (`:id`, `:faseId`, `:carpetaId`, `:evidenciaId`, `:proyectoId`). |
+| **Límite de peticiones** | 300 por IP cada 15 min en `/api/`; 20 cada 15 min en login, registro, olvido y reset. |
+| **CORS** | Lista blanca por `FRONTEND_URL`; sin `Origin` se permite (Postman, health checks). |
 
 ---
 
 ## 2. Resumen por módulo
 
-| Módulo | Prefijo | Existentes | Propuestos | Requisitos |
-|---|---|:---:|:---:|---|
-| Sistema | `/api/health`, `/api/system` | 1 | 2 | RF-013 |
-| Autenticación | `/api/auth` | 4 | 3 | RF-001 a RF-004 |
-| Usuarios | `/api/users` | 7 | 1 | RF-006 a RF-008, RF-011 |
-| Fichas y programas | `/api/fichas`, `/api/programas` | 8 | 3 | RF-009, RF-010, RF-012 |
-| Grupos | `/api/grupos` | 0 | 1 | RF-018 |
-| Aprendiz | `/api/aprendiz/proyectos` | 14 | 2 | RF-014 a RF-031 |
-| Instructor | `/api/instructor` | 10 | 9 | RF-023 a RF-026, RF-033 a RF-038 |
-| Coordinador | `/api/coordinador` | 8 | 1 | RF-011, RF-032, RF-033, RF-035 |
-| **Total** | | **52** | **22** | |
+| Módulo | Prefijo | Rutas | Requisitos |
+|---|---|:---:|---|
+| Salud | `/health`, `/api/health` | 2 | — |
+| Autenticación | `/api/auth` | 4 | RF-001 a RF-003 |
+| Usuarios | `/api/users` | 7 | RF-006, RF-007, RF-011 |
+| Fichas | `/api/fichas` | 8 | RF-001, RF-009, RF-010, RF-012 |
+| Aprendiz | `/api/aprendiz/proyectos` | 15 | RF-014 a RF-032 |
+| Instructor | `/api/instructor` | 11 | RF-021, RF-023, RF-024, RF-026, RF-032, RF-033 |
+| Coordinador | `/api/coordinador` | 8 | RF-011, RF-032, RF-033 |
+| **Total** | | **55** | |
 
 ---
 
-## 3. Sistema
+## 3. Salud
 
-| Método | Ruta | Auth | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| GET | `/api/health` | Público | `{ status: "OK", message }` | — | ✅ |
-| GET | `/api/system/diagnostics` | JWT · ADMINISTRADOR | Estado del servidor, base de datos y última copia | [RF-013](../requisitos/RFs/RF-013_diagnostico_y_copia_de_seguridad.md) | 🆕 |
-| GET | `/api/system/backup` 🔑 | JWT · ADMINISTRADOR | Archivo de volcado de la base de datos | [RF-013](../requisitos/RFs/RF-013_diagnostico_y_copia_de_seguridad.md) | 🆕 |
+| Método | Ruta | Auth | Respuesta | Estado |
+|---|---|---|---|:---:|
+| GET | `/health` | Público | `{ status: "OK", message }` | ✅ |
+| GET | `/api/health` | Público | El mismo cuerpo | ✅ |
+
+`/api/health` es el `healthCheckPath` de Render y el que usa el `HEALTHCHECK`
+del contenedor.
 
 ---
 
 ## 4. Autenticación — `/api/auth`
 
 | Método | Ruta | Auth | Cuerpo | Respuesta exitosa | RF | Estado |
-|---|---|---|---|---|:---:|:---:|
-| POST | `/register` | Público | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `password`, `numero_ficha`, ~~`sub_rol`~~ | `201` `{ message, user, token }` | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) | 🔄 |
-| POST | `/login` | Público | `correo`, `password` | `200` `{ message, user, token }` | [RF-002](../requisitos/RFs/RF-002_inicio_de_sesion.md) | 🔄 |
-| POST | `/forgot-password` | Público | `correo` | `200` `{ message }` | [RF-003](../requisitos/RFs/RF-003_recuperacion_de_contrasena.md) | 🔄 |
-| POST | `/reset-password` | Público | `token`, `contrasena` | `200` `{ message }` | [RF-003](../requisitos/RFs/RF-003_recuperacion_de_contrasena.md) | ✅ |
-| POST | `/refresh` | Token de refresco | `refresh_token` | `200` `{ token, refresh_token }` | [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) | 🆕 |
-| POST | `/logout` | JWT | `refresh_token` | `200` `{ message }` | [RF-004](../requisitos/RFs/RF-004_sesion_segura.md) | 🆕 |
-| POST | `/verify-email` | Público | `token` | `200` `{ message }` | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) | 🆕 |
+|---|---|---|---|---|---|:---:|:---:|
+| POST | `/register` | Público | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `password`, `numero_ficha`, `acepta_terminos`, `acepta_privacidad`, `acepta_cookies`, `acepta_tratamiento_datos` | `201` `{ message, user, token }` | RF-001 | ✅ |
+| POST | `/login` | Público | `correo` (o `email`), `password` | `200` `{ message, user, token }` | RF-002 | ✅ |
+| POST | `/forgot-password` | Público | `correo` | `200` `{ message }` uniforme | RF-003 | ✅ |
+| POST | `/reset-password` | Público | `token`, `contrasena` | `200` `{ message }` | RF-003 | ✅ |
+
+Reglas del registro:
+
+- El rol siempre es `APRENDIZ`: el autoregistro no permite elegir rol ni
+  sub-rol Scrum.
+- El correo debe cumplir `usuario@soy.sena.edu.co`.
+- `tipo_documento` ∈ `CC`, `TI`, `CE`, `PA`, `PPT`.
+- `numero_documento` debe tener entre 6 y 11 dígitos.
+- Las cuatro aceptaciones deben llegar en `true`.
+- La contraseña debe tener al menos 8 caracteres.
+- El aprendiz queda vinculado al grupo General de su ficha.
+
+Reglas de recuperación:
+
+- `forgot-password` responde **siempre** lo mismo, exista o no el correo.
+- El token dura 15 minutos, lleva `purpose: 'reset'` y se guarda como hash
+  SHA-256.
+- Un token de sesión **no** sirve para resetear la contraseña.
+- El token es de un solo uso: se marca `usado_en` y se incrementa
+  `usuarios.token_version`, lo que invalida las sesiones anteriores.
 
 **Ejemplo — inicio de sesión**
 
@@ -98,77 +128,92 @@ Content-Type: application/json
 ## 5. Usuarios — `/api/users` (JWT · ADMINISTRADOR)
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| POST 🔑 | `/` | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `rol`, `fichas`, `estado`, `password` (de quien crea) y la contraseña del nuevo usuario | `201` usuario creado | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) | ✅ |
-| GET | `/` | — | Lista de usuarios con sus fichas | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) | ✅ |
-| GET | `/:id` | — | Un usuario | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) | ✅ |
-| PUT 🔑 | `/:id` | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `rol`, `fichas`, `estado`, `password` | Usuario actualizado | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) | ✅ |
-| PUT 🔑 | `/:id/rol` | `rol`, `password` | Usuario con el rol nuevo | [RF-006](../requisitos/RFs/RF-006_gestion_de_usuarios.md) | ✅ |
-| PUT 🔑 | `/:id/fichas` | `fichas`, `password` | Instructor con sus fichas | [RF-011](../requisitos/RFs/RF-011_asignacion_de_instructores_a_fichas.md) | 🔄 |
-| DELETE 🔑 | `/:id` | `password` | `200` mensaje | [RF-007](../requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md) | ✅ |
-| POST 🔑 | `/bulk` | Archivo CSV | `200` creados y errores por fila | [RF-008](../requisitos/RFs/RF-008_carga_masiva_de_usuarios.md) | 🆕 |
+|---|---|---|---|---|---|
+| POST 🔑 | `/` | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `rol`, `fichas` (solo instructores), `userPassword`, `password` | `201` usuario creado | RF-006 | ✅ |
+| GET | `/` | — | Lista de usuarios con `fichas` / `ficha` derivadas | RF-006 | ✅ |
+| GET | `/:id` | — | Un usuario | RF-006 | ✅ |
+| PUT 🔑 | `/:id` | `nombre`, `apellido`, `correo`, `tipo_documento`, `numero_documento`, `rol`, `fichas`, `estado`, `password` | Usuario actualizado | RF-006 | ✅ |
+| PUT 🔑 | `/:id/rol` | `rol`, `password` | Usuario con el rol nuevo | RF-006 | ✅ |
+| PUT 🔑 | `/:id/fichas` | `fichas` (códigos), `password` | Instructor con sus fichas vigentes | RF-011 | ✅ |
+| DELETE 🔑 | `/:id` | `password` | `200` mensaje | RF-007 | ✅ |
+
+> `fichas` son **números de ficha**, no IDs. En instructores se sincroniza
+> `instructor_ficha` conservando el historial; las asignaciones cerradas no se
+> muestran como vigentes.
 
 ---
 
-## 6. Fichas y programas
+## 6. Fichas — `/api/fichas`
 
 | Método | Ruta | Auth | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|---|:---:|:---:|
-| GET | `/api/fichas/publicas` | Público | — | Fichas para el selector del registro | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) | ✅ |
-| GET | `/api/fichas/programas` | JWT · ADMINISTRADOR | — | Programas para el formulario | [RF-012](../requisitos/RFs/RF-012_gestion_de_programas_de_formacion.md) | ✅ |
-| GET | `/api/fichas` | JWT · ADMINISTRADOR | — | Fichas con conteos | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) | ✅ |
-| POST 🔑 | `/api/fichas` | JWT · ADMINISTRADOR | `codigo_programa`, `numero_ficha`, `fecha_inicio`, `fecha_fin`, `jornada`, `password` | `201` listado actualizado | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) | ✅ |
-| PUT 🔑 | `/api/fichas/:id` | JWT · ADMINISTRADOR | `numero_ficha`, `fecha_inicio`, `fecha_fin`, `jornada`, `password` | Ficha actualizada | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) | ✅ |
-| DELETE 🔑 | `/api/fichas/:id` | JWT · ADMINISTRADOR | `password` | `200` mensaje | [RF-009](../requisitos/RFs/RF-009_gestion_de_fichas.md) | ✅ |
-| PUT 🔑 | `/api/fichas/:id/aprendiz` | JWT · ADMINISTRADOR | `usuario_id`, `password` | `200` "Aprendiz vinculado a la ficha" | [RF-010](../requisitos/RFs/RF-010_aprendices_en_una_ficha.md) | ✅ |
-| DELETE 🔑 | `/api/fichas/:id/aprendiz/:usuario_id` | JWT · ADMINISTRADOR | `password` | `200` "Aprendiz desvinculado de la ficha" | [RF-010](../requisitos/RFs/RF-010_aprendices_en_una_ficha.md) | ✅ |
-| POST 🔑 | `/api/programas` | JWT · ADMINISTRADOR | `codigo_programa`, `nombre_programa`, `password` | `201` programa | [RF-012](../requisitos/RFs/RF-012_gestion_de_programas_de_formacion.md) | 🆕 |
-| PUT 🔑 | `/api/programas/:id` | JWT · ADMINISTRADOR | `codigo_programa`, `nombre_programa`, `password` | Programa actualizado | [RF-012](../requisitos/RFs/RF-012_gestion_de_programas_de_formacion.md) | 🆕 |
-| DELETE 🔑 | `/api/programas/:id` | JWT · ADMINISTRADOR | `password` | `200`; `409` si tiene fichas | [RF-012](../requisitos/RFs/RF-012_gestion_de_programas_de_formacion.md) | 🆕 |
+|---|---|---|---|---|---|---|
+| GET | `/publicas` | Público | — | Fichas para el selector del registro | RF-001 | ✅ |
+| GET | `/programas` | JWT · ADMINISTRADOR | — | Programas para el formulario | RF-012 | ✅ |
+| GET | `/` | JWT · ADMINISTRADOR | — | Fichas con conteos | RF-009 | ✅ |
+| POST 🔑 | `/` | JWT · ADMINISTRADOR | `codigo_programa`, `numero_ficha`, `fecha_inicio`, `fecha_fin`, `jornada`, `password` | `201` listado actualizado | RF-009 | ✅ |
+| PUT 🔑 | `/:id` | JWT · ADMINISTRADOR | `numero_ficha`, `fecha_inicio`, `fecha_fin`, `jornada`, `password` | Ficha actualizada | RF-009 | ✅ |
+| DELETE 🔑 | `/:id` | JWT · ADMINISTRADOR | `password` | `200` mensaje | RF-009 | ✅ |
+| PUT 🔑 | `/:id/aprendiz` | JWT · ADMINISTRADOR | `usuario_id`, `password` | `200` "Aprendiz vinculado a la ficha" | RF-010 | ✅ |
+| DELETE 🔑 | `/:id/aprendiz/:usuario_id` | JWT · ADMINISTRADOR | `password` | `200` "Aprendiz desvinculado de la ficha" | RF-010 | ✅ |
+
+> La gestión de **programas** (crear, editar, eliminar) no está implementada.
+> Solo existe la lectura en `/api/fichas/programas`. Ver sección 12.
 
 ---
 
-## 7. Grupos — `/api/grupos` (JWT · ADMINISTRADOR)
+## 7. Aprendiz — `/api/aprendiz/proyectos` (JWT · APRENDIZ)
+
+### 7.1 Proyecto y ficha
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| PUT 🔑 | `/:id/lider` | `nuevo_lider_id`, `password` | Grupo con el nuevo líder | [RF-018](../requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) | 🆕 |
+|---|---|---|---|---|---|
+| POST | `/` | `nombre_proyecto`, `descripcion`, `problema`, `objetivo`, `alcance`, `tecnologias`, `fecha_inicio`, `fecha_fin_estimada`, `cupo_maximo` | `201` `{ grupo_id, proyecto_id, codigo_grupo, cupo_maximo }` | RF-014 | ✅ |
+| PUT | `/mio/cupo` | `cupo_maximo` (1–50, no menor al total actual; solo líder) | `200` `{ cupo_maximo }` | RF-014 | ✅ |
+| POST | `/unirse` | `codigo_grupo` (misma ficha, grupo con cupo) | `200` "Te uniste al proyecto correctamente" | RF-015 | ✅ |
+| GET | `/mio` | — | Proyecto, integrantes, líder y fases | RF-016 | ✅ |
+| GET | `/resumen` | — | Métricas y series para el panel | RF-032 | ✅ |
+| GET | `/mi-ficha` | — | Ficha actual | RF-017 | ✅ |
+| PUT | `/mi-ficha` | `numero_ficha` | `200` "Ficha actualizada correctamente" | RF-017 | ✅ |
 
----
+Reglas:
 
-## 8. Aprendiz — `/api/aprendiz/proyectos` (JWT · APRENDIZ)
+- Un aprendiz solo puede tener **un proyecto activo** ([RN-007](../Requisitos/reglas-de-negocio.md)).
+- La creación bloquea la fila del usuario con `SELECT … FOR UPDATE` para
+  evitar dos proyectos simultáneos.
+- `cupo_maximo` por defecto es 6; rango 1–50; el líder cuenta como integrante.
+- Solo se puede unir a grupos de la **misma ficha**.
 
-### 8.1 Proyecto y ficha
-
-| Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| POST | `/` | `nombre_proyecto`, `descripcion`, `problema`, `objetivo`, `alcance`, `tecnologias`, `fecha_inicio`, `fecha_fin_estimada`, `cupo_maximo` | `201` `{ grupo_id, proyecto_id, codigo_grupo, cupo_maximo }` | [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md) | ✅ |
-| PUT | `/mio/cupo` | `cupo_maximo` (1–50, no menor al total actual; solo líder) | `200` `{ cupo_maximo }` | [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md) | ✅ |
-| POST | `/unirse` | `codigo_grupo` (misma ficha, grupo con cupo) | `200` "Te uniste al proyecto correctamente" | [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md) | ✅ |
-| GET | `/mio` | — | Proyecto, integrantes, líder y fases | [RF-016](../requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) | 🔄 |
-| GET | `/resumen` | — | Métricas y series para el panel | [RF-032](../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) | ✅ |
-| GET | `/mi-ficha` | — | Ficha actual | [RF-017](../requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | ✅ |
-| PUT | `/mi-ficha` | `numero_ficha` | `200` "Ficha actualizada correctamente" | [RF-017](../requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | ✅ |
-
-### 8.2 Carpetas, evidencias y observaciones
+### 7.2 Carpetas, evidencias y observaciones
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| GET | `/fases/:faseId/carpetas` | — | Carpetas con evidencias y resultado | [RF-021](../requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | 🔄 |
-| POST | `/fases/:faseId/carpetas` | `nombre_carpeta` | `201` carpeta | [RF-019](../requisitos/RFs/RF-019_carpetas_de_una_fase.md) | 🔄 |
-| POST | `/carpetas/:carpetaId/evidencias` | `nombre_evidencia`, `tipo_evidencia` (`Documento`/`Imagen`/`Video`/`Enlace`), `ubicacion` (`http/https`, máx. 500) | `201` `{ evidencia_id }` | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) | ✅ solo enlaces; archivos en Semana 4 |
-| POST | `/evidencias/:id/versiones` | Archivo o enlace nuevo | `201` nueva versión | [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | 🆕 |
-| DELETE | `/evidencias/:id` | — | `200`; `409` si está aprobada | [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | 🆕 |
-| GET | `/observaciones` | — | Observaciones de mi proyecto | [RF-027](../requisitos/RFs/RF-027_consulta_de_observaciones.md) | ✅ |
+|---|---|---|---|---|---|
+| GET | `/fases/:faseId/carpetas` | — | Carpetas con evidencias y resultado | RF-021 | ✅ |
+| POST | `/fases/:faseId/carpetas` | `nombre_carpeta` | `201` carpeta | RF-019 | ✅ |
+| POST | `/carpetas/:carpetaId/evidencias` | `nombre_evidencia`, `tipo_evidencia` (`Documento`/`Imagen`/`Video`/`Enlace`), `ubicacion` (`http/https`, máx. 500) | `201` `{ evidencia_id }` | RF-020 | 🟡 solo enlaces; archivos en Semana 4 |
+| GET | `/observaciones` | — | Observaciones de mi proyecto, con `nombre_evidencia` | RF-027 | ✅ |
 
-### 8.3 Tareas
+> Cualquier integrante activo del grupo puede crear carpetas y subir enlaces;
+> la autoría queda en `evidencias.usuario_id`.
+
+### 7.3 Tareas
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| POST | `/tareas` | `titulo`, `descripcion`, `prioridad`, `responsable_id`, `fecha_inicio`, `fecha_limite` | `201` tarea (solo el líder) | [RF-028](../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) | 🔄 |
-| GET | `/tareas` | — | Tareas del proyecto | [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md) | ✅ |
-| GET | `/tareas/progreso` | — | Total y confirmadas | [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md) | ✅ |
-| PUT | `/tareas/:id/estado` | `estado` | Tarea con el nuevo estado | [RF-029](../requisitos/RFs/RF-029_avance_de_mis_tareas.md), [RF-030](../requisitos/RFs/RF-030_confirmacion_de_tareas.md) | 🔄 |
+|---|---|---|---|---|---|
+| POST | `/tareas` | `titulo`, `descripcion`, `prioridad`, `responsable_id`, `fecha_inicio`, `fecha_limite` | `201` tarea (solo el líder) | RF-028 | ✅ |
+| GET | `/tareas` | — | Tareas del proyecto | RF-031 | ✅ |
+| GET | `/tareas/progreso` | — | Total y confirmadas | RF-031 | ✅ |
+| PUT | `/tareas/:id/estado` | `estado` | Tarea con el nuevo estado | RF-029, RF-030 | ✅ |
+
+Flujo permitido:
+
+```text
+Pendiente → En proceso → Finalizada → Confirmada
+                                    ↘ Incompleta → En proceso
+```
+
+- El **responsable** mueve `Pendiente → En proceso → Finalizada`.
+- Solo el **líder** confirma o marca incompleta una tarea finalizada.
+- La autorización usa `grupos.lider_id`; no existe sub-rol Scrum.
 
 **Ejemplo — crear proyecto**
 
@@ -187,29 +232,32 @@ Authorization: Bearer <JWT>
 
 ---
 
-## 9. Instructor — `/api/instructor` (JWT · INSTRUCTOR)
+## 8. Instructor — `/api/instructor` (JWT · INSTRUCTOR)
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| GET | `/resumen` | — | Métricas del instructor | [RF-032](../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) | ✅ |
-| GET | `/fichas` | — | Fichas a su cargo | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | 🔄 |
-| GET | `/fichas/:id/aprendices` | — | Aprendices de la ficha | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/fichas/:id/grupos` | — | Grupos de la ficha | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/fichas/:id/evidencias` | — | Evidencias de la ficha | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/proyectos/:proyectoId` | — | Detalle (README) del proyecto | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/fases/:faseId/carpetas` | — | Carpetas y evidencias de la fase | [RF-021](../requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | 🔄 |
-| POST | `/evidencias/:evidenciaId/evaluar` | `resultado` (`APROBADO` o `REPROBADO`) | Evaluación y estado de la fase | [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md) | 🔄 |
-| GET | `/proyectos/:proyectoId/observaciones` | — | Observaciones del proyecto | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | ✅ |
-| POST | `/proyectos/:proyectoId/observaciones` | `titulo`, `descripcion`, `evidencia_id` opcional | `201` observación con `nombre_evidencia` | [RF-026](../requisitos/RFs/RF-026_observaciones_del_instructor.md) | ✅ |
-| POST | `/carpetas/:carpetaId/aprobar` | — | Estado de carpeta y fase | [RF-024](../requisitos/RFs/RF-024_aprobacion_de_carpetas_en_bloque.md) | 🆕 |
-| POST | `/fichas/:id/lista-chequeo` | `nombre`, ítems | `201` lista | [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) | 🆕 |
-| PUT | `/lista-chequeo/:listaId` | Lista e ítems | Lista actualizada | [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md) | 🆕 |
-| POST | `/lista-chequeo/importar` | Excel y correspondencia de columnas | Lista importada | [RF-037](../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md) | 🆕 |
-| GET | `/lista-chequeo/:listaId/exportar` | — | Archivo `.xlsx` | [RF-037](../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md) | 🆕 |
-| POST | `/lista-chequeo/:listaId/copiar` | `ficha_destino_id` | `201` lista copiada | [RF-037](../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md) | 🆕 |
-| POST | `/lista-chequeo/items/:itemId/evaluar` | `grupo_id`, `resultado`, `comentario` | `201` evaluación y avance | [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) | 🆕 |
-| GET | `/fichas/:id/lista-chequeo/avance` | — | Avance por grupo y por ficha | [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) | 🆕 |
-| GET | `/fichas/:id/reporte` | — | Archivo `.xlsx` | [RF-035](../requisitos/RFs/RF-035_reporte_en_excel.md) | 🆕 |
+|---|---|---|---|---|---|
+| GET | `/resumen` | — | Métricas del instructor | RF-032 | ✅ |
+| GET | `/fichas` | — | Fichas con asignación vigente | RF-033 | ✅ |
+| GET | `/fichas/:id/aprendices` | — | Aprendices de la ficha | RF-033 | ✅ |
+| GET | `/fichas/:id/grupos` | — | Grupos de la ficha | RF-033 | ✅ |
+| GET | `/fichas/:id/evidencias` | — | Evidencias de la ficha | RF-033 | ✅ |
+| GET | `/proyectos/:proyectoId` | — | Detalle (README) del proyecto | RF-033 | ✅ |
+| GET | `/fases/:faseId/carpetas` | — | Carpetas y evidencias de la fase | RF-021 | ✅ |
+| POST | `/evidencias/:evidenciaId/evaluar` | `resultado` (`APROBADO` o `REPROBADO`) | Evaluación y estado de la fase | RF-023 | ✅ |
+| POST | `/carpetas/:carpetaId/aprobar` | — | `{ aprobadas, estado_carpeta, estado_fase }` | RF-024 | ✅ |
+| GET | `/proyectos/:proyectoId/observaciones` | — | Observaciones del proyecto | RF-026 | ✅ |
+| POST | `/proyectos/:proyectoId/observaciones` | `titulo`, `descripcion`, `evidencia_id` opcional | `201` observación con `nombre_evidencia` | RF-026 | ✅ |
+
+Reglas:
+
+- El instructor solo puede evaluar evidencias de fichas con asignación
+  **vigente** (`instructor_ficha.fecha_fin IS NULL`).
+- Cada evaluación es un `INSERT`: recalificar no borra el historial. La
+  vigente es la de mayor `evaluacion_id`.
+- La aprobación en bloque rechaza la carpeta si ya tiene una evaluación
+  vigente y aprueba todas sus evidencias en una transacción.
+- Después de evaluar o aprobar se recalculan `estado_carpeta` y `estado_fase`
+  (RN-018).
 
 **Ejemplo — evaluar una evidencia**
 
@@ -222,69 +270,100 @@ Authorization: Bearer <JWT>
 
 ---
 
-## 10. Coordinador — `/api/coordinador` (JWT · COORDINADOR)
+## 9. Coordinador — `/api/coordinador` (JWT · COORDINADOR)
 
 | Método | Ruta | Cuerpo | Respuesta | RF | Estado |
-|---|---|---|---|:---:|:---:|
-| GET | `/dashboard` | — | Métricas del programa | [RF-032](../requisitos/RFs/RF-032_paneles_de_resumen_por_rol.md) | ✅ |
-| GET | `/perfil` | — | Perfil del coordinador | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/fichas` | — | Fichas del programa ADSO | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/grupos` | — | Grupos del programa | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/proyectos` | — | Proyectos del programa | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/proyectos/:id/seguimiento` | — | Seguimiento de un proyecto | [RF-033](../requisitos/RFs/RF-033_seguimiento_academico_de_fichas_y_proyectos.md) | ✅ |
-| GET | `/instructores` | — | Instructores del programa | [RF-011](../requisitos/RFs/RF-011_asignacion_de_instructores_a_fichas.md) | ✅ |
-| PUT 🔑 | `/instructores/:id/fichas` | `fichas`, `password` | Instructor con sus fichas ADSO | [RF-011](../requisitos/RFs/RF-011_asignacion_de_instructores_a_fichas.md) | 🔄 |
-| GET | `/reporte` | — | Archivo `.xlsx` del programa | [RF-035](../requisitos/RFs/RF-035_reporte_en_excel.md) | 🆕 |
+|---|---|---|---|---|---|
+| GET | `/dashboard` | — | Métricas del programa | RF-032 | ✅ |
+| GET | `/perfil` | — | Perfil del coordinador | RF-033 | ✅ |
+| GET | `/fichas` | — | Fichas del programa ADSO | RF-033 | ✅ |
+| GET | `/grupos` | — | Grupos del programa | RF-033 | ✅ |
+| GET | `/proyectos` | — | Proyectos del programa | RF-033 | ✅ |
+| GET | `/proyectos/:id/seguimiento` | — | Seguimiento de un proyecto | RF-033 | ✅ |
+| GET | `/instructores` | — | Instructores del programa | RF-011 | ✅ |
+| PUT 🔑 | `/instructores/:id/fichas` | `fichas`, `password` | Instructor con sus fichas ADSO | RF-011 | ✅ |
+
+> El reporte CSV/Excel del coordinador se genera en el navegador; no hay
+> endpoint de archivo en el servidor (ver sección 12).
 
 ---
 
-## 11. Errores de los middlewares
+## 10. Errores de los middlewares
 
-| Situación | Código | Mensaje actual en v11 |
-|---|:---:|---|
+| Situación | Código | Mensaje actual |
+|---|---|:---:|---|
 | Sin cabecera `Authorization` | `401` | "No se proporcionó token, ¿cómo entraste sin permiso?" |
-| Token inválido o vencido | `401` | "Token inválido, intenta de nuevo" |
+| Token inválido, vencido o con `token_version` viejo | `401` | "Token inválido, intenta de nuevo" |
+| Cuenta inactiva | `403` | "Tu cuenta está inactiva, habla con un administrador" |
 | Rol sin permiso | `403` | Mensaje propio de `isAdmin`, `isInstructor`, etc. |
+| Límite de peticiones | `429` | Mensaje del `rate-limit` |
 
-> Los textos informales deben reemplazarse por mensajes profesionales ([RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)).
-
----
-
-## 12. Cambios de contrato planificados
-
-| Endpoint | Cambio en v12 | Compatibilidad |
-|---|---|---|
-| `POST /auth/register` | Se elimina `sub_rol`; se agregan aceptaciones legales y verificación de correo. | El backend puede ignorar `sub_rol` mientras el frontend se actualiza. |
-| `POST /aprendiz/proyectos/unirse` | Se elimina `rol_scrum`. | Igual: se ignora primero y se elimina después. |
-| `POST /aprendiz/proyectos` | Se agrega `cupo_maximo` (1–50, por defecto 6). | Compatible: si falta, se aplica 6. |
-| `PUT /aprendiz/proyectos/mio/cupo` | Nuevo endpoint para que el líder ajuste el cupo. | No menor al total actual de integrantes. |
-| `POST /carpetas/:id/evidencias` | En Semana 2 solo JSON con enlaces `http/https`. Archivos reales (`multipart/form-data`) en Semana 4. | Sin cambio para el JSON actual. |
-| `POST /auth/login` | **Hoy:** token único de 24 h (`JWT_SESSION_EXPIRES`). **Objetivo HU-004:** token de acceso de 15 min + `refresh_token`. | La reducción de 15 min aún **no** está implementada; el frontend no debe renovar todavía. |
-| `POST /auth/forgot-password` | Responde siempre `200`, exista o no el correo. | El frontend no debe depender del `404` actual. |
-| `POST /instructor/evidencias/:id/evaluar` | Inserta una evaluación nueva en lugar de actualizar la anterior. | Compatible: la respuesta no cambia. |
-| `POST /instructor/proyectos/:id/observaciones` | Acepta `evidencia_id` opcional. | Compatible. |
-| `PUT /aprendiz/proyectos/tareas/:id/estado` | Los mensajes mencionan al líder, no al Scrum Master. | Compatible. |
+> Los textos informales deben reemplazarse por mensajes profesionales
+> ([RI-002](../Requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)).
+> Es un pendiente de estilo, no de seguridad.
 
 ---
 
-## 13. Inconsistencias detectadas en v11
+## 11. Cambios de contrato ya aplicados (Semanas 1–2)
 
-| # | Hallazgo | Acción sugerida |
+| Endpoint | Cambio aplicado |
+|---|---|
+| `POST /api/auth/register` | Se eliminó `sub_rol`; se agregaron las cuatro aceptaciones legales, el tipo `PPT`, la validación de contraseña y el vínculo automático al General. |
+| `POST /api/aprendiz/proyectos/unirse` | Se eliminó `rol_scrum`; solo valida ficha, cupo y grupo activo. |
+| `POST /api/aprendiz/proyectos` | Acepta `cupo_maximo` (1–50, 6 por defecto). |
+| `PUT /api/aprendiz/proyectos/mio/cupo` | Nuevo; solo el líder y nunca por debajo del total actual. |
+| `POST /api/aprendiz/proyectos/carpetas/:carpetaId/evidencias` | En Semana 2 solo JSON con enlaces `http/https`; archivos reales en Semana 4. |
+| `POST /api/auth/forgot-password` | Responde siempre `200` y guarda solo el hash del token. |
+| `POST /api/instructor/evidencias/:id/evaluar` | Inserta una evaluación nueva en lugar de actualizar la anterior. |
+| `POST /api/instructor/carpetas/:carpetaId/aprobar` | Nuevo; aprobación en bloque (HU-024). |
+| `POST /api/instructor/proyectos/:id/observaciones` | Acepta `evidencia_id` opcional. |
+| `PUT /api/aprendiz/proyectos/tareas/:id/estado` | Los mensajes mencionan al líder, no al Scrum Master. |
+| `PUT /api/users/:id/fichas` | Sincroniza `instructor_ficha` conservando el historial. |
+
+---
+
+## 12. Endpoints aprobados pero **no implementados**
+
+Estos endpoints pertenecen a las Semanas 3–6. **No existen en el código
+actual** y no deben usarse desde el frontend todavía.
+
+| Método | Ruta propuesta | Requisito | Semana |
+|---|---|---|---|
+| POST | `/api/users/bulk` | RF-008 · carga masiva por CSV | 3–6 |
+| POST/PUT/DELETE | `/api/programas`, `/api/programas/:id` | RF-012 · gestión de programas | 3–6 |
+| GET | `/api/system/diagnostics` | RF-013 · diagnóstico | 3–6 |
+| GET 🔑 | `/api/system/backup` | RF-013 · copia de seguridad | 3–6 |
+| POST | `/api/auth/refresh` | RF-004 · refresh token | 3–6 |
+| POST | `/api/auth/logout` | RF-004 · cierre de sesión | 3–6 |
+| POST | `/api/auth/verify-email` | RF-001 · verificación de correo | 3–6 |
+| POST | `/api/aprendiz/proyectos/evidencias/:id/versiones` | RF-022 · versiones | 4 |
+| DELETE | `/api/aprendiz/proyectos/evidencias/:id` | RF-022 · eliminación | 4 |
+| POST | `/api/instructor/fichas/:id/lista-chequeo` | RF-036 | 5 |
+| PUT | `/api/instructor/lista-chequeo/:listaId` | RF-036 | 5 |
+| POST | `/api/instructor/lista-chequeo/importar` | RF-037 | 5 |
+| GET | `/api/instructor/lista-chequeo/:listaId/exportar` | RF-037 | 5 |
+| POST | `/api/instructor/lista-chequeo/:listaId/copiar` | RF-037 | 5 |
+| POST | `/api/instructor/lista-chequeo/items/:itemId/evaluar` | RF-038 | 5 |
+| GET | `/api/instructor/fichas/:id/lista-chequeo/avance` | RF-038 | 5 |
+| GET | `/api/instructor/fichas/:id/reporte` | RF-035 · Excel en servidor | 6 |
+| GET | `/api/coordinador/reporte` | RF-035 · Excel en servidor | 6 |
+
+---
+
+## 13. Inconsistencias conocidas (no bloqueantes)
+
+| # | Hallazgo | Estado |
 |:---:|---|---|
-| 1 | `GET /programas` está registrado **dos veces** en `routes/admin/fichas.js`. | Eliminar el duplicado. |
-| 2 | El prefijo `/api/aprendiz/proyectos` contiene también ficha, tareas y resumen, que no son "proyectos". | A futuro, mover a `/api/aprendiz` conservando un alias. |
-| 3 | Los programas se leen en `/api/fichas/programas`. | Mantener y agregar `/api/programas` para su gestión. |
-| 4 | `server.js` usa `cors()` sin restricciones. | Limitar al origen del frontend ([RNF-001.9](../requisitos/RNFs/RNF-001_seguridad.md)). |
-| 5 | `routes/coordinador/coordinador.js` usa saltos de línea CRLF y el resto LF. | Unificar con un `.gitattributes`. |
-| 6 | Las respuestas de autenticación devuelven `user`, no `usuario`. | Mantener `user`: es parte del contrato. |
-| 7 | Los listados no se paginan. | Agregar paginación ([RNF-002.4](../requisitos/RNFs/RNF-002_rendimiento.md)). |
-| 8 | La API no tiene versión en la ruta. | Mantener `/api/...` durante el proyecto formativo ([pendiente](../requisitos/restricciones.md#pendientes-de-confirmación)). |
-| 9 | Varios mensajes son informales o contienen groserías. | Reescribirlos ([RI-002](../requisitos/restricciones.md#ri-002--documentación-y-comentarios-profesionales-en-español)). |
+| 1 | El prefijo `/api/aprendiz/proyectos` también contiene ficha, tareas y resumen. | Se mantiene por compatibilidad con el frontend. |
+| 2 | Los programas se leen en `/api/fichas/programas`, no en `/api/programas`. | Se mantiene hasta implementar RF-012. |
+| 3 | Los listados no se paginan. | Pendiente de RNF-002.4. |
+| 4 | La API no tiene versión en la ruta. | Decisión del proyecto formativo. |
+| 5 | Varios mensajes son informales. | Pendiente de RI-002. |
 
 ---
 
 ## Documentos relacionados
 
 - [Arquitectura](arquitectura.md) · [Esquema de base de datos](esquema-bd.md)
-- [Matriz de permisos](../requisitos/matriz-permisos.md) · [Matriz de trazabilidad](../requisitos/matriz-trazabilidad.md)
-- [RNF-013 Interoperabilidad y API](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)
+- [Matriz de permisos](../Requisitos/matriz-permisos.md) · [Matriz de trazabilidad](../Requisitos/matriz-trazabilidad.md)
+- [RNF-013 Interoperabilidad y API](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md)

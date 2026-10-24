@@ -16,7 +16,7 @@
 | **Título** | Registro de aprendiz |
 | **Módulo** | Autenticación |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Aprendiz nuevo |
 | **RF asociado** | RF-001 |
 | **Reglas de negocio** | RN-001, RN-002, RN-004, RN-005, RN-006 |
@@ -84,3 +84,9 @@
 - Se agregan las cuatro casillas legales obligatorias, el medidor de contraseña y el bloqueo de pegado en la confirmación.
 - Se agregan límite de intentos, campo trampa (*honeypot*) y verificación del correo (ver [RS-006](../restricciones.md#rs-006--registro-seguro-y-humano)).
 - Hoy el registro no valida la longitud de la contraseña; solo lo hace el restablecimiento.
+
+## Estado en la Semana 2
+
+Implementado y verificado en el código actual: el autoregistro crea solo `APRENDIZ`, exige correo `@soy.sena.edu.co`, valida tipo de documento (incluido `PPT`), número de documento y las cuatro aceptaciones legales en el backend, y deja al aprendiz en el grupo General de su ficha. El medidor de contraseña y el anti-pegado están en el frontend.
+
+Quedan para más adelante el *honeypot* y la verificación de correo ([RS-006](../restricciones.md#rs-006--registro-seguro-y-humano)), que no forman parte del alcance de las Semanas 1–2.

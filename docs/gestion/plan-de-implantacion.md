@@ -1,8 +1,8 @@
 # Plan de Implantación — ZENDA Semanas 1 y 2
 
 > **Alcance:** únicamente las semanas 1 y 2. No se adelantan funcionalidades de las semanas 3–6.
-> **Rama de trabajo:** `develop` local. En esta entrega **no se hace `push`**; los commits previos ya publicados en `origin/develop` no se reescriben.
-> **Fecha de cierre:** 22 de octubre de 2026.
+> **Rama de trabajo:** `develop`, publicada en `origin/develop` (commits `5be156a`, `bacaa2b` y merge `4e54425`).
+> **Fecha de cierre:** 23 de octubre de 2026.
 
 ## Objetivo
 
@@ -22,7 +22,7 @@ Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_a
 - **Sin sub-roles Scrum:** se eliminan `usuarios.sub_rol_intencion` e `integrantes_grupo.rol_scrum`. El liderazgo es `grupos.lider_id`; cualquier integrante activo crea carpetas y sube evidencias con autor tomado de `req.user`.
 - **Cupo del grupo (RN-009):** `grupos.cupo_maximo` con rango **1–50** y valor por defecto **6** (General: 50). Se valida al crear y al unirse, con bloqueo `SELECT ... FOR UPDATE`. El líder puede modificarlo con `PUT /api/aprendiz/proyectos/mio/cupo` sin bajarlo del número actual de integrantes. La UI está en `MiProyecto.jsx`.
 - **Grupo General (RN-006):** se identifica con `grupos.es_general`, no por el nombre. Índice único parcial por ficha; código `GEN-<número_ficha>`; helper único `backend/src/services/grupos.js`.
-- **Un proyecto por aprendiz (RN-007):** se bloquea al usuario con `pg_advisory_xact_lock` antes de crear o unirse. Un aprendiz solo puede unirse a grupos de su ficha.
+- **Un proyecto por aprendiz (RN-007):** se bloquea la fila del usuario con `SELECT ... FOR UPDATE` antes de crear o unirse. Un aprendiz solo puede unirse a grupos de su ficha.
 - **Historial instructor–ficha (RN-024):** `instructor_ficha` conserva `fecha_inicio`, `fecha_fin` y `estado`; las reasignaciones cierran la fila vigente sin `DELETE`. Índice único parcial de asignaciones vigentes.
 - **Evaluaciones e historial (RN-017/RN-018):** toda evaluación es un `INSERT`; la vigente se elige por `evaluacion_id DESC` y se registra con `clock_timestamp()`. La cascada evidencia → carpeta → fase usa funciones SQL únicas (`zenda_recalcular_carpeta`, `zenda_recalcular_fase`) y bloqueos por usuario, carpeta y fase.
 - **Aprobación en bloque:** `POST /api/instructor/carpetas/:carpetaId/aprobar` usa `INSERT ... SELECT` y devuelve cuántas evidencias aprobó realmente. La UI pide confirmación y advierte si hay reprobadas.
@@ -37,7 +37,7 @@ Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_a
 
 | Tema | Decisión |
 |---|---|
-| **HU-020, archivos reales** (CA-020.1, .3 y .4) | **Fuera de las Semanas 1–2.** Se traslada a la **Semana 4** con S3/MinIO, lista blanca, tamaño máximo y compresión. En Semana 2 solo quedan enlaces validados (CA-020.2) y autoría de cualquier integrante (CA-020.5). |
+| **HU-020, archivos reales** (CA-020.1, .3 y .4) | **Fuera de las Semanas 1–2.** Se traslada a la **Semana 4** con almacenamiento compatible con S3 (por definir), lista blanca, tamaño máximo y compresión. En Semana 2 solo quedan enlaces validados (CA-020.2) y autoría de cualquier integrante (CA-020.5). |
 | **HU-004, sesión de 15 min + refresh** | Semana 4. Hoy la sesión dura 24 h (`JWT_SESSION_EXPIRES=24h`); no se cambia el contrato del frontend todavía. |
 | **HU-022, versiones y eliminación** | Semana 3. |
 | **H-13, token en `localStorage`** | Sigue abierto. Se mitiga con Helmet, CORS, rate-limit y validación de URLs; la solución completa depende de HU-004. |
@@ -84,10 +84,10 @@ Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_a
 ## Pruebas
 
 - **Unitarias:** `backend/tests/reglas.test.js` (9 pruebas de reglas puras).
-- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, HU-026, HU-011 y C-01. Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan.
-- **CI:** carga `Database/zenda_bd.sql`, aplica `002_semana2.sql` dos veces, ejecuta lint, pruebas y build del frontend.
-- **Ejecución local verificada (22-oct-2026):** PostgreSQL 18.6, base `zenda_audit_test` cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **15 pruebas aprobadas** (9 unitarias + 6 de integración). También se probó la migración sobre una copia del esquema anterior (`HEAD`) y se verificó un único General por ficha.
-- **No ejecutado:** Docker/Compose y el build de la imagen, porque el daemon de Docker no está disponible. El archivo `docker-compose.yml` sí pasa `docker compose config`.
+- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, RN-018 (evidencia mixta), HU-026, HU-011 y C-01 (7 escenarios). Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan con `REQUIRE_DB=1`.
+- **CI:** carga `Database/zenda_bd.sql`, aplica `002_semana2.sql` dos veces, migra desde el *fixture* v11, ejecuta lint, pruebas y build del frontend.
+- **Ejecución local verificada (23-oct-2026):** PostgreSQL 16, base cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **16 pruebas aprobadas** (9 unitarias + 7 de integración). También se probó la migración sobre el *fixture* v11 con datos (`V11_MIGRATION_OK`) y se verificó un único General por ficha.
+- **Docker verificado:** `docker compose up --build` construye `zenda-backend` y `zenda-frontend`, y levanta `db`, `migrate`, `backend` y `frontend`. `GET /api/health` responde 200, el frontend 200 y el login de administrador y aprendiz 200.
 
 ## Verificación
 
@@ -107,17 +107,18 @@ pnpm build
 
 ## Despliegue
 
-- **Backend:** Render (`render.yaml`) con `preDeployCommand` que ejecuta `backend/scripts/migrar.js` antes de arrancar.
+- **Backend:** Render (`render.yaml`) con `startCommand: sh -c "node scripts/migrar.js && node server.js"`. El plan free no admite `preDeployCommand`; la migración se ejecuta al arrancar y es idempotente.
 - **Migración local:** el servicio `migrate` de Compose aplica `002_semana2.sql` cuando la base ya existía.
 - **Frontend:** Vercel (`frontend/vercel.json`, Root Directory `frontend`, `VITE_API_URL`).
 - **BD:** Neon (PostgreSQL) con SSL validado.
 
 ## Proceso y limitaciones
 
-- Los commits de esta entrega se hacen por bloques con *Conventional Commits* en español y **no se hace `push`**.
-- **D-08:** el historial anterior concentra 15 de 16 commits en un integrante y no refleja el reparto ni la rotación de revisores. No se reescribe la historia; a partir de esta entrega se documentan los commits por bloque y se recomienda usar PRs hacia `develop` con el revisor asignado.
-- **D-09:** `develop` ya estaba publicado antes de esta tarea. La regla de “sin push” aplica a los cambios nuevos de esta entrega.
-- La migración se probó sobre el esquema anterior disponible en `HEAD`, no sobre una copia restaurada de producción. Antes de desplegar en Neon debe hacerse un respaldo y ejecutar `backend/scripts/migrar.js` en un entorno de ensayo.
+- Los commits se hacen por bloques con *Conventional Commits* en español y ya están publicados en `origin/develop`.
+- **D-08:** el historial anterior concentra la mayoría de commits en un integrante y no refleja el reparto ni la rotación de revisores. No se reescribe la historia; a partir de esta entrega se documentan los commits por bloque y se recomienda usar PRs hacia `develop` con el revisor asignado.
+- **D-09:** `develop` ya estaba publicado antes de esta tarea. Los cambios nuevos también se publicaron (`5be156a`, `bacaa2b`, merge `4e54425`).
+- La migración se probó sobre el *fixture* v11 y sobre el esquema actual, no sobre una copia restaurada de producción. Antes de desplegar en Neon debe hacerse un respaldo y ejecutar `backend/scripts/migrar.js` en un entorno de ensayo.
+- El despliegue público de Render/Vercel sigue sirviendo la versión v11; el código actual no se ha desplegado.
 
 ## Criterio de cierre
 

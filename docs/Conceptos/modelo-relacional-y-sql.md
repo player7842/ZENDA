@@ -12,10 +12,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Motor** | PostgreSQL 14 o superior ([RT-003](../requisitos/restricciones.md#rt-003--base-de-datos-obligatoria)) |
-| **Acceso** | Biblioteca `pg` con SQL parametrizado ([RS-005](../requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas)) |
-| **Esquema** | [esquema-bd.md](../referencia-tecnica/esquema-bd.md) · [MER y MR](../diagramas/mer-mr.md) |
-| **Fecha** | Octubre 2026 |
+| **Motor** | PostgreSQL 16 ([RT-003](../Requisitos/restricciones.md#rt-003--base-de-datos-obligatoria)) |
+| **Acceso** | Biblioteca `pg` con SQL parametrizado ([RS-005](../Requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas)) |
+| **Esquema** | [esquema-bd.md](../Referencia-Tecnica/esquema-bd.md) · [MER y MR](../Diagramas/mer-mr.md) |
+| **Fecha** | 23-oct-2026 |
 
 ---
 
@@ -61,10 +61,10 @@ Las tablas intermedias suelen cargar **datos propios de la relación**: `integra
 | Forma | Regla | Cómo se ve en ZENDA |
 |---|---|---|
 | **1FN** | Un valor por celda; sin listas dentro de una columna | Los integrantes **no** van como una lista en `grupos`: tienen su tabla |
-| **2FN** | Cada columna depende de **toda** la clave | En `evidencia_versiones`, los datos del archivo dependen de la versión, no solo de la evidencia |
+| **2FN** | Cada columna depende de **toda** la clave | `integrantes_grupo` guarda solo datos de la relación grupo–usuario, no datos del usuario |
 | **3FN** | Las columnas no dependen de otras columnas que no son clave | El nombre del programa vive en `programas`, no se copia en cada ficha |
 
-**Desnormalización a propósito:** `evidencias.tipo_evidencia` y `evidencias.ubicacion` **repiten** los datos de la versión vigente. Se conservan para no romper el código de v11, que ya los lee. El riesgo es que se desincronicen; la regla es que **solo el servicio de evidencias** los actualiza, al cambiar la versión vigente.
+**Estado derivado:** `carpetas.estado_carpeta` y `fases.estado_fase` no son datos independientes: se recalculan a partir de las evaluaciones vigentes (RN-018). No hay versionado de evidencias en el esquema actual; `evidencias.tipo_evidencia` y `evidencias.ubicacion` son la fuente de verdad.
 
 ---
 
@@ -107,11 +107,11 @@ SELECT count(*) FROM integrantes_grupo WHERE grupo_id = $1 AND estado_integrante
 COMMIT;
 ```
 
-Prueba: [IT-12](../testing/pruebas-de-integracion.md#it-12--concurrencia-del-último-cupo).
+Prueba: [IT-12](../Testing/pruebas-de-integracion.md#it-12--concurrencia-del-último-cupo).
 
 ---
 
-## 5. Consultas de ejemplo con el esquema v12
+## 5. Consultas de ejemplo con el esquema actual
 
 ### Resultado vigente de cada evidencia de una carpeta
 
@@ -125,8 +125,7 @@ SELECT e.evidencia_id, e.nombre_evidencia, ev.resultado
      ORDER BY evaluacion_id DESC
      LIMIT 1
   ) ev ON true
- WHERE e.carpeta_id = $1
-   AND e.eliminada = false;
+ WHERE e.carpeta_id = $1;
 ```
 
 `LEFT JOIN` conserva las evidencias **sin evaluar** (`resultado` queda en `NULL`). Con `INNER JOIN` desaparecerían, y la carpeta parecería completa.
@@ -137,7 +136,7 @@ SELECT e.evidencia_id, e.nombre_evidencia, ev.resultado
 SELECT count(*) FILTER (WHERE ev.resultado = 'APROBADO') AS aprobadas,
        count(*)                                         AS total
   FROM carpetas c
-  JOIN evidencias e ON e.carpeta_id = c.carpeta_id AND e.eliminada = false
+  JOIN evidencias e ON e.carpeta_id = c.carpeta_id
   LEFT JOIN LATERAL (
     SELECT resultado
       FROM evaluaciones
@@ -193,7 +192,7 @@ Un índice acelera la búsqueda a costa de algo de espacio y de escritura. Postg
 EXPLAIN ANALYZE SELECT ... ;   -- busca "Index Scan"; "Seq Scan" en una tabla grande es una alerta
 ```
 
-Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
+Prueba: [PNF-R06](../Testing/pruebas-no-funcionales.md#2-pruebas).
 
 ---
 
@@ -201,13 +200,13 @@ Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
 
 | Técnica | Idea | Dónde |
 |---|---|---|
-| **Historial por vigencia** | No se actualiza: se agrega un registro y el anterior pasa a `vigente = false` | `evaluaciones`, `evidencia_versiones`, `lista_chequeo_evaluaciones` |
+| **Historial por inserción** | No se actualiza: cada recalificación agrega una fila y la vigente es la de mayor `evaluacion_id` | `evaluaciones` |
 | **Historial por fechas** | Se cierra con `fecha_fin` en lugar de borrar | `instructor_ficha` |
-| **Borrado lógico** | `eliminada = true`; las consultas filtran | `evidencias` |
-| **Auditoría** | Tabla `auditoria` con `detalle` en `JSONB` | Acciones críticas |
+| **Borrado lógico** | `eliminada = true`; las consultas filtran | **No implementado** (Semana 4) |
+| **Auditoría** | Tabla `auditoria` con `detalle` en `JSONB` | **No implementado** (Semanas 3–6) |
 | **Migraciones** | Scripts numerados que llevan el esquema de una versión a otra sin borrar datos | `002_semana2.sql` |
 
-**Reglas de migración:** corren en una transacción; usan `IF [NOT] EXISTS`; **nunca se edita una ya fusionada**; se prueban sobre una copia ([IT-13](../testing/pruebas-de-integracion.md#it-13--migración-de-v11-a-v12)).
+**Reglas de migración:** corren en una transacción; usan `IF [NOT] EXISTS`; **nunca se edita una ya fusionada**; se prueban sobre una copia ([IT-13](../Testing/pruebas-de-integracion.md#it-13--migración-de-v11-al-esquema-actual)).
 
 ---
 
@@ -218,10 +217,10 @@ Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
 | **Identidad** | `GENERATED BY DEFAULT AS IDENTITY` | Reemplaza a `SERIAL`; es el estándar actual |
 | **Roles** | `ENUM tipo_rol` | Cuatro valores estables; cambiarlo exige migración |
 | **Estados** | `VARCHAR` con `CHECK` | Más fácil de ampliar que un `ENUM` |
-| **Fechas** | `TIMESTAMP` sin zona horaria | Pendiente: valorar `TIMESTAMPTZ` para evitar ambigüedades; [RNF-013.4](../requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) pide mostrar en hora de Colombia |
-| **Textos largos** | `VARCHAR(500)` en descripciones | El límite se valida también en el backend ([RNF-009.9](../requisitos/RNFs/RNF-009_integridad_de_datos.md)) |
+| **Fechas** | `TIMESTAMP` sin zona horaria | Pendiente: valorar `TIMESTAMPTZ` para evitar ambigüedades; [RNF-013.4](../Requisitos/RNFs/RNF-013_interoperabilidad_y_api.md) pide mostrar en hora de Colombia |
+| **Textos largos** | `VARCHAR(500)` en descripciones | El límite se valida también en el backend ([RNF-009.9](../Requisitos/RNFs/RNF-009_integridad_de_datos.md)) |
 | **Booleanos** | `BOOLEAN NOT NULL DEFAULT …` | Evita el "tres estados" (verdadero, falso, nulo) |
-| **JSON** | `JSONB` solo en `auditoria.detalle` | Datos variables que no se consultan a diario |
+| **JSON** | `JSONB` solo en una futura tabla `auditoria` | Datos variables que no se consultan a diario |
 | **Contraseñas y tokens** | Solo hash | [Autenticación](autenticacion-jwt.md) |
 
 ---
@@ -232,12 +231,12 @@ Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
 |---|---|---|
 | Concatenar valores en el SQL | Inyección | Parámetros `$1`, `$2` |
 | `INNER JOIN` donde hacía falta `LEFT JOIN` | Desaparecen filas sin relación (evidencias sin evaluar) | Pensar qué pasa con lo que **no** tiene pareja |
-| Olvidar filtrar `NOT eliminada` o `vigente` | Se cuentan registros históricos o eliminados | Consultas centralizadas en un servicio |
+| Olvidar elegir la evaluación vigente | Se cuenta una evaluación histórica | Usar siempre `LATERAL … ORDER BY evaluacion_id DESC LIMIT 1` |
 | `pool.query` dentro de una transacción | No es atómico | Un solo `client` |
 | No liberar el cliente | Se agota el pool | `release()` en `finally` |
 | El problema N+1: una consulta por cada fila | Lentitud | Una consulta con `JOIN` o `IN` |
 | Dividir por cero en porcentajes | Error o `NaN` | Controlar el caso de total `0` |
-| `SELECT *` | Trae columnas sensibles (`contrasena`) | Listar columnas ([RS-003](../requisitos/restricciones.md#rs-003--no-exponer-contraseñas)) |
+| `SELECT *` | Trae columnas sensibles (`contrasena`) | Listar columnas ([RS-003](../Requisitos/restricciones.md#rs-003--no-exponer-contraseñas)) |
 | `OFFSET` enorme para paginar | Se vuelve lento | Paginar con límite y criterio estable; evaluar paginación por cursor |
 
 ---
@@ -251,12 +250,12 @@ Prueba: [PNF-R06](../testing/pruebas-no-funcionales.md#2-pruebas).
 | 3 | ¿Las columnas obligatorias son `NOT NULL` y los valores cerrados tienen `CHECK`? | ☐ |
 | 4 | ¿Necesita historial (vigencia o fechas) en lugar de `UPDATE`? | ☐ |
 | 5 | ¿Debe usar borrado lógico? | ☐ |
-| 6 | ¿Registra quién y cuándo (`creada_por`, `fecha_creacion`, `fecha_actualizacion`)? | ☐ |
-| 7 | ¿Hay una migración numerada y se actualizaron [esquema](../referencia-tecnica/esquema-bd.md) y [MER/MR](../diagramas/mer-mr.md)? | ☐ |
+| 6 | ¿Registra quién y cuándo cuando el modelo lo necesita (`usuario_id`, `fecha_creacion`, `fecha_subida`)? | ☐ |
+| 7 | ¿Hay una migración numerada y se actualizaron [esquema](../Referencia-Tecnica/esquema-bd.md) y [MER/MR](../Diagramas/mer-mr.md)? | ☐ |
 
 ---
 
 ## Documentos relacionados
 
-- [Esquema de base de datos](../referencia-tecnica/esquema-bd.md) · [MER y MR](../diagramas/mer-mr.md) · [Patrones de arquitectura](patrones-arquitectonicos.md)
-- [Convenciones de código — SQL](../colaboracion/convenciones-de-codigo.md#5-sql-y-acceso-a-datos) · [Pruebas de integración](../testing/pruebas-de-integracion.md)
+- [Esquema de base de datos](../Referencia-Tecnica/esquema-bd.md) · [MER y MR](../Diagramas/mer-mr.md) · [Patrones de arquitectura](patrones-arquitectonicos.md)
+- [Convenciones de código — SQL](../Colaboracion/convenciones-de-codigo.md#5-sql-y-acceso-a-datos) · [Pruebas de integración](../Testing/pruebas-de-integracion.md)

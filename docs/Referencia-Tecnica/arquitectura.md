@@ -1,4 +1,13 @@
-# Arquitectura — ZENDA v12
+# Arquitectura — ZENDA
+
+> [!NOTE]
+> **Estado del documento.** Esta es la arquitectura **objetivo** de las
+> Semanas 3–6. El código actual (v11 + Semanas 1 y 2) **no** incluye
+> `AuthContext`, refresh tokens, `sesiones_refresh`, almacenamiento S3 ni
+> listas de chequeo. Para el estado real consulta el
+> [`README.md`](../../README.md), el
+> [`esquema-bd.md`](esquema-bd.md) y
+> [`SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`](../../SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md).
 
 <!--
   ¿Qué? Descripción de la arquitectura de ZENDA: contexto, contenedores, componentes, flujos clave, seguridad y estructura de código.
@@ -14,10 +23,10 @@
 |---|---|
 | **Sistema** | ZENDA — gestión y seguimiento de proyectos formativos ADSO |
 | **Estilo** | Cliente–servidor, SPA + API REST + base de datos relacional |
-| **Versión documentada** | v12 (objetivo) sobre la base real de v11 |
+| **Versión documentada** | Objetivo Semanas 3–6; base real v11 + Semanas 1–2 |
 | **Fecha** | Octubre 2026 |
 
-**Leyenda de estado:** ✅ existe en v11 · 🔄 cambio aprobado · 🆕 componente nuevo.
+**Leyenda de estado:** ✅ existe en el código actual · 🔄 cambio aprobado · 🆕 componente nuevo (aún no implementado).
 
 ---
 
@@ -28,9 +37,9 @@ ZENDA permite que grupos de aprendices desarrollen su proyecto formativo por fas
 | Principio | Qué significa en ZENDA |
 |---|---|
 | **Separación por capas** | Las rutas no contienen lógica; los controladores no construyen respuestas HTML; el acceso a datos está centralizado. |
-| **El servidor manda** | Toda autorización se valida en el backend ([RS-004](../requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor)). |
-| **SQL explícito** | Consultas parametrizadas con `pg`, sin ORM ([RT-001](../requisitos/restricciones.md#rt-001--stack-de-backend-obligatorio)). |
-| **Configuración por entorno** | Nada sensible ni dependiente del entorno vive en el código ([RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)). |
+| **El servidor manda** | Toda autorización se valida en el backend ([RS-004](../Requisitos/restricciones.md#rs-004--autorización-siempre-en-el-servidor)). |
+| **SQL explícito** | Consultas parametrizadas con `pg`, sin ORM ([RT-001](../Requisitos/restricciones.md#rt-001--stack-de-backend-obligatorio)). |
+| **Configuración por entorno** | Nada sensible ni dependiente del entorno vive en el código ([RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio)). |
 | **Sin romper el contrato** | Rutas y nombres de campos se mantienen estables mientras se reorganiza el código interno. |
 
 ---
@@ -61,8 +70,8 @@ flowchart LR
 
 | Sistema externo | Uso | Estado |
 |---|---|---|
-| Gmail SMTP | Recuperación de contraseña y verificación de correo, con contraseña de aplicación ([RT-007](../requisitos/restricciones.md#rt-007--correo-electrónico-limitado)). | ✅ recuperación · 🆕 verificación |
-| Almacenamiento S3 | Archivos de evidencias; MinIO en desarrollo, R2 o S3 en producción ([RT-006](../requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). | 🆕 |
+| Gmail SMTP | Recuperación de contraseña y verificación de correo, con contraseña de aplicación ([RT-007](../Requisitos/restricciones.md#rt-007--correo-electrónico-limitado)). | ✅ recuperación · 🆕 verificación |
+| Almacenamiento S3 | Archivos de evidencias; MinIO en desarrollo, R2 o S3 en producción ([RT-006](../Requisitos/restricciones.md#rt-006--evidencias-como-archivo-o-enlace)). | 🆕 |
 
 ---
 
@@ -176,7 +185,7 @@ flowchart TB
 
 ## 6. Flujos clave
 
-### 6.1 Inicio de sesión y renovación
+### 6.1 Inicio de sesión y renovación (objetivo HU-004)
 
 ```mermaid
 sequenceDiagram
@@ -199,7 +208,7 @@ sequenceDiagram
     Note over FE: 30 min sin actividad → cierra la sesión
 ```
 
-### 6.2 Subida de una evidencia (archivo)
+### 6.2 Subida de una evidencia (archivo, objetivo Semana 4)
 
 ```mermaid
 sequenceDiagram
@@ -240,7 +249,7 @@ sequenceDiagram
     BE-->>I: estado de la fase y avance
 ```
 
-**Algoritmo de la cascada** ([RN-018](../requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados), [RN-020](../requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase)):
+**Algoritmo de la cascada** ([RN-018](../Requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados), [RN-020](../Requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase)):
 
 1. Para cada carpeta, tomar la evaluación vigente de cada evidencia no eliminada.
 2. Si alguna es `REPROBADO` → carpeta `Desaprobada`; si todas son `APROBADO` → `Aprobada`; si no → `En revisión`.
@@ -273,13 +282,13 @@ sequenceDiagram
 
 | Capa | Medida | Requisito |
 |---|---|---|
-| Navegador | Bloqueo de pegado en la confirmación de contraseña; medidor de fortaleza; cierre por inactividad. | [RS-006](../requisitos/restricciones.md#rs-006--registro-seguro-y-humano) |
-| Transporte | HTTPS en producción; cabeceras de seguridad en Nginx y en la API. | [RNF-001](../requisitos/RNFs/RNF-001_seguridad.md) |
-| API | JWT de corta duración, CORS restringido al frontend, límite de intentos. | [RT-004](../requisitos/restricciones.md#rt-004--método-de-autenticación) |
-| Autorización | Middleware de rol + verificación de pertenencia (grupo, ficha, líder). | [Matriz de permisos](../requisitos/matriz-permisos.md) |
-| Datos | SQL parametrizado, bcrypt, secretos en variables de entorno, transacciones. | [RS-003](../requisitos/restricciones.md#rs-003--no-exponer-contraseñas), [RS-005](../requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas) |
-| Archivos | Lista blanca por contenido, nombre aleatorio, cuota, descarga con autorización. | [RNF-012](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md) |
-| Contenedores | Proceso sin `root`, `.dockerignore` que excluye `.env`, imágenes LTS. | [RT-008](../requisitos/restricciones.md#rt-008--contenedores-con-docker) |
+| Navegador | Bloqueo de pegado en la confirmación de contraseña; medidor de fortaleza; cierre por inactividad. | [RS-006](../Requisitos/restricciones.md#rs-006--registro-seguro-y-humano) |
+| Transporte | HTTPS en producción; cabeceras de seguridad en Nginx y en la API. | [RNF-001](../Requisitos/RNFs/RNF-001_seguridad.md) |
+| API | JWT de corta duración, CORS restringido al frontend, límite de intentos. | [RT-004](../Requisitos/restricciones.md#rt-004--método-de-autenticación) |
+| Autorización | Middleware de rol + verificación de pertenencia (grupo, ficha, líder). | [Matriz de permisos](../Requisitos/matriz-permisos.md) |
+| Datos | SQL parametrizado, bcrypt, secretos en variables de entorno, transacciones. | [RS-003](../Requisitos/restricciones.md#rs-003--no-exponer-contraseñas), [RS-005](../Requisitos/restricciones.md#rs-005--consultas-sql-parametrizadas) |
+| Archivos | Lista blanca por contenido, nombre aleatorio, cuota, descarga con autorización. | [RNF-012](../Requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md) |
+| Contenedores | Proceso sin `root`, `.dockerignore` que excluye `.env`, imágenes LTS. | [RT-008](../Requisitos/restricciones.md#rt-008--contenedores-con-docker) |
 
 ---
 
@@ -346,12 +355,12 @@ ZENDA/
 
 | Atributo | Cómo lo soporta la arquitectura | RNF |
 |---|---|---|
-| Seguridad | Capas de la sección 7 | [RNF-001](../requisitos/RNFs/RNF-001_seguridad.md) |
-| Rendimiento | Pool de conexiones, índices, paginación, compresión | [RNF-002](../requisitos/RNFs/RNF-002_rendimiento.md) |
-| Mantenibilidad | Capas, `services/`, constantes, estructura uniforme | [RNF-005](../requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) |
-| Portabilidad | Docker y configuración por entorno | [RNF-006](../requisitos/RNFs/RNF-006_compatibilidad_y_portabilidad.md) |
-| Escalabilidad | Backend sin estado y almacenamiento externo | [RNF-010](../requisitos/RNFs/RNF-010_escalabilidad.md) |
-| Observabilidad | Registro de errores y auditoría | [RNF-011](../requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
+| Seguridad | Capas de la sección 7 | [RNF-001](../Requisitos/RNFs/RNF-001_seguridad.md) |
+| Rendimiento | Pool de conexiones, índices, paginación, compresión | [RNF-002](../Requisitos/RNFs/RNF-002_rendimiento.md) |
+| Mantenibilidad | Capas, `services/`, constantes, estructura uniforme | [RNF-005](../Requisitos/RNFs/RNF-005_mantenibilidad_y_calidad.md) |
+| Portabilidad | Docker y configuración por entorno | [RNF-006](../Requisitos/RNFs/RNF-006_compatibilidad_y_portabilidad.md) |
+| Escalabilidad | Backend sin estado y almacenamiento externo | [RNF-010](../Requisitos/RNFs/RNF-010_escalabilidad.md) |
+| Observabilidad | Registro de errores y auditoría | [RNF-011](../Requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
 
 ---
 
@@ -371,5 +380,5 @@ ZENDA/
 ## Documentos relacionados
 
 - [Esquema de base de datos](esquema-bd.md)
-- [Restricciones](../requisitos/restricciones.md) · [Reglas de negocio](../requisitos/reglas-de-negocio.md) · [Matriz de permisos](../requisitos/matriz-permisos.md)
-- [Requisitos no funcionales](../requisitos/RNFs/)
+- [Restricciones](../Requisitos/restricciones.md) · [Reglas de negocio](../Requisitos/reglas-de-negocio.md) · [Matriz de permisos](../Requisitos/matriz-permisos.md)
+- [Requisitos no funcionales](../Requisitos/RNFs/)

@@ -15,7 +15,7 @@
 | **Tiempo estimado** | 15 a 20 minutos |
 | **Sistemas** | Windows, macOS y Linux |
 | **Alternativa** | [Instalación con Docker](con-docker.md) |
-| **Fecha** | Octubre 2026 |
+| **Fecha** | 23-oct-2026 |
 
 ---
 
@@ -23,9 +23,9 @@
 
 | Herramienta | Versión | Verificar con | Notas |
 |---|---|---|---|
-| [Node.js](https://nodejs.org/) | **LTS** (ver [RH-002](../requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)) | `node -v` | Usa solo versiones LTS. Se recomienda `nvm` para cambiar de versión. |
-| [pnpm](https://pnpm.io/installation) | reciente | `pnpm -v` | **Único** gestor de paquetes permitido ([RH-001](../requisitos/restricciones.md#rh-001--gestor-de-paquetes)). |
-| [PostgreSQL](https://www.postgresql.org/download/) | 14 o superior | `psql --version` | Debe incluir el cliente `psql`. |
+| [Node.js](https://nodejs.org/) | **LTS** (ver [RH-002](../Requisitos/restricciones.md#rh-002--versión-lts-de-nodejs-fija)) | `node -v` | Usa solo versiones LTS. Se recomienda `nvm` para cambiar de versión. |
+| [pnpm](https://pnpm.io/installation) | reciente | `pnpm -v` | **Único** gestor de paquetes permitido ([RH-001](../Requisitos/restricciones.md#rh-001--gestor-de-paquetes)). |
+| [PostgreSQL](https://www.postgresql.org/download/) | **16** | `psql --version` | Debe incluir el cliente `psql`. |
 | [Git](https://git-scm.com/) | cualquiera | `git --version` | |
 
 Para activar pnpm con Corepack (incluido en Node.js LTS):
@@ -75,23 +75,35 @@ psql -U postgres -h localhost -d zenda -f Database/zenda_bd.sql
 
 > ⚠️ **Este script borra y recrea todas las tablas.** No lo ejecutes sobre una base con datos que quieras conservar.
 
-### 3.3 Aplicar la migración v12 (opcional)
+### 3.3 Aplicar la migración de Semana 2
 
-Solo si ya actualizaste el backend a v12 ([esquema](../referencia-tecnica/esquema-bd.md)):
+`zenda_bd.sql` ya crea el esquema actual (14 tablas), pero **no** crea las dos
+funciones SQL de cascada. La migración las añade y deja la base idéntica a la
+que usa Docker:
 
 ```bash
-psql -U postgres -h localhost -d zenda -f Database/migrations/002_semana2.sql
+psql -U postgres -h localhost -d zenda -v ON_ERROR_STOP=1 \
+  -f Database/migrations/002_semana2.sql
 ```
 
-> La migración elimina `rol_scrum` y `sub_rol_intencion`; con el backend de v11 el registro y la unión a proyectos dejan de funcionar. Haz antes una copia: `pg_dump -U postgres zenda > respaldo.sql`.
+La migración es idempotente: se puede ejecutar varias veces. Si ya tenías una
+base de una versión anterior, la actualiza sin borrar evidencias, grupos ni
+proyectos. Si el script detecta ubicaciones heredadas inválidas, las conserva
+y deja `chk_evidencias_ubicacion` como `NOT VALID`.
+
+> Antes de migrar una base con datos reales haz una copia:
+> `pg_dump -U postgres zenda > respaldo.sql`.
 
 ### 3.4 Comprobar
 
 ```bash
 psql -U postgres -h localhost -d zenda -c "SELECT count(*) FROM usuarios;"
+psql -U postgres -h localhost -d zenda -c "SELECT count(*) FROM grupos WHERE es_general;"
 ```
 
-Con los datos de prueba debe devolver `18`.
+Con los datos de prueba debe devolver `18` usuarios y un General por cada una
+de las 4 fichas. El detalle del esquema está en
+[esquema de base de datos](../Referencia-Tecnica/esquema-bd.md).
 
 ---
 
@@ -161,6 +173,8 @@ Fichas de prueba: `2724285`, `2724310`, `2724290` y `2724315`. El proyecto de ej
 |---|---|---|
 | `backend/` | `pnpm dev` | Servidor con recarga automática (`nodemon`). |
 | `backend/` | `pnpm start` | Servidor sin recarga (como en producción). |
+| `backend/` | `pnpm test` | 9 pruebas unitarias + 7 de integración (16). Las de integración se omiten si no hay base. |
+| `backend/` | `pnpm lint` | Analiza el código con ESLint. |
 | `frontend/` | `pnpm dev` | Servidor de desarrollo de Vite. |
 | `frontend/` | `pnpm build` | Compila a `frontend/dist`. |
 | `frontend/` | `pnpm preview` | Sirve el *build* localmente para probarlo. |
@@ -209,5 +223,5 @@ Después de instalar o de cualquier cambio grande, verifica en unos 10 minutos:
 ## Documentos relacionados
 
 - [Instalación con Docker](con-docker.md) · [Variables de entorno](variables-de-entorno.md)
-- [Esquema de base de datos](../referencia-tecnica/esquema-bd.md) · [Arquitectura](../referencia-tecnica/arquitectura.md)
-- [Restricciones](../requisitos/restricciones.md)
+- [Esquema de base de datos](../Referencia-Tecnica/esquema-bd.md) · [Arquitectura](../Referencia-Tecnica/arquitectura.md)
+- [Restricciones](../Requisitos/restricciones.md)

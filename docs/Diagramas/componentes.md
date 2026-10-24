@@ -15,10 +15,10 @@
 | **Nivel** | Componentes (UML) |
 | **Notación** | Mermaid (flujo con subgrafos) |
 | **Contexto** | [Diagrama de contexto](contexto.md) |
-| **Capas y flujos** | [Arquitectura](../referencia-tecnica/arquitectura.md) |
+| **Capas y flujos** | [Arquitectura](../Referencia-Tecnica/arquitectura.md) |
 | **Fecha** | Octubre 2026 |
 
-**Leyenda:** ✅ existe en v11 · 🆕 nuevo en v12 · 🔄 se reorganiza en v12.
+**Leyenda:** ✅ existe en el código actual · 🆕 propuesto para las Semanas 3–6 (aún no implementado) · 🔄 se reorganiza.
 
 ---
 
@@ -114,11 +114,11 @@ flowchart LR
 
 | Servicio | Responsabilidad | Lo usan | Requisito |
 |---|---|---|---|
-| `CascadaService` | Recalcula el estado de carpeta y de fase a partir de las evaluaciones vigentes. | Aprendiz, instructor | [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
-| `AvanceService` | Calcula porcentajes de fase, de lista de chequeo y de tareas. | Instructor, coordinador | [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md), [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) |
-| `PermisosService` | Verifica pertenencia al grupo, condición de líder y vinculación del instructor con la ficha. | Aprendiz, instructor | [Matriz de permisos](../requisitos/matriz-permisos.md) |
-| `AlmacenamientoService` | Valida, comprime, guarda y entrega archivos. | Aprendiz | [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md) |
-| `AuditoriaService` | Registra acciones críticas (quién, qué, cuándo). | Usuarios, grupos, instructor | [RNF-011](../requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
+| `CascadaService` | Recalcula el estado de carpeta y de fase a partir de las evaluaciones vigentes. | Aprendiz, instructor | [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md) |
+| `AvanceService` | Calcula porcentajes de fase, de lista de chequeo y de tareas. | Instructor, coordinador | [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md), [RF-038](../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md) |
+| `PermisosService` | Verifica pertenencia al grupo, condición de líder y vinculación del instructor con la ficha. | Aprendiz, instructor | [Matriz de permisos](../Requisitos/matriz-permisos.md) |
+| `AlmacenamientoService` | Valida, comprime, guarda y entrega archivos. | Aprendiz | [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md) |
+| `AuditoriaService` | Registra acciones críticas (quién, qué, cuándo). | Usuarios, grupos, instructor | [RNF-011](../Requisitos/RNFs/RNF-011_observabilidad_y_auditoria.md) |
 
 ---
 
@@ -126,10 +126,10 @@ flowchart LR
 
 | Interfaz | Ofrece | Consume | Contrato |
 |---|---|---|---|
-| **API REST** | Backend | Frontend | [api-endpoints.md](../referencia-tecnica/api-endpoints.md) |
-| **Pool de PostgreSQL** | `config/db.js` | Controladores y servicios | [esquema-bd.md](../referencia-tecnica/esquema-bd.md) |
-| **SMTP** | Gmail | `utils/mailer.js` | [variables de entorno](../setup/variables-de-entorno.md) |
-| **API S3** 🆕 | Almacenamiento | `AlmacenamientoService` | [RNF-012](../requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md) |
+| **API REST** | Backend | Frontend | [api-endpoints.md](../Referencia-Tecnica/api-endpoints.md) |
+| **Pool de PostgreSQL** | `config/db.js` | Controladores y servicios | [esquema-bd.md](../Referencia-Tecnica/esquema-bd.md) |
+| **SMTP** | Gmail | `utils/mailer.js` | [variables de entorno](../Setup/variables-de-entorno.md) |
+| **API S3** 🆕 | Almacenamiento | `AlmacenamientoService` | [RNF-012](../Requisitos/RNFs/RNF-012_gestion_de_archivos_y_almacenamiento.md) |
 | **Almacenamiento del navegador** | Navegador | Contextos | Token y tema (`localStorage`) |
 
 ---
@@ -149,16 +149,17 @@ flowchart LR
 | `proyectos` | | | | C R U | R | R |
 | `fases` | | | | C R U | R U | R |
 | `carpetas` | | | | C R U | R U | |
-| `evidencias` | | | | C R U D | R | |
-| `evidencia_versiones` | | | | C R | R | |
-| `evaluaciones` | | | | R | C U | R |
+| `evidencias` | | | | C R | R | |
+| `evaluaciones` | | | | R | C R | R |
 | `observaciones` | | | | R | C R | |
 | `tareas` | | | | C R U | | R |
 | `listas_chequeo`, ítems y evaluaciones 🆕 | | | | | C R U D | R |
 | `sesiones_refresh`, `tokens_verificacion_correo` 🆕 | C R U | | | | | |
 | `auditoria` 🆕 | | C | | | C | |
 
-> Para `evaluaciones`, `U` significa marcar la anterior como no vigente; nunca se sobrescribe el resultado ([RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)).
+> Las filas 🆕 **no existen en la base actual**; se muestran solo como diseño objetivo.
+
+> En `evaluaciones` solo hay `C` y `R`: cada recalificación inserta una fila nueva y la vigente es la de mayor `evaluacion_id` ([RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones)).
 
 ---
 
@@ -170,11 +171,11 @@ flowchart LR
 | Los servicios no conocen `req` ni `res`. | Poder probarlos sin servidor. |
 | Los controladores de un rol no importan los de otro rol. | Lo compartido va a `services/`. |
 | El frontend solo habla con el backend a través de la capa API. | Un cambio de ruta se corrige en un solo lugar. |
-| Ningún componente lee secretos fuera de `config/`. | [RS-001](../requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio) |
+| Ningún componente lee secretos fuera de `config/`. | [RS-001](../Requisitos/restricciones.md#rs-001--secretos-fuera-del-código-y-del-repositorio) |
 
 ---
 
 ## Documentos relacionados
 
 - [Contexto](contexto.md) · [Clases](clases.md) · [MER y MR](mer-mr.md)
-- [Arquitectura](../referencia-tecnica/arquitectura.md) · [Matriz de permisos](../requisitos/matriz-permisos.md)
+- [Arquitectura](../Referencia-Tecnica/arquitectura.md) · [Matriz de permisos](../Requisitos/matriz-permisos.md)

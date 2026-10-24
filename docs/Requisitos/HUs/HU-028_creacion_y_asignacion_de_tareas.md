@@ -16,7 +16,7 @@
 | **Título** | Creación y asignación de tareas |
 | **Módulo** | Tareas |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Líder de grupo |
 | **RF asociado** | RF-028 |
 | **Reglas de negocio** | RN-008, RN-021 |
@@ -61,4 +61,6 @@
 
 ## Cambios frente a la versión v11
 
-- El mensaje de error "Solo el Scrum Master puede crear y asignar tareas" pasa a mencionar al líder del grupo.
+- El mensaje de error "Solo el Scrum Master puede crear y asignar tareas" ahora menciona al líder del grupo (corregido en Semana 2).
+- La autorización se resuelve con `grupos.lider_id`, no con un sub-rol Scrum.
+- Verificado en el código: `crearTarea` valida que quien llama sea el líder, que el responsable sea integrante activo del mismo grupo y que la prioridad sea `Alta`, `Media` o `Baja`.

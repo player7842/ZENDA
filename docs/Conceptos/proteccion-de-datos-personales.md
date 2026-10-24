@@ -15,7 +15,7 @@
 | **Norma principal** | Ley 1581 de 2012 (régimen general de protección de datos personales) y su reglamentación (Decreto 1377 de 2013, hoy compilado en el Decreto 1074 de 2015) |
 | **Autoridad** | Superintendencia de Industria y Comercio (SIC) |
 | **Origen del requisito** | Observación del instructor: aceptación **obligatoria** de términos, privacidad, cookies y protección de datos ("es de ley") |
-| **Requisitos** | [RS-007](../requisitos/restricciones.md#rs-007--aceptación-legal-obligatoria), [RN-004](../requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria), [RNF-007](../requisitos/RNFs/RNF-007_privacidad_y_cumplimiento_legal.md), [RF-039](../requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
+| **Requisitos** | [RS-007](../Requisitos/restricciones.md#rs-007--aceptación-legal-obligatoria), [RN-004](../Requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria), [RNF-007](../Requisitos/RNFs/RNF-007_privacidad_y_cumplimiento_legal.md), [RF-039](../Requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
 | **Fecha** | Octubre 2026 |
 
 > **Aviso importante:** este documento es **informativo y técnico**, no asesoría jurídica. Los textos legales definitivos y las decisiones marcadas como "por confirmar" deben revisarse con el área jurídica o de protección de datos del SENA antes de publicar el sistema. Las normas pueden cambiar: verifica siempre la versión vigente.
@@ -43,7 +43,7 @@
 | **Libertad** | Con consentimiento del titular | Casillas de aceptación en el registro |
 | **Veracidad o calidad** | Datos exactos y actualizados | Permitir corregir el perfil |
 | **Transparencia** | El titular puede saber qué se guarda de él | Páginas legales y canal de consulta |
-| **Acceso y circulación restringida** | Solo ve los datos quien debe | Permisos por rol ([matriz](../requisitos/matriz-permisos.md)) |
+| **Acceso y circulación restringida** | Solo ve los datos quien debe | Permisos por rol ([matriz](../Requisitos/matriz-permisos.md)) |
 | **Seguridad** | Proteger los datos | [Seguridad y OWASP](seguridad-owasp.md), bcrypt, HTTPS |
 | **Confidencialidad** | Reservar los datos aunque termine la relación | Nada de datos reales en capturas, registros ni respaldos compartidos |
 
@@ -59,8 +59,8 @@
 | Contraseña | Autenticación | No (se guarda solo como hash) | `usuarios.contrasena` |
 | Ficha, grupo y rol | Organización académica | No | `fichas`, `grupos`, `integrantes_grupo` |
 | Evidencias, observaciones y evaluaciones | Seguimiento del proyecto | No (pueden contener datos personales dentro de los archivos) | `evidencias`, `observaciones`, `evaluaciones` |
-| Registro de acciones | Seguridad y auditoría | No | `auditoria` |
-| Aceptación de textos legales | Prueba de la autorización | No | `usuarios.acepto_legales_en` |
+| Registro de acciones | Seguridad y auditoría | No | **No implementado** (propuesta de Semanas 3–6) |
+| Aceptación de textos legales | Prueba de la autorización | No | `usuarios.acepta_terminos`, `acepta_privacidad`, `acepta_cookies`, `acepta_tratamiento_datos` y `fecha_aceptacion_legal` |
 
 > **Datos sensibles** (salud, origen étnico, orientación política, biométricos…): ZENDA **no los recoge ni los pide**. Un archivo subido como evidencia podría contenerlos por error: las políticas de uso deben indicarlo.
 
@@ -72,7 +72,7 @@ Si hay aprendices **menores de 18 años**, el tratamiento de sus datos exige con
 
 ## 3. Las cuatro aceptaciones del registro
 
-El instructor pidió que sean **obligatorias, separadas y enlazadas** ([RN-004](../requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria)).
+El instructor pidió que sean **obligatorias, separadas y enlazadas** ([RN-004](../Requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria)).
 
 | Casilla | Qué contiene la página que enlaza | Por qué existe |
 |---|---|---|
@@ -112,10 +112,10 @@ Resumen de lo que la reglamentación pide que incluya (**revisar con el área ju
 |---|---|---|:---:|
 | **Conocer** | Saber qué datos se guardan | Consulta al responsable; vista de su perfil | ⚠️ |
 | **Actualizar y rectificar** | Corregir datos inexactos | El administrador edita el usuario; **pendiente** que el usuario edite su perfil | ⚠️ |
-| **Solicitar prueba de la autorización** | Ver cuándo y qué aceptó | `acepto_legales_en` ([esquema](../referencia-tecnica/esquema-bd.md)) | ✅ v12 |
-| **Ser informado del uso** | Conocer para qué se usan | Política de privacidad | ✅ v12 |
+| **Solicitar prueba de la autorización** | Ver cuándo y qué aceptó | `usuarios.fecha_aceptacion_legal` y las cuatro banderas ([esquema](../Referencia-Tecnica/esquema-bd.md)) | ✅ |
+| **Ser informado del uso** | Conocer para qué se usan | Política de privacidad | 🟡 páginas legales pendientes (HU-039) |
 | **Revocar la autorización y pedir supresión** | Retirar el consentimiento y que se borren los datos | Desactivar la cuenta; ver "supresión" abajo | ⚠️ |
-| **Presentar quejas ante la SIC** | Acudir a la autoridad | Se informa en la política | ✅ v12 |
+| **Presentar quejas ante la SIC** | Acudir a la autoridad | Se informa en la política | 🟡 páginas legales pendientes (HU-039) |
 
 ### Plazos de atención (referencia de la Ley 1581)
 
@@ -126,13 +126,13 @@ Resumen de lo que la reglamentación pide que incluya (**revisar con el área ju
 
 ### Supresión frente a historial académico
 
-Un derecho de supresión puede chocar con la necesidad de conservar **evaluaciones y evidencias** como registro académico y con el [historial inmutable](../requisitos/RNFs/RNF-009_integridad_de_datos.md). Opciones:
+Un derecho de supresión puede chocar con la necesidad de conservar **evaluaciones y evidencias** como registro académico y con el [historial inmutable](../Requisitos/RNFs/RNF-009_integridad_de_datos.md). Opciones:
 
 | Opción | Efecto | Valoración |
 |---|---|---|
 | **Desactivar** la cuenta | Deja de poder entrar; los datos se conservan | Es lo que existe hoy |
 | **Anonimizar** | Reemplaza nombre, documento y correo por valores genéricos y conserva los registros académicos | **Propuesta**; por confirmar con el SENA |
-| **Eliminar** todo | Borra datos y trabajo | Solo cuando no haya obligación de conservarlos; hoy puede fallar por las claves foráneas ([RF-007](../requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)) |
+| **Eliminar** todo | Borra datos y trabajo | Solo cuando no haya obligación de conservarlos; hoy puede fallar por las claves foráneas ([RF-007](../Requisitos/RFs/RF-007_desactivacion_y_eliminacion_de_usuarios.md)) |
 
 ---
 
@@ -140,13 +140,13 @@ Un derecho de supresión puede chocar con la necesidad de conservar **evaluacion
 
 | # | Función | Estado | Requisito |
 |:---:|---|:---:|---|
-| 1 | Pedir las 4 aceptaciones **obligatorias** antes de crear la cuenta | 🔄 v12 | [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) |
-| 2 | Guardar **cuándo** se aceptó | 🔄 v12 | `usuarios.acepto_legales_en` |
-| 3 | Publicar las 4 páginas y enlazarlas desde el pie de página y el registro | 🔄 v12 | [RF-039](../requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
+| 1 | Pedir las 4 aceptaciones **obligatorias** antes de crear la cuenta | ✅ | [RF-001](../Requisitos/RFs/RF-001_registro_de_aprendiz.md) |
+| 2 | Guardar **cuándo** se aceptó | ✅ | `usuarios.fecha_aceptacion_legal` |
+| 3 | Publicar las 4 páginas y enlazarlas desde el pie de página y el registro | 🟡 páginas legales pendientes (HU-039) | [RF-039](../Requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md) |
 | 4 | Mostrar el aviso de cookies | ✅ | `CookieBanner` |
-| 5 | Pedir la aceptación a los **usuarios existentes** en su próximo inicio de sesión | 🆕 por definir | [Notas de migración](../referencia-tecnica/esquema-bd.md#6-notas-de-migración) |
+| 5 | Pedir la aceptación a los **usuarios existentes** en su próximo inicio de sesión | 🆕 por definir | [Migración](../Referencia-Tecnica/esquema-bd.md#5-migración-002_semana2sql) |
 | 6 | Guardar la **versión** del texto aceptado | 🆕 propuesta | Columna `version_legales` (por confirmar) |
-| 7 | Controlar el acceso por rol y pertenencia | ✅ parcial | [Matriz de permisos](../requisitos/matriz-permisos.md) |
+| 7 | Controlar el acceso por rol y pertenencia | ✅ parcial | [Matriz de permisos](../Requisitos/matriz-permisos.md) |
 | 8 | Proteger los datos: hash, HTTPS, auditoría | ⚠️ | [OWASP](seguridad-owasp.md) |
 | 9 | Canal para consultas y reclamos (correo o formulario) | 🆕 por definir | Política de privacidad |
 | 10 | Permitir al usuario ver y corregir su perfil | 🆕 propuesta | Nuevo requisito |
@@ -218,5 +218,5 @@ La ley distingue **transmisión** (el proveedor trata datos por cuenta del respo
 ## Documentos relacionados
 
 - [Seguridad y OWASP](seguridad-owasp.md) · [Autenticación y JWT](autenticacion-jwt.md)
-- [RNF-007 Privacidad y cumplimiento legal](../requisitos/RNFs/RNF-007_privacidad_y_cumplimiento_legal.md) · [Restricciones de seguridad](../requisitos/restricciones.md#6-restricciones-de-seguridad)
-- [Esquema de base de datos](../referencia-tecnica/esquema-bd.md) · [Páginas legales — RF-039](../requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md)
+- [RNF-007 Privacidad y cumplimiento legal](../Requisitos/RNFs/RNF-007_privacidad_y_cumplimiento_legal.md) · [Restricciones de seguridad](../Requisitos/restricciones.md#6-restricciones-de-seguridad)
+- [Esquema de base de datos](../Referencia-Tecnica/esquema-bd.md) · [Páginas legales — RF-039](../Requisitos/RFs/RF-039_paginas_legales_y_aviso_de_cookies.md)

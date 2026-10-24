@@ -8,14 +8,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 ### Agregado
 
 - Documentación completa en `docs/` (requisitos, diagramas, referencia técnica, instalación, pruebas y colaboración).
-- Plantillas de GitHub, flujo de CI y guía de GitHub Projects.
+- Flujo de CI en `.github/workflows/ci.yml`: lint, pruebas con PostgreSQL 16, build del frontend y migración desde una base v11.
 - `docker-compose.yml`, Dockerfiles, `nginx.conf`, `.gitignore`, `.dockerignore`, `.gitattributes` y archivos `.env.example`.
 - **Semana 2:**
   - Reglas puras en `backend/src/domain/reglas.js`.
   - Servicios `cascada.js`, `asignaciones.js` y `grupos.js`.
-  - Pruebas unitarias y suite de integración con Supertest.
+  - 9 pruebas unitarias y 7 de integración con Supertest (16 en total).
   - Migración incremental e idempotente `Database/migrations/002_semana2.sql`.
-  - Servicio `migrate` en Compose y `preDeployCommand` en Render.
+  - Servicio `migrate` en Compose y `startCommand` con migración en Render (el plan free no admite `preDeployCommand`).
+  - *Fixtures* `Database/fixtures/v11_migracion.sql` y `v11_migracion_assert.sql` para probar el upgrade desde v11.
 - **Seguridad:** `helmet`, `express-rate-limit`, `trust proxy`, `/health` y `/api/health`.
 - **Recuperación de contraseña:** tabla `recuperacion_contrasena`, tokens con `purpose: 'reset'`, hash SHA-256 de un solo uso y `token_version`.
 - **Esquema:** `grupos.es_general`, `grupos.cupo_maximo`, `instructor_ficha` con historial, funciones `zenda_recalcular_carpeta`/`zenda_recalcular_fase`, checks de URLs de evidencias y de tipos.
@@ -35,7 +36,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Duración real de sesión documentada como 24 h (`JWT_SESSION_EXPIRES`); 15 min + refresh queda para HU-004.
 - `backend/.env.example`, `.env.example` y `docs/Setup/variables-de-entorno.md` alineados con `DB_SSL_REJECT_UNAUTHORIZED`, `JWT_SESSION_EXPIRES` y `CODIGO_PROGRAMA_COORDINADOR`.
 - **HU-020** (archivos reales) queda fuera de las Semanas 1–2 y se traslada a la Semana 4. En Semana 2 solo se admiten enlaces `http/https`.
-- **HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025 y HU-026** pasan a “Implementado” en el backlog.
+- **HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025, HU-026 y HU-028** pasan a “Implementado” en el backlog y en la matriz de trazabilidad (24 implementadas, 10 parciales, 8 planificadas).
 
 ### Corregido
 
@@ -43,6 +44,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - **C-02:** el plan ahora coincide con el código (`helmet`, rate-limit, `/health`).
 - **C-04:** la migración recalcula datos antes de añadir `CHECK`, normaliza cupos y es idempotente.
 - **C-05:** se elimina la comparación por `nombre_grupo = 'General'` y la posibilidad de crear un proyecto “General”.
+- **Colisión `GEN-<ficha>`:** si un General legado con proyecto ya ocupa el código, se conserva y el General nuevo recibe un sufijo estable. El *fixture* v11 cubre ese caso y las *assertions* comprueban que el grupo legado y su proyecto siguen intactos.
 - **C-06:** bloqueos en cascada, RN-007, cupo y evaluaciones; `clock_timestamp()`.
 - **C-07:** URLs `javascript:` rechazadas en backend y frontend.
 - **Q-01 a Q-11:** logging en `catch`, funciones SQL únicas, helper General, listados sin N+1, aprobación en bloque atómica, validación de fechas/longitudes, código criptográfico y `ORDER BY` antes de `LIMIT 1`.
@@ -58,19 +60,28 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - **D-10:** `JWT_SECRET` corto falla en producción; SSL valida certificados por defecto.
 - **H-16:** dependencias exactas y `pnpm` fijado.
 - Infraestructura: backend corre como `node`, tiene `HEALTHCHECK`, Compose aplica migraciones y CI las ejecuta dos veces.
+- **Healthchecks de Compose:** `db` y `frontend` usan `127.0.0.1` para forzar IPv4; el frontend ya no queda en `unhealthy` cuando `localhost` resuelve a `::1`.
 
 ### Pruebas
 
-- `pnpm lint` en backend y frontend.
-- 9 pruebas unitarias de reglas puras.
-- 7 pruebas de integración con Supertest (se omiten sin PostgreSQL; se ejecutan en CI).
-- `pnpm build` del frontend.
+- `pnpm --dir backend lint` y `pnpm --dir frontend build`.
+- 9 pruebas unitarias de reglas puras (`backend/tests/reglas.test.js`).
+- 7 pruebas de integración con Supertest (`backend/tests/integracion.test.js`). Se omiten sin PostgreSQL; en CI se ejecutan con `REQUIRE_DB=1`.
+- **Total: 16/16.**
+- Migración probada sobre una base v11 con datos: se aplica dos veces seguidas sin errores y las *assertions* confirman que no se pierden evidencias, grupos ni proyectos (`V11_MIGRATION_OK`).
+- `docker compose up --build` verificado: `db`, `migrate`, `backend` y `frontend` arrancan; `GET /api/health` responde 200, el frontend responde 200 y el login de administrador y aprendiz responde 200.
+
+### Verificación
+
+- Stack local verificado con PostgreSQL 16 (imagen `postgres:16-alpine`), Node 22 y Docker Compose.
+- CI de GitHub Actions con PostgreSQL 16.
+- Commits de cierre: `5be156a` (cascada y verificación), `bacaa2b` (migración v11 sin destruir datos) y merge `4e54425` en `develop`.
 
 ### Limitaciones conocidas
 
 - **H-13:** el token sigue en `localStorage` y dura 24 h; la solución completa es HU-004 (Semanas 3–6).
-- **HU-020:** archivos reales, lista blanca, tamaño máximo y compresión quedan para la Semana 4.
-- La suite se ejecutó contra PostgreSQL 18.6: 9 unitarias y 6 de integración aprobadas, y la migración se aplicó dos veces sin errores. No se pudo ejecutar Docker/Compose (daemon no disponible), aunque `docker compose config` valida la configuración.
+- **HU-020:** archivos reales, lista blanca, tamaño máximo y compresión quedan para la Semana 4. En Semana 2 solo se admiten enlaces `http/https`.
+- **Despliegue público:** la URL de Render/Vercel sigue sirviendo la versión v11; el código de las Semanas 1–2 no se ha desplegado. En Render free la migración va en `startCommand`, no en `preDeployCommand`.
 - **D-08:** el historial previo concentra los commits y no refleja la rotación de revisores. No se reescribe; se documenta y se corrige el proceso desde esta entrega.
 
 ## [11.0.0]

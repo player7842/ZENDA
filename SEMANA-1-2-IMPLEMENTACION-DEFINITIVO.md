@@ -2,7 +2,7 @@
 
 > **Documento de referencia oficial** para el estado real del repositorio al cerrar la Semana 2.
 > **Rama:** `develop` · **Fecha de cierre:** 23-oct-2026 · **Auditoría aplicada:** `ZENDA_auditoria_semanas_1_y_2.md`
-> **Estado:** cambios de la auditoría commiteados localmente. **No se hizo `push`.**
+> **Estado:** cambios commiteados, publicados en `origin/develop` y fusionados (`4e54425`). El stack Docker se ejecutó y verificó.
 > **Alcance:** este documento no autoriza ni describe funcionalidad de las Semanas 3–6. Los pendientes se indican explícitamente.
 
 ---
@@ -37,13 +37,15 @@ Se aplicaron los siete hallazgos críticos de la auditoría, se completaron las 
 | Verificación | Resultado |
 |---|---|
 | Pruebas unitarias | **9/9 aprobadas** |
-| Pruebas de integración | **7/7 aprobadas** contra PostgreSQL 18.6 |
-| Migración `002_semana2.sql` | Aplicada **dos veces** sin errores; también sobre una copia del esquema previo (`HEAD`) |
+| Pruebas de integración | **7/7 aprobadas** contra PostgreSQL 16 |
+| Migración `002_semana2.sql` | Aplicada **dos veces** sin errores; también sobre una base v11 con datos (`V11_MIGRATION_OK`) |
 | Lint backend | Pasa |
 | Lint frontend | Pasa; solo advertencias preexistentes en archivos no tocados |
 | Build frontend | Pasa |
 | `docker compose config` | Válido |
-| Build de imagen Docker | **No ejecutado**: el daemon de Docker no está disponible en este equipo |
+| Build de imagen Docker | **Verificado** (`zenda-backend` y `zenda-frontend` construidas) |
+| Arranque del stack | **Verificado**: `db`, `backend` y `frontend` sanos, `migrate` completa; frontend responde 200 |
+| Endpoints | `GET /api/health` 200; login de administrador y aprendiz 200 |
 
 **Aclaración importante:** `HU-020` no se declara completa. En la Semana 2 solo se admiten **enlaces `http/https`** como evidencia. La carga de archivos reales se trasladó a la **Semana 4**.
 
@@ -296,8 +298,8 @@ La UI no crea ni muestra sub-roles Scrum. La columna de integrantes se rotula **
 ### 9.2 Render
 
 - `render.yaml` declara el servicio con contexto raíz.
-- `preDeployCommand: node scripts/migrar.js` aplica la migración antes de poner la nueva versión en línea.
-- El script usa `DATABASE_URL` y falla con código distinto de cero si la migración no se aplica.
+- `startCommand: sh -c "node scripts/migrar.js && node server.js"` aplica la migración al arrancar. El plan **free** de Render no admite `preDeployCommand`.
+- El script usa `DATABASE_URL` y falla con código distinto de cero si la migración no se aplica, por lo que el servicio no queda saludable.
 
 ### 9.3 CI
 
@@ -317,10 +319,11 @@ La UI no crea ni muestra sub-roles Scrum. La columna de integrantes se rotula **
 | Elemento | Estado |
 |---|---|
 | `docker compose config` | Válido |
-| Build de imagen | No ejecutado (daemon no disponible) |
-| Compose en ejecución | No ejecutado (daemon no disponible) |
-| Migración con `node scripts/migrar.js` | Ejecutada correctamente contra PostgreSQL local |
-| CI | Configurado; no se ejecutó desde este equipo porque no se hizo push |
+| Build de imagen | Verificado: `zenda-backend` y `zenda-frontend` construidas |
+| Compose en ejecución | Verificado: `db`, `backend` y `frontend` sanos, `migrate` completa; `frontend` responde 200 |
+| Migración con `node scripts/migrar.js` | Ejecutada correctamente contra PostgreSQL 16 local |
+| CI | Configurado y activo en `origin/develop` (PostgreSQL 16) |
+| Salud y login | `GET /api/health` 200; login de administrador y aprendiz 200 |
 
 ---
 
@@ -370,11 +373,12 @@ docker compose config --quiet
 1. HU-001: registro con correo institucional, documento y cuatro aceptaciones.
 2. HU-014/HU-015: cupo, unión por código y validación de la ficha del aprendiz.
 3. HU-023/HU-024/HU-025: cascada, aprobación en bloque, historial y progreso.
-4. HU-026: observación asociada a una evidencia del proyecto.
-5. HU-011: reasignación de fichas conservando el historial del instructor.
-6. C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso.
+4. RN-018: una carpeta con evidencia mixta queda **En revisión**, no Aprobada (regresión de la cascada).
+5. HU-026: observación asociada a una evidencia del proyecto.
+6. HU-011: reasignación de fichas conservando el historial del instructor.
+7. C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso.
 
-> Las pruebas de integración se omiten automáticamente si no hay PostgreSQL o si el esquema no está cargado. En CI se ejecutan siempre porque el workflow prepara la base.
+> Las pruebas de integración se omiten automáticamente si no hay PostgreSQL o si el esquema no está cargado. En CI se ejecutan siempre porque el workflow prepara la base y define `REQUIRE_DB=1` para que un fallo de conexión no pase desapercibido.
 
 ---
 
@@ -418,7 +422,7 @@ docker compose config --quiet
 | H-01 a H-07 | Corregidos |
 | **H-08** | Corregido: `observaciones.evidencia_id` validado y visible |
 | H-09 a H-11 | Corregidos |
-| **H-12** | Dockerfiles corregidos; build pendiente por falta de daemon |
+| **H-12** | Corregido y verificado: `docker compose up --build` construye ambas imágenes y el stack arranca |
 | **H-13** | **Abierto**: token en `localStorage`; se resolverá con HU-004 (Semanas 3–6) |
 | H-14 | Corregido |
 | **H-15** | Corregido con `.gitattributes`, sin renormalización masiva |
@@ -433,17 +437,18 @@ docker compose config --quiet
 | **HU-020 completa** | **Semana 4**. En Semana 2 solo enlaces `http/https` de máximo 500 caracteres. No se implementan archivos binarios, almacenamiento, descarga ni antivirus. |
 | **HU-004** | Semanas 3–6. Sesión de 15 min con refresh rotativo. |
 | **H-13** | Se mantiene el token en `localStorage` durante la sesión actual de 24 h; se corrige con HU-004. |
-| **Build Docker** | Pendiente de un entorno con daemon. No se declara verificado. |
+| **Build Docker** | **Verificado** en Docker Desktop: imágenes `zenda-backend` y `zenda-frontend` construidas y stack levantado. |
 | **Migración en producción** | Requiere respaldo y ensayo previo en Neon. No se ejecutó contra producción. |
 | **Semanas 3–6** | No se adelantó funcionalidad. |
-| **Push** | No realizado. |
+| **Push** | **Realizado**: `5be156a`, `bacaa2b` y merge `4e54425` en `origin/develop`. |
+| **Despliegue público** | La URL de Render/Vercel sigue en v11; el código actual no se ha desplegado. |
 
 ---
 
 ## 13. Riesgos y limitaciones
 
-1. **Docker no verificado en ejecución.** El `docker-compose.yml` y los Dockerfiles son válidos a nivel de configuración, pero falta probar el arranque completo en un equipo con Docker Desktop o en CI con daemon.
-2. **Migración sobre producción.** Se probó sobre el esquema previo disponible en `HEAD`, no sobre una copia restaurada de una base real. Antes de desplegar se debe hacer respaldo y ensayo.
+1. **Docker verificado en local, no en Render.** `docker compose up --build` arranca `db`, `migrate`, `backend` y `frontend` en Docker Desktop. El despliegue real en Render/Vercel/Neon sigue pendiente.
+2. **Migración sobre producción.** Se probó sobre una base v11 con datos y sobre el esquema actual, no sobre una copia restaurada de producción. Antes de desplegar se debe hacer respaldo y ensayo en Neon.
 3. **Token en `localStorage`.** Sigue expuesto a XSS; la mitigación actual es la restricción de URLs y el escape de React. La solución definitiva pertenece a HU-004.
 4. **Archivos de evidencia.** La Semana 2 no almacena archivos; solo enlaces. Cualquier prueba con archivos reales debe hacerse cuando se implemente HU-020 en Semana 4.
 5. **Advertencias de lint frontend.** Son preexistentes y no bloquean el build; se recomienda limpiarlas en una tarea aparte.
@@ -510,24 +515,23 @@ curl http://localhost:4000/api/health
 
 ## 15. Commits de esta entrega
 
-Los cambios se agruparon por bloque funcional. **Todos son locales; no se ejecutó `push`.**
+Los cambios se agruparon por bloque funcional y ya están publicados en `origin/develop`.
 
 | Hash | Commit |
 |---|---|
-| `289641c` | `chore(repo): normalizar finales de línea y contexto de Docker` |
-| `3fbe0b6` | `feat(db): actualizar esquema y migración de Semana 2` |
-| `28e6566` | `feat(backend): aplicar reglas, seguridad y pruebas de Semana 2` |
-| `d6b68f5` | `feat(frontend): completar registro, cupo, avance y evaluación` |
-| `4a257c2` | `chore(infra): fijar dependencias y automatizar migración y salud` |
+| `5be156a` | `fix(semana2): corregir cascada de estados y reforzar verificacion` |
+| `bacaa2b` | `fix(db): migrar v11 sin destruir datos y probar el upgrade` |
+| `4e54425` | Merge de `develop` en `origin/develop` |
 
-El commit de documentación incluye este archivo, el `CHANGELOG`, la auditoría histórica y la alineación de las guías. Para verificar el estado:
+El bloque de documentación de esta revisión (README, CHANGELOG, este documento, auditoría y guías) se commitea después de los anteriores. Para verificar el estado:
 
 ```bash
 git log --oneline --decorate -10
 git status
+git log --oneline origin/develop -3
 ```
 
-No debe aparecer ningún `push` en el historial local de esta entrega.
+`develop` debe estar al día con `origin/develop`.
 
 ---
 
@@ -553,24 +557,26 @@ No debe aparecer ningún `push` en el historial local de esta entrega.
 - [x] `pnpm` único, versiones exactas y `packageManager` declarado.
 - [x] Docker con contexto raíz, usuario no root y healthcheck.
 - [x] Compose ejecuta migración antes del backend.
-- [x] Render ejecuta `scripts/migrar.js` como predeploy.
-- [x] CI carga esquema, migra dos veces, lint, pruebas y build.
+- [x] Render ejecuta `scripts/migrar.js` al arrancar (`startCommand`; el plan free no admite `preDeployCommand`).
+- [x] CI carga esquema, migra desde v11 dos veces, lint, pruebas y build.
 - [x] Documentación de API, esquema, reglas, RF/HU, pruebas y variables alineada.
 - [x] Archivos obsoletos eliminados.
 - [x] HU-020 declarada parcial y trasladada a Semana 4.
-- [x] Sin `push`.
+- [x] Cambios publicados en `origin/develop`.
 
 ### Verificación ejecutada
 
 - [x] 9 pruebas unitarias aprobadas.
-- [x] 6 pruebas de integración aprobadas con PostgreSQL real.
+- [x] 7 pruebas de integración aprobadas con PostgreSQL 16.
 - [x] Migración aplicada dos veces sin errores.
+- [x] Migración probada sobre una base v11 con datos (`V11_MIGRATION_OK`).
 - [x] Script de migración de Render ejecutado.
 - [x] Lint backend aprobado.
 - [x] Lint frontend aprobado con advertencias preexistentes.
 - [x] Build frontend aprobado.
 - [x] `docker compose config` válido.
-- [ ] Build y arranque real de Docker (pendiente por daemon no disponible).
+- [x] Build y arranque real de Docker (`db`, `migrate`, `backend`, `frontend`).
+- [x] `GET /api/health` 200, frontend 200 y login de administrador y aprendiz 200.
 
 ---
 

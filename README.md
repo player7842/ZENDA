@@ -13,14 +13,16 @@ Plataforma web para que los aprendices **desarrollen su proyecto por fases**, su
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-22_LTS-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)
 
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![Auth](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
 ![Roles](https://img.shields.io/badge/Roles-4-1e7e22?style=flat-square)
-![Tablas](https://img.shields.io/badge/Tablas-13-blue?style=flat-square)
+![Tablas](https://img.shields.io/badge/Tablas-14-blue?style=flat-square)
+![Pruebas](https://img.shields.io/badge/Pruebas-16%2F16-1e7e22?style=flat-square)
+![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
 
 [Descripción](#-descripción) ·
 [Inicio rápido](#-inicio-rápido) ·
@@ -100,7 +102,7 @@ Los roles son un `ENUM` en la base de datos: `APRENDIZ`, `INSTRUCTOR`, `COORDINA
 | 🛡️ **Administrador** | `/admin` | Gestiona usuarios, fichas y programas de toda la plataforma. |
 
 > [!TIP]
-> El detalle de permisos por rol está en [`docs/requisitos/matriz-permisos.md`](docs/requisitos/matriz-permisos.md).
+> El detalle de permisos por rol está en [`docs/Requisitos/matriz-permisos.md`](docs/Requisitos/matriz-permisos.md).
 
 ---
 
@@ -110,7 +112,7 @@ Los roles son un `ENUM` en la base de datos: `APRENDIZ`, `INSTRUCTOR`, `COORDINA
 |---|---|---|
 | **Frontend** | React 19 · Vite 8 · React Router 7 · Tailwind CSS 4 · Recharts · Lucide | Aplicación de una sola página (SPA) |
 | **Backend** | Node.js · Express 4 · `pg` · `jsonwebtoken` · `bcryptjs` · Nodemailer | API REST con SQL directo (sin ORM) |
-| **Base de datos** | PostgreSQL 14+ | Persistencia relacional (13 tablas, 1 tipo `ENUM`) |
+| **Base de datos** | PostgreSQL 16 | Persistencia relacional (14 tablas, 1 tipo `ENUM`) |
 | **Gestor de paquetes** | **pnpm** | Instalación reproducible con `pnpm-lock.yaml` |
 
 > [!IMPORTANT]
@@ -147,7 +149,7 @@ flowchart LR
 3. El middleware `auth` valida el token y los middlewares `is*` validan el rol.
 4. El controlador ejecuta la lógica y consulta PostgreSQL mediante un `Pool`.
 
-Más detalle en [`docs/referencia-tecnica/arquitectura.md`](docs/referencia-tecnica/arquitectura.md).
+Más detalle en [`docs/Referencia-Tecnica/arquitectura.md`](docs/Referencia-Tecnica/arquitectura.md).
 
 ---
 
@@ -178,7 +180,7 @@ stateDiagram-v2
     state "En proceso" as EnProceso
 ```
 
-El catálogo completo está en [`docs/requisitos/reglas-de-negocio.md`](docs/requisitos/reglas-de-negocio.md).
+El catálogo completo está en [`docs/Requisitos/reglas-de-negocio.md`](docs/Requisitos/reglas-de-negocio.md).
 
 ---
 
@@ -190,16 +192,37 @@ El catálogo completo está en [`docs/requisitos/reglas-de-negocio.md`](docs/req
 |---|---|---|
 | [Node.js](https://nodejs.org/) | **22 (LTS)** | Usa siempre una versión LTS |
 | [pnpm](https://pnpm.io/installation) | reciente | Gestor de paquetes del proyecto |
-| [PostgreSQL](https://www.postgresql.org/download/) | **14 o superior** | Con el cliente `psql` |
+| [PostgreSQL](https://www.postgresql.org/download/) | **16** | Con el cliente `psql` (o usa Docker) |
 | [Git](https://git-scm.com/) | cualquiera | Para clonar el repositorio |
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | opcional | Alternativa que levanta todo el stack |
 
-### 1. Clonar y crear la base de datos
+### Opción A — Todo con Docker (recomendada)
 
 ```bash
 git clone https://github.com/player7842/ZENDA.git
 cd ZENDA
 git checkout develop
 
+cp .env.example .env          # cambia DB_PASSWORD y JWT_SECRET
+docker compose up --build -d
+```
+
+| Servicio | URL |
+|---|---|
+| Frontend (Nginx) | <http://localhost:8080> |
+| API | <http://localhost:4000/api/health> |
+| PostgreSQL | interno, puerto `5432` de la red de Compose |
+
+Compose crea la base con `Database/zenda_bd.sql`, espera el *healthcheck* de PostgreSQL, aplica la migración `Database/migrations/002_semana2.sql` y arranca backend y frontend. En una base nueva la migración no hace nada; en una base v11 la actualiza sin destruir datos.
+
+> [!NOTE]
+> La guía detallada, con la solución de problemas habitual, está en [`docs/Setup/con-docker.md`](docs/Setup/con-docker.md).
+
+### Opción B — Sin Docker
+
+**1. Crear la base de datos**
+
+```bash
 psql -U postgres -h localhost -c "CREATE DATABASE zenda;"
 psql -U postgres -h localhost -d zenda -f Database/zenda_bd.sql
 ```
@@ -207,32 +230,37 @@ psql -U postgres -h localhost -d zenda -f Database/zenda_bd.sql
 > [!WARNING]
 > `zenda_bd.sql` **borra y recrea** todas las tablas. No lo ejecutes sobre una base con datos que quieras conservar.
 
-### 2. Backend
+**2. Backend**
 
 ```bash
 cd backend
 pnpm install
+cp .env.example .env     # ajusta DB_* y JWT_SECRET
+pnpm dev                 # recarga automática
+curl http://localhost:4000/api/health
 ```
 
-Crea `backend/.env` con las variables descritas en [`docs/setup/variables-de-entorno.md`](docs/setup/variables-de-entorno.md) (`DB_*`, `JWT_SECRET`, `EMAIL_*`) y arranca:
-
-```bash
-pnpm dev                                # recarga automática
-curl http://localhost:4000/api/health   # comprobación
-```
-
-### 3. Frontend
-
-En otra terminal:
+**3. Frontend** (en otra terminal)
 
 ```bash
 cd frontend
 pnpm install
-pnpm dev                                # http://localhost:5173
+cp .env.example .env
+pnpm dev                 # http://localhost:5173
 ```
 
 > [!NOTE]
-> Las credenciales de prueba y las guías completas (con y sin Docker) están en [`docs/setup/`](docs/setup/).
+> Las variables están explicadas en [`docs/Setup/variables-de-entorno.md`](docs/Setup/variables-de-entorno.md) y la guía sin Docker en [`docs/Setup/sin-docker.md`](docs/Setup/sin-docker.md).
+
+### Pruebas
+
+```bash
+pnpm --dir backend test          # 9 unitarias + 7 de integración (16)
+pnpm --dir backend lint
+pnpm --dir frontend build
+```
+
+Las pruebas de integración necesitan PostgreSQL con el esquema cargado. Sin base se omiten; en CI se ejecutan con `REQUIRE_DB=1` para que un fallo de conexión no pase desapercibido.
 
 ---
 
@@ -241,25 +269,44 @@ pnpm dev                                # http://localhost:5173
 ```text
 ZENDA/
 ├── README.md
+├── CHANGELOG.md
+├── docker-compose.yml               # db · migrate · backend · frontend
+├── render.yaml                      # Blueprint del backend en Render
+├── .env.example                     # Variables para Docker Compose
+│
 ├── Database/
-│   └── zenda_bd.sql                 # Esquema (13 tablas) + datos de prueba
+│   ├── zenda_bd.sql                 # Esquema (14 tablas) + datos de prueba
+│   ├── migrations/
+│   │   └── 002_semana2.sql          # Migración incremental e idempotente
+│   └── fixtures/
+│       ├── v11_migracion.sql        # Base v11 para probar la migración
+│       └── v11_migracion_assert.sql # Assertions del upgrade v11 → actual
 │
 ├── backend/                         # API REST · Express + PostgreSQL
 │   ├── server.js                    # Punto de entrada
+│   ├── Dockerfile
+│   ├── scripts/migrar.js            # Aplica la migración antes de arrancar
+│   ├── tests/                       # reglas.test.js · integracion.test.js
 │   └── src/
-│       ├── config/                  # db.js (pool de PostgreSQL)
+│       ├── config/                  # env.js · db.js (pool de PostgreSQL)
+│       ├── domain/                  # reglas.js (funciones puras)
+│       ├── services/                # cascada.js · asignaciones.js · grupos.js
 │       ├── middleware/              # auth.js · isAdmin · isCoordinador · isInstructor · isAprendiz
 │       ├── routes/                  # admin/ · aprendiz/ · coordinador/ · instructor/
 │       ├── controllers/             # Lógica de negocio por rol
 │       └── utils/                   # confirmarAdmin.js · mailer.js
 │
 ├── frontend/                        # SPA · React + Vite
+│   ├── Dockerfile
+│   ├── nginx.conf
 │   └── src/
 │       ├── api.js                   # Todas las llamadas HTTP al backend
 │       ├── context/                 # ThemeContext (tema claro/oscuro)
 │       ├── components/              # Auth/ · admin/ · ui/
 │       ├── pages/                   # Una carpeta por rol
 │       └── styles/                  # CSS por pantalla
+│
+├── .github/workflows/ci.yml         # Lint + pruebas + build + migración v11
 │
 └── docs/                            # Documentación del proyecto (ver abajo)
 ```
@@ -272,15 +319,16 @@ Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para
 
 | Carpeta | Contenido | Estado |
 |---|---|---|
-| [`docs/requisitos/`](docs/requisitos/) | Historias de usuario, requisitos funcionales y no funcionales, reglas de negocio, matriz de permisos, restricciones y trazabilidad | 🟡 En elaboración |
-| [`docs/diagramas/`](docs/diagramas/) | Contexto, componentes, clases, dominio, MER/MR, actividades, estados y procesos (en Mermaid) | 🟡 En elaboración |
-| [`docs/referencia-tecnica/`](docs/referencia-tecnica/) | Arquitectura, esquema de base de datos, endpoints y sistema de diseño | 🟡 En elaboración |
-| [`docs/setup/`](docs/setup/) | Instalación con y sin Docker, variables de entorno | 🟡 En elaboración |
-| [`docs/conceptos/`](docs/conceptos/) | Seguridad (OWASP), autenticación JWT, patrones y accesibilidad | ⚪ Pendiente |
-| [`docs/colaboracion/`](docs/colaboracion/) | Flujo de Git y convenciones | ⚪ Pendiente |
-| [`docs/testing/`](docs/testing/) | Plan y casos de prueba | ⚪ Pendiente |
-| [`docs/gestion/`](docs/gestion/) | Backlog priorizado, cronograma y riesgos | ⚪ Pendiente |
-| [`docs/decisiones/`](docs/decisiones/) | Registro de decisiones de arquitectura (ADR) | ⚪ Pendiente |
+| [`docs/Requisitos/`](docs/Requisitos/) | 42 historias de usuario, 42 RF, 15 RNF, reglas de negocio, matriz de permisos, restricciones y trazabilidad | 🟡 En elaboración (Semana 2 cerrada) |
+| [`docs/Diagramas/`](docs/Diagramas/) | Contexto, componentes, clases, dominio, MER/MR, actividades, estados y procesos (en Mermaid) | 🟡 En elaboración |
+| [`docs/Referencia-Tecnica/`](docs/Referencia-Tecnica/) | Arquitectura, esquema real de las 14 tablas, 55 endpoints y sistema de diseño | 🟢 Alineado con el código |
+| [`docs/Setup/`](docs/Setup/) | Instalación con y sin Docker, variables de entorno y despliegue en Render + Vercel + Neon | 🟢 Verificado |
+| [`docs/Conceptos/`](docs/Conceptos/) | Seguridad (OWASP), autenticación JWT, patrones, contenedores y accesibilidad | 🟢 Disponible |
+| [`docs/Colaboracion/`](docs/Colaboracion/) | Flujo de Git, convenciones y revisión de código | 🟢 Disponible |
+| [`docs/Testing/`](docs/Testing/) | Plan, casos, pruebas unitarias, de integración y no funcionales, hallazgos y cobertura | 🟢 16/16 automatizadas |
+| [`docs/gestion/`](docs/gestion/) | Backlog priorizado, plan de implantación, cronograma y riesgos | 🟡 En elaboración |
+
+El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`](SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md). La auditoría que lo originó se conserva en [`ZENDA_auditoria_semanas_1_y_2.md`](ZENDA_auditoria_semanas_1_y_2.md).
 
 ---
 
@@ -293,8 +341,11 @@ Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para
 | Autorización por rol | ✅ | Middlewares `isAdmin`, `isCoordinador`, `isInstructor`, `isAprendiz`. |
 | Confirmación con contraseña | ✅ | Acciones delicadas del administrador y del coordinador. |
 | Transacciones SQL | ✅ | `BEGIN / COMMIT / ROLLBACK` en operaciones compuestas. |
-| Recuperación de contraseña | ✅ | Token de 15 minutos enviado por correo. |
-| Secretos fuera del repositorio | ⚠️ | `.env` no se versiona; falta publicar un `.env.example` y quitar el secreto por defecto del código. |
+| Recuperación de contraseña | ✅ | Token de un solo uso, hash SHA-256 y 15 minutos de validez. |
+| Cabeceras y límite de peticiones | ✅ | `helmet`, `trust proxy`, 300 req/15 min general y 20 en autenticación. |
+| Secretos fuera del repositorio | ✅ | `.env` no se versiona y hay `.env.example` en raíz, `backend/` y `frontend/`. `JWT_SECRET` es obligatorio. |
+| Sesión en el navegador | ⚠️ | El token vive en `localStorage` y dura 24 h (hallazgo **H-13**); se corrige con HU-004 en las Semanas 3–6. |
+| Credenciales semilla | ⚠️ | `Database/zenda_bd.sql` incluye usuarios de demostración. **No las uses en producción**: cámbialas antes de desplegar. |
 
 > [!WARNING]
 > **Nunca subas `backend/.env` a GitHub.** Si una credencial se expuso alguna vez, revócala y genera una nueva.
@@ -303,7 +354,7 @@ Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para
 
 ## 🚧 Estado del proyecto
 
-### ✅ Implementado (v11)
+### ✅ Base funcional (v11)
 
 - Autenticación completa: registro, inicio de sesión y recuperación de contraseña.
 - Paneles y dashboards para los 4 roles.
@@ -312,26 +363,37 @@ Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para
 - Gestión de usuarios, fichas e instructores.
 - Exportación a PDF mediante impresión del navegador y reporte CSV del coordinador.
 
-### 🔄 Cambios aprobados para la siguiente versión
+### 🟢 Cerrado en las Semanas 1 y 2
+
+| Área | Qué quedó implementado |
+|---|---|
+| **Infraestructura** | Docker Compose con `db`, `migrate`, `backend` y `frontend`; Node 22 fijo; Nginx; `render.yaml`; `frontend/vercel.json`; `.env.example` en raíz, backend y frontend. |
+| **Migración** | `002_semana2.sql` idempotente, probada dos veces seguidas y sobre una base v11 con datos. El upgrade conserva evidencias, grupos y proyectos legados. |
+| **Reglas de negocio** | Funciones puras en `backend/src/domain/reglas.js` y servicios `cascada.js`, `asignaciones.js` y `grupos.js`. |
+| **Grupos y cupo** | `grupos.es_general`, `grupos.cupo_maximo` (1–50, por defecto 6; General 50) y líder editable sin bajar del total actual. |
+| **Fases y evaluación** | Estado de carpeta y fase derivado de la evaluación vigente; aprobación de carpeta en bloque; evaluación siempre `INSERT`. |
+| **Instructores** | Historial en `instructor_ficha` con una única asignación vigente por índice parcial. |
+| **Seguridad** | `helmet`, rate-limit, CORS por lista blanca, `JWT_SECRET` obligatorio, reset de un solo uso y validación de URLs. |
+| **Calidad** | 9 pruebas unitarias + 7 de integración = **16/16**, lint, build y CI de GitHub Actions con PostgreSQL 16. |
+| **Interfaz** | Medidor de contraseña, aceptaciones legales, anti-pegado, cupo editable, progreso por fase, aprobación en bloque y observaciones por evidencia. |
+
+### 🔄 Aprobado para las Semanas 3–6
 
 | Cambio | Resumen |
 |---|---|
-| **Sin sub-roles Scrum** | Se elimina el rol Scrum del registro y de la base de datos; queda el **líder de grupo**. |
-| **Todos suben evidencias** | Cualquier integrante crea carpetas y sube evidencias; se registra quién subió cada una. |
-| **Archivos reales** | Evidencias como archivo (con compresión de imágenes) o enlace, en almacenamiento compatible con S3. |
-| **Aprobación por carpeta** | El instructor puede aprobar una carpeta completa; el porcentaje de la fase se calcula sobre evidencias aprobadas. |
-| **Lista de chequeo** | Una por ficha, creada por el instructor (editor o importación de Excel), copiable entre fichas y con historial de evaluación. |
-| **Cupo del grupo** | El líder define la cantidad de integrantes al crear el proyecto. |
-| **Registro seguro** | Medidor de contraseña, aceptación obligatoria de legales, bloqueo de pegado en "confirmar contraseña" y tipo de documento **PPT**. |
-| **Páginas legales** | Términos de uso, política de privacidad, política de cookies y protección de datos enlazadas desde el footer. |
-| **Interfaz** | Contrastes, animaciones consistentes, dashboard colapsable, menú de tres puntos, botón "Volver al inicio" y año vigente automático. |
-| **Sesiones** | Access token de 15 min, refresh token y cierre por inactividad. |
+| **Archivos reales** | Evidencias como archivo (con compresión de imágenes) o enlace, en almacenamiento compatible con S3 (HU-020). |
+| **Lista de chequeo** | Una por ficha, creada por el instructor, copiable entre fichas y con historial de evaluación (HU-036 a HU-038). |
+| **Sesiones** | Access token de 15 min, refresh token y cierre por inactividad (HU-004). |
+| **Páginas legales** | Términos, privacidad, cookies y protección de datos enlazadas desde el footer (HU-039). |
+| **Reportes** | Exportación a PDF y Excel desde el servidor (HU-034 y HU-035). |
+| **Panel y mensajes** | Dashboard colapsable, menú de tres puntos y mensajes guiados (HU-040 y HU-041). |
 
 ### 🛠️ Pendiente técnico
 
-- Endpoints del backend para **programas**, **importación de usuarios por CSV**, **copia de seguridad** y **diagnóstico** (la interfaz ya existe).
-- Contenedores **Docker** y versiones exactas en los `package.json` (hoy usan rangos `^`).
-- Pruebas automatizadas y pipeline de CI.
+- Endpoints del backend para **carga masiva de usuarios por CSV** (HU-008), **copia de seguridad y diagnóstico** (HU-013) y **gestión de programas** (HU-012): la interfaz existe, la API aún no.
+- Reducir el *bundle* del frontend (aviso de Vite por encima de 500 kB).
+- Migrar la sesión de `localStorage` a cookies seguras cuando se implemente HU-004.
+- Desplegar el código actual en Render/Vercel/Neon: la URL pública actual corresponde a la versión v11.
 
 ### ❌ Fuera del alcance
 
@@ -383,7 +445,8 @@ git push -u origin feat/nombre-de-la-funcionalidad
 <div align="center">
 
 **ZENDA** · Sistema de gestión de proyectos formativos ADSO
-https://zenda-flax.vercel.app/ 
+
+Demo de la base v11: <https://zenda-flax.vercel.app/> · El código de las Semanas 1–2 aún no está desplegado.
 
 Hecho para la formación en **Análisis y Desarrollo de Software** · SENA
 

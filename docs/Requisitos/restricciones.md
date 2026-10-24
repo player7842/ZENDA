@@ -18,7 +18,7 @@
 | **Versión del documento** | 1.0 |
 | **Fecha** | 10 de octubre de 2026 |
 | **Base del análisis** | Código de `ZENDA-develop` (v11), `zenda_bd.sql`, Dockerfiles entregados y observaciones del instructor |
-| **Ubicación** | `docs/requisitos/restricciones.md` |
+| **Ubicación** | `docs/Requisitos/restricciones.md` |
 
 ### Cómo leer este documento
 
@@ -88,7 +88,7 @@ No se permite el uso de otros frameworks de interfaz (Angular, Vue, Svelte, etc.
 |:---:|---|
 | ✅ Vigente | Código |
 
-La base de datos debe ser **PostgreSQL 14 o superior**. No se permiten bases de datos alternativas (MySQL, SQLite, MongoDB, etc.). El esquema oficial es `Database/zenda_bd.sql` (13 tablas y un tipo `ENUM` para los roles).
+La base de datos debe ser **PostgreSQL 16**. No se permiten bases de datos alternativas (MySQL, SQLite, MongoDB, etc.). El esquema oficial es `Database/zenda_bd.sql` (14 tablas y un tipo `ENUM` para los roles).
 
 ### RT-004 — Método de autenticación
 

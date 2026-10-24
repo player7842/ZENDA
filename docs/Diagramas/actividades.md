@@ -23,7 +23,7 @@
 
 ## 1. Registro de aprendiz
 
-Requisito: [RF-001](../requisitos/RFs/RF-001_registro_de_aprendiz.md) · Historia: [HU-001](../requisitos/HUs/HU-001_registro_de_aprendiz.md)
+Requisito: [RF-001](../Requisitos/RFs/RF-001_registro_de_aprendiz.md) · Historia: [HU-001](../Requisitos/HUs/HU-001_registro_de_aprendiz.md)
 
 ```mermaid
 flowchart TD
@@ -61,16 +61,16 @@ flowchart TD
 
 | Regla | Detalle |
 |---|---|
-| Correo | Debe terminar en `@soy.sena.edu.co` ([RN-001](../requisitos/reglas-de-negocio.md#rn-001--registro-limitado-a-aprendices-con-correo-institucional)). |
-| Aceptación legal | Las 4 casillas son obligatorias ([RN-004](../requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria)). |
-| Grupo `General` | Se crea si la ficha aún no lo tiene ([RN-006](../requisitos/reglas-de-negocio.md#rn-006--grupo-general-por-ficha)). |
-| Verificación | Paso de v12; las cuentas existentes se consideran verificadas. |
+| Correo | Debe terminar en `@soy.sena.edu.co` ([RN-001](../Requisitos/reglas-de-negocio.md#rn-001--registro-limitado-a-aprendices-con-correo-institucional)). |
+| Aceptación legal | Las 4 casillas son obligatorias ([RN-004](../Requisitos/reglas-de-negocio.md#rn-004--aceptación-legal-obligatoria)). |
+| Grupo `General` | Se crea si la ficha aún no lo tiene ([RN-006](../Requisitos/reglas-de-negocio.md#rn-006--grupo-general-por-ficha)). |
+| Verificación | Paso **propuesto** (RS-006); no implementado en el código actual. |
 
 ---
 
 ## 2. Crear un proyecto o unirse a uno
 
-Requisitos: [RF-014](../requisitos/RFs/RF-014_creacion_de_proyecto.md), [RF-015](../requisitos/RFs/RF-015_unirse_a_un_proyecto.md) · Historias: [HU-014](../requisitos/HUs/HU-014_creacion_de_proyecto.md), [HU-015](../requisitos/HUs/HU-015_unirse_a_un_proyecto.md)
+Requisitos: [RF-014](../Requisitos/RFs/RF-014_creacion_de_proyecto.md), [RF-015](../Requisitos/RFs/RF-015_unirse_a_un_proyecto.md) · Historias: [HU-014](../Requisitos/HUs/HU-014_creacion_de_proyecto.md), [HU-015](../Requisitos/HUs/HU-015_unirse_a_un_proyecto.md)
 
 ```mermaid
 flowchart TD
@@ -113,16 +113,16 @@ flowchart TD
 
 | Regla | Detalle |
 |---|---|
-| Un proyecto activo | [RN-007](../requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz) |
-| El creador es el líder y queda fijo | [RN-008](../requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo) |
-| Cupo | [RN-009](../requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo) |
-| La creación es **atómica**: si falla un paso, no queda nada a medias | [Arquitectura 6.4](../referencia-tecnica/arquitectura.md#64-creación-de-proyecto) |
+| Un proyecto activo | [RN-007](../Requisitos/reglas-de-negocio.md#rn-007--un-proyecto-activo-por-aprendiz) |
+| El creador es el líder y queda fijo | [RN-008](../Requisitos/reglas-de-negocio.md#rn-008--líder-del-grupo) |
+| Cupo | [RN-009](../Requisitos/reglas-de-negocio.md#rn-009--cupo-del-grupo) |
+| La creación es **atómica**: si falla un paso, no queda nada a medias | [Arquitectura 6.4](../Referencia-Tecnica/arquitectura.md#64-creación-de-proyecto) |
 
 ---
 
 ## 3. Entrega y evaluación de evidencias
 
-Requisitos: [RF-019](../requisitos/RFs/RF-019_carpetas_de_una_fase.md), [RF-020](../requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-022](../requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md), [RF-023](../requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-025](../requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md)
+Requisitos: [RF-019](../Requisitos/RFs/RF-019_carpetas_de_una_fase.md), [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md), [RF-022](../Requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md), [RF-023](../Requisitos/RFs/RF-023_evaluacion_de_evidencias.md), [RF-025](../Requisitos/RFs/RF-025_estado_y_porcentaje_de_avance.md)
 
 ```mermaid
 flowchart TD
@@ -165,16 +165,16 @@ flowchart TD
 
 | Regla | Detalle |
 |---|---|
-| Nadie queda bloqueado: se puede seguir subiendo con la fase en revisión | [RN-015](../requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase) |
-| Una evidencia aprobada queda protegida | [RN-014](../requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
-| La evaluación se agrega, no se sobrescribe | [RN-017](../requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) |
-| Cascada y porcentaje | [RN-018](../requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados), [RN-020](../requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase) |
+| Nadie queda bloqueado: se puede seguir subiendo con la fase en revisión | [RN-015](../Requisitos/reglas-de-negocio.md#rn-015--sin-bloqueo-por-fase) |
+| Una evidencia aprobada queda protegida | [RN-014](../Requisitos/reglas-de-negocio.md#rn-014--versionado-y-borrado-lógico) |
+| La evaluación se agrega, no se sobrescribe | [RN-017](../Requisitos/reglas-de-negocio.md#rn-017--historial-de-evaluaciones) |
+| Cascada y porcentaje | [RN-018](../Requisitos/reglas-de-negocio.md#rn-018--cascada-de-estados), [RN-020](../Requisitos/reglas-de-negocio.md#rn-020--porcentaje-de-avance-de-la-fase) |
 
 ---
 
 ## 4. Gestión de tareas
 
-Requisitos: [RF-028](../requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) a [RF-031](../requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md)
+Requisitos: [RF-028](../Requisitos/RFs/RF-028_creacion_y_asignacion_de_tareas.md) a [RF-031](../Requisitos/RFs/RF-031_tablero_y_progreso_de_tareas.md)
 
 ```mermaid
 flowchart TD
@@ -209,14 +209,14 @@ flowchart TD
 
 | Regla | Detalle |
 |---|---|
-| Solo el líder crea, asigna y confirma | [RN-021](../requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
-| Solo el responsable mueve su tarea | [RN-022](../requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
+| Solo el líder crea, asigna y confirma | [RN-021](../Requisitos/reglas-de-negocio.md#rn-021--tareas-creadas-solo-por-el-líder) |
+| Solo el responsable mueve su tarea | [RN-022](../Requisitos/reglas-de-negocio.md#rn-022--flujo-de-estados-de-la-tarea) |
 
 ---
 
 ## 5. Lista de chequeo del instructor
 
-Requisitos: [RF-036](../requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md), [RF-037](../requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md), [RF-038](../requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md)
+Requisitos: [RF-036](../Requisitos/RFs/RF-036_creacion_de_lista_de_chequeo.md), [RF-037](../Requisitos/RFs/RF-037_importacion_exportacion_y_copia_de_listas.md), [RF-038](../Requisitos/RFs/RF-038_evaluacion_con_lista_de_chequeo.md)
 
 ```mermaid
 flowchart TD
@@ -254,15 +254,15 @@ flowchart TD
 
 | Regla | Detalle |
 |---|---|
-| La lista pertenece a la ficha, no al instructor | [RN-026](../requisitos/reglas-de-negocio.md#rn-026--lista-de-chequeo-por-ficha) |
-| El avance cuenta ítems obligatorios aprobados | [RN-027](../requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo) |
+| La lista pertenece a la ficha, no al instructor | [RN-026](../Requisitos/reglas-de-negocio.md#rn-026--lista-de-chequeo-por-ficha) |
+| El avance cuenta ítems obligatorios aprobados | [RN-027](../Requisitos/reglas-de-negocio.md#rn-027--avance-de-la-lista-de-chequeo) |
 | Es independiente de la cascada de evidencias | [Dominio, sección 5](modelo-dominio.md#5-cómo-se-calcula-lo-que-importa) |
 
 ---
 
 ## 6. Recuperación de contraseña
 
-Requisito: [RF-003](../requisitos/RFs/RF-003_recuperacion_de_contrasena.md) · Historia: [HU-003](../requisitos/HUs/HU-003_recuperacion_de_contrasena.md)
+Requisito: [RF-003](../Requisitos/RFs/RF-003_recuperacion_de_contrasena.md) · Historia: [HU-003](../Requisitos/HUs/HU-003_recuperacion_de_contrasena.md)
 
 ```mermaid
 flowchart TD
@@ -294,11 +294,11 @@ flowchart TD
     S5 -- "Sí" --> S6 --> U5
 ```
 
-> El sistema responde igual exista o no el correo, para no revelar qué cuentas están registradas ([RNF-001.6](../requisitos/RNFs/RNF-001_seguridad.md)). Hoy (v11) responde `404` si no existe; es un cambio aprobado.
+> El sistema responde igual exista o no el correo, para no revelar qué cuentas están registradas ([RNF-001.6](../Requisitos/RNFs/RNF-001_seguridad.md)). Hoy (v11) responde `404` si no existe; es un cambio aprobado.
 
 ---
 
 ## Documentos relacionados
 
 - [Estados](estados.md) · [BPMN](bpmn.md) · [Mapa de procesos](mapa-procesos.md)
-- [Requisitos](../requisitos/matriz-trazabilidad.md) · [Reglas de negocio](../requisitos/reglas-de-negocio.md)
+- [Requisitos](../Requisitos/matriz-trazabilidad.md) · [Reglas de negocio](../Requisitos/reglas-de-negocio.md)
