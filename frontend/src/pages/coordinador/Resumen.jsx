@@ -47,9 +47,8 @@ function Dashboard() {
                 ]);
                 setDatos(dashboard);
 
-                // Simulación calculada de proyectos con >15 días sin observaciones / entregas
-                const enRiesgo = Math.max(1, Math.floor((dashboard?.totales?.total_grupos || 0) * 0.15));
-                setProyectosAlertados(enRiesgo);
+                // HU-033: grupos con más de 15 días sin evidencias ni observaciones
+                setProyectosAlertados(dashboard?.totales?.proyectos_sin_actividad || 0);
 
                 setCargaInstructores(
                     (instructores || [])
