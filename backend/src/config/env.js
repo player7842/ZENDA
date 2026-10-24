@@ -52,9 +52,9 @@ export const env = {
   isProduction: process.env.NODE_ENV === 'production',
   port: Number(process.env.PORT) || 4000,
   jwtSecret: process.env.JWT_SECRET.trim(),
-  // La sesión actual dura 24 h. HU-004 (Semanas 3–6) la reducirá a 15 min
-  // con refresh rotativo; hasta entonces esta variable documenta el valor real.
-  jwtSessionExpires: process.env.JWT_SESSION_EXPIRES || '24h',
+  // HU-004: el token de acceso dura 15 minutos; el refresco (cookie HttpOnly)
+  // dura 7 días y rota en cada renovación. Ya no existe una sesión de 24 h.
+  jwtAccessExpires: process.env.JWT_ACCESS_EXPIRES || '15m',
   frontendUrls,
   frontendUrl: frontendUrls[0],
   emailUser: process.env.EMAIL_USER || '',
