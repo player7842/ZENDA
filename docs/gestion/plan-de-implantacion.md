@@ -120,6 +120,46 @@ pnpm build
 - La migración se probó sobre el *fixture* v11 y sobre el esquema actual, no sobre una copia restaurada de producción. Antes de desplegar en Neon debe hacerse un respaldo y ejecutar `backend/scripts/migrar.js` en un entorno de ensayo.
 - El despliegue público de Render/Vercel sigue sirviendo la versión v11; el código actual no se ha desplegado.
 
+## Responsables por semana
+
+| Semana | Responsable | Alcance |
+|--------|-------------|---------|
+| Semana 1 y 2 | Hernan Robledo | Cierre completo de Semanas 1 y 2: backend, frontend, base de datos, migraciones, pruebas, CI y despliegue local con Docker. |
+| Semana 3 | Nicolas Aparicio | Funcionalidades pendientes del roadmap (a definir en el backlog de Semana 3). |
+| Semana 4 | Leyner Buitrago | HU-020 (archivos reales de evidencia), S3/MinIO como deuda declarada, y demás HU de la Semana 4. |
+| Semana 5 | Omar Gonzalez | Calidad, cobertura de pruebas ≥60 %, colección Postman, cierre de hallazgos abiertos y preparación del congelamiento de código. |
+| Semana 6 | TODOS | Entrega final, demo integrada end-to-end, sustentación individual, etiqueta `v12.0.0` y fusión de `develop` en `main`. |
+
+## Criterios de éxito
+
+Los siguientes criterios deben cumplirse para dar por cerrada la implantación de las Semanas 1 y 2:
+
+| # | Criterio | Cómo se mide | Responsable |
+|---|----------|--------------|-------------|
+| C-01 | `pnpm lint` pasa en backend y frontend | `pnpm --dir backend lint` y `pnpm --dir frontend lint` exit code 0 | Hernan Robledo |
+| C-02 | `pnpm test` pasa (unitarias e integración) | 9 unitarias + 8 de integración = 17 pruebas aprobadas | Hernan Robledo |
+| C-03 | `pnpm build` del frontend sin errores | `pnpm --dir frontend build` exit code 0 | Hernan Robledo |
+| C-04 | Migración `002_semana2.sql` idempotente en CI | Se ejecuta dos veces sin error | Hernan Robledo |
+| C-05 | Migración desde v11 probada con *fixture* | `v11_migracion_assert.sql` pasa sin excepciones | Hernan Robledo |
+| C-06 | CI falla si no hay base de datos | `REQUIRE_DB=1` lanza error si PostgreSQL no está disponible | Hernan Robledo |
+| C-07 | Prettier pasa en CI | `pnpm dlx prettier --check` exit code 0 | Hernan Robledo |
+| C-08 | Docker Compose levanta en clon limpio | `docker compose up --build` construye y levanta `db`, `migrate`, `backend`, `frontend` | Hernan Robledo |
+| C-09 | PR #16 revisado y mergueado en `develop` | PR abierto con revisor asignado y merge confirmado | Hernan Robledo |
+| C-10 | No hay credenciales hardcodeadas en el repositorio | `zenda_bd.sql` sin contraseñas reales; pruebas leen de `ADMIN_EMAIL`/`ADMIN_PASSWORD` | Hernan Robledo |
+| C-11 | Plan de implantación con responsables, criterios y contingencia | Este documento aprobado por el equipo | Hernan Robledo |
+
+## Plan de contingencia
+
+| Riesgo | Impacto | Probabilidad | Mitigación / Contingencia | Responsable |
+|--------|---------|--------------|---------------------------|-------------|
+| El despliegue en Render falla por migración | Alto | Media | La migración corre en `startCommand`; si falla, Render no marca el servicio como saludable. Se revisa el log de Render y se ejecuta `backend/scripts/migrar.js` manualmente en un entorno de ensayo antes de reintentar. | Hernan Robledo |
+| Neon no disponible en CI | Alto | Baja | El CI usa PostgreSQL 16 local (servicio de GitHub Actions), no Neon. Neon solo se usa en producción. | Hernan Robledo |
+| Credenciales de admin expuestas en seed | Alto | Baja | Se quitaron las credenciales reales de `zenda_bd.sql`. Ahora se leen de variables de entorno `ADMIN_EMAIL`/`ADMIN_PASSWORD`. | Hernan Robledo |
+| Fallo en pruebas de integración por falta de BD | Medio | Alta | El CI requiere `REQUIRE_DB=1`; si no hay BD, el pipeline falla explícitamente en lugar de omitir pruebas. | Hernan Robledo |
+| Conflictos de historial entre `main` y `develop` | Medio | Media | No se reescribe la historia; se usan PRs hacia `develop` y se documentan los commits por bloque. | Todos |
+| Atraso en Semana 3 por falta de cierre de Semana 2 | Medio | Baja | Este plan documenta el cierre al 100 %; si queda algo pendiente, se marca como `Parcial` con justificación aprobada y se traslada a la semana siguiente. | Todos |
+| Falle el deploy en Vercel (frontend) | Medio | Baja | Vercel se conecta a `frontend/vercel.json`; si falla, se revisa `VITE_API_URL` y se hace despliegue manual desde `frontend/` con `pnpm build` y `vercel --prod`. | Nicolas Aparicio (Semana 3) |
+
 ## Criterio de cierre
 
 1. `pnpm lint` pasa en backend y frontend.
@@ -127,3 +167,5 @@ pnpm build
 3. `pnpm build` del frontend termina sin errores.
 4. `002_semana2.sql` se ejecuta dos veces sin errores en CI.
 5. HU-020 queda declarada fuera de alcance y trasladada a la Semana 4.
+6. Todos los criterios de éxito (C-01 a C-11) verificados.
+7. Plan de contingencia revisado y aprobado por el equipo.
