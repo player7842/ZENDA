@@ -312,6 +312,59 @@ describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
     expect(listado.body.progreso.carpetas_total).toBe(2);
   });
 
+  it('HU-019: carpetas de una fase con validación de nombre, fase y pertenencia', async () => {
+    const mio = await api
+      .get('/api/aprendiz/proyectos/mio')
+      .set('Authorization', `Bearer ${segundo.token}`);
+    expect(mio.status).toBe(200);
+    const faseDos = mio.body.fases.find((f) => f.numero_fase === 2);
+    expect(faseDos).toBeTruthy();
+
+    // CA-019.2: el nombre es obligatorio y tiene un máximo de 150 caracteres.
+    const sinNombre = await api
+      .post(`/api/aprendiz/proyectos/fases/${faseDos.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ nombre_carpeta: '   ' });
+    expect(sinNombre.status).toBe(400);
+    expect(sinNombre.body.message).toBe('El nombre de la carpeta es obligatorio');
+
+    const nombreLargo = await api
+      .post(`/api/aprendiz/proyectos/fases/${faseDos.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ nombre_carpeta: 'x'.repeat(151) });
+    expect(nombreLargo.status).toBe(400);
+    expect(nombreLargo.body.message).toContain('150 caracteres');
+
+    // RF-019: una fase inexistente responde 404, no 403.
+    const faseInexistente = await api
+      .post('/api/aprendiz/proyectos/fases/99999999/carpetas')
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ nombre_carpeta: 'Carpeta fantasma' });
+    expect(faseInexistente.status).toBe(404);
+    expect(faseInexistente.body.message).toBe('Fase no encontrada');
+
+    // CA-019.4: una fase de otro grupo responde 403.
+    const faseAjena = await api
+      .post(`/api/aprendiz/proyectos/fases/${faseDos.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${ajeno.token}`)
+      .send({ nombre_carpeta: 'Carpeta ajena' });
+    expect(faseAjena.status).toBe(403);
+
+    // CA-019.3: cualquier integrante activo puede crear la carpeta, no solo el líder.
+    const creada = await api
+      .post(`/api/aprendiz/proyectos/fases/${faseDos.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${segundo.token}`)
+      .send({ nombre_carpeta: 'Carpeta del integrante' });
+    expect(creada.status).toBe(201);
+    expect(creada.body.nombre_carpeta).toBe('Carpeta del integrante');
+
+    const listado = await api
+      .get(`/api/aprendiz/proyectos/fases/${faseDos.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${lider.token}`);
+    expect(listado.status).toBe(200);
+    expect(listado.body.carpetas.some((c) => c.carpeta_id === creada.body.carpeta_id)).toBe(true);
+  });
+
   it('HU-026: una observación puede asociarse a una evidencia del proyecto', async () => {
     const creacion = await api
       .post(`/api/instructor/proyectos/${proyecto.proyecto_id}/observaciones`)

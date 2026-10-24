@@ -68,9 +68,12 @@ function Fases({ fases }) {
 
   const handleCrearCarpeta = async (e) => {
     e.preventDefault();
-    if (!nombreCarpeta.trim()) return;
     setError("");
     setExito("");
+    if (!nombreCarpeta.trim()) {
+      setError("El nombre de la carpeta es obligatorio");
+      return;
+    }
     try {
       await crearCarpetaAprendiz(faseSeleccionada.fase_id, nombreCarpeta);
       setNombreCarpeta("");
@@ -251,6 +254,7 @@ function Fases({ fases }) {
                     className="add-ficha-input"
                     placeholder="Ej. Entregables Fase Analisis"
                     value={nombreCarpeta}
+                    maxLength={150}
                     onChange={(e) => setNombreCarpeta(e.target.value)}
                   />
                   <button className="btn-rol" type="submit" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>

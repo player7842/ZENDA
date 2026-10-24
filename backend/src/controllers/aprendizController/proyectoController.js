@@ -547,12 +547,29 @@ export async function crearCarpeta(req, res) {
     const usuarioId = req.user.usuario_id;
     const { faseId } = req.params;
     const nombreCarpeta = texto(req.body.nombre_carpeta);
+    const idFase = Number(faseId);
 
-    const error = errorDeValidacion('nombre_carpeta', nombreCarpeta);
-    if (error) return res.status(400).json({ message: error });
+    // RF-019: el nombre es obligatorio y tiene un máximo de 150 caracteres.
+    if (!nombreCarpeta) {
+      return res.status(400).json({ message: 'El nombre de la carpeta es obligatorio' });
+    }
+    if (nombreCarpeta.length > MAXIMOS.nombre_carpeta) {
+      return res.status(400).json({
+        message: `El nombre de la carpeta no puede superar ${MAXIMOS.nombre_carpeta} caracteres`,
+      });
+    }
 
-    const check = await verificarIntegranteDeFase(pool, usuarioId, faseId);
+    if (!Number.isInteger(idFase) || idFase <= 0) {
+      return res.status(404).json({ message: 'Fase no encontrada' });
+    }
+
+    const check = await verificarIntegranteDeFase(pool, usuarioId, idFase);
     if (!check) {
+      // Distingue una fase inexistente (404) de una fase ajena (403).
+      const { rowCount } = await pool.query('SELECT 1 FROM fases WHERE fase_id = $1', [idFase]);
+      if (rowCount === 0) {
+        return res.status(404).json({ message: 'Fase no encontrada' });
+      }
       return res.status(403).json({ message: 'No perteneces al grupo dueño de esta fase' });
     }
 
