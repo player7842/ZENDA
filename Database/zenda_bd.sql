@@ -247,7 +247,8 @@ BEGIN
   SELECT CASE
            WHEN COUNT(ev.evidencia_id) = 0 THEN 'Pendiente'
            WHEN BOOL_OR(ult.resultado = 'REPROBADO') THEN 'Desaprobada'
-           WHEN BOOL_AND(ult.resultado = 'APROBADO') THEN 'Aprobada'
+           WHEN COUNT(*) FILTER (WHERE ult.resultado = 'APROBADO') = COUNT(ev.evidencia_id)
+             THEN 'Aprobada'
            ELSE 'En revisión'
          END
     INTO v_estado
@@ -281,7 +282,8 @@ BEGIN
   SELECT CASE
            WHEN COUNT(ev.evidencia_id) = 0 THEN 'Pendiente'
            WHEN BOOL_OR(ult.resultado = 'REPROBADO') THEN 'Desaprobada'
-           WHEN BOOL_AND(ult.resultado = 'APROBADO') THEN 'Aprobada'
+           WHEN COUNT(*) FILTER (WHERE ult.resultado = 'APROBADO') = COUNT(ev.evidencia_id)
+             THEN 'Aprobada'
            ELSE 'En revisión'
          END
     INTO v_estado

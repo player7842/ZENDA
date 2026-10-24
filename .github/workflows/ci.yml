@@ -20,7 +20,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U zenda_user -d zenda"
+          --health-cmd "pg_isready -h 127.0.0.1 -U zenda_user -d zenda"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -39,6 +39,9 @@ jobs:
       EMAIL_PASS: ''
       JWT_SESSION_EXPIRES: 24h
       CODIGO_PROGRAMA_COORDINADOR: 2338
+      # En CI la base siempre debe existir: si no, las pruebas de integración
+      # fallan en vez de omitirse silenciosamente.
+      REQUIRE_DB: '1'
     steps:
       - uses: actions/checkout@v4
 

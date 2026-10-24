@@ -19,7 +19,10 @@ services:
       # Se ejecuta SOLO la primera vez (con el volumen vacío)
       - ./Database/zenda_bd.sql:/docker-entrypoint-initdb.d/01-zenda_bd.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      # -h 127.0.0.1 fuerza TCP: durante la inicialización Postgres solo
+      # escucha por socket Unix y el healthcheck no debe darse por bueno
+      # antes de que termine de cargar zenda_bd.sql.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 10

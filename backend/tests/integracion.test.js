@@ -30,6 +30,14 @@ try {
   dbDisponible = false;
 }
 
+// En CI (REQUIRE_DB=1) la suite no puede omitirse: si la base no está lista,
+// el pipeline debe fallar en vez de reportar verde sin ejecutar integración.
+if (!dbDisponible && process.env.REQUIRE_DB === '1') {
+  throw new Error(
+    'REQUIRE_DB=1 pero PostgreSQL no está disponible: las pruebas de integración no pueden omitirse.'
+  );
+}
+
 const api = request(app);
 const sufijo = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 let contador = 0;
@@ -254,6 +262,54 @@ describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
     expect(listadoFinal.body.progreso.porcentaje).toBe(100);
     expect(listadoFinal.body.progreso.carpetas_aprobadas).toBe(1);
     expect(listadoFinal.body.progreso.carpetas_total).toBe(1);
+  });
+
+  it('RN-018: una carpeta con evidencia mixta queda En revisión, no Aprobada', async () => {
+    const carpeta = await api
+      .post(`/api/aprendiz/proyectos/fases/${fase.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${lider.token}`)
+      .send({ nombre_carpeta: 'Carpeta mixta' });
+    expect(carpeta.status).toBe(201);
+
+    const ids = [];
+    for (let i = 1; i <= 2; i += 1) {
+      const evidencia = await api
+        .post(`/api/aprendiz/proyectos/carpetas/${carpeta.body.carpeta_id}/evidencias`)
+        .set('Authorization', `Bearer ${segundo.token}`)
+        .send({
+          nombre_evidencia: `Evidencia mixta ${i}`,
+          tipo_evidencia: 'Enlace',
+          ubicacion: `https://example.com/mixta-${i}`,
+        });
+      expect(evidencia.status).toBe(201);
+      ids.push(evidencia.body.evidencia_id);
+    }
+
+    // Se aprueba solo una de las dos: la otra sigue sin evaluar.
+    const aprobada = await api
+      .post(`/api/instructor/evidencias/${ids[0]}/evaluar`)
+      .set('Authorization', `Bearer ${instructor.token}`)
+      .send({ resultado: 'APROBADO' });
+    expect(aprobada.status).toBe(200);
+    expect(aprobada.body.estado_carpeta).toBe('En revisión');
+    expect(aprobada.body.estado_fase).toBe('En revisión');
+
+    const listado = await api
+      .get(`/api/instructor/fases/${fase.fase_id}/carpetas`)
+      .set('Authorization', `Bearer ${instructor.token}`);
+    expect(listado.status).toBe(200);
+
+    const mixta = listado.body.carpetas.find((c) => c.carpeta_id === carpeta.body.carpeta_id);
+    expect(mixta.estado_carpeta).toBe('En revisión');
+    expect(listado.body.estado_fase).toBe('En revisión');
+
+    // Fase: 3 de 4 evidencias aprobadas y 1 de 2 carpetas aprobadas.
+    expect(listado.body.progreso.total).toBe(4);
+    expect(listado.body.progreso.aprobadas).toBe(3);
+    expect(listado.body.progreso.sinEvaluar).toBe(1);
+    expect(listado.body.progreso.porcentaje).toBe(75);
+    expect(listado.body.progreso.carpetas_aprobadas).toBe(1);
+    expect(listado.body.progreso.carpetas_total).toBe(2);
   });
 
   it('HU-026: una observación puede asociarse a una evidencia del proyecto', async () => {
