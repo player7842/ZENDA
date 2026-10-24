@@ -161,7 +161,26 @@ export const getDashboardCoordinador = async (req, res) => {
         (SELECT count(*)::int FROM grupos g
            JOIN fichas f ON f.ficha_id = g.ficha_id
            JOIN programas p ON p.programa_id = f.programa_id
-           WHERE p.codigo_programa = $1 AND NOT g.es_general AND g.estado_grupo = 'Activo') AS total_grupos`,
+           WHERE p.codigo_programa = $1 AND NOT g.es_general AND g.estado_grupo = 'Activo') AS total_grupos,
+        (SELECT count(*)::int
+           FROM proyectos pr
+           JOIN grupos g ON g.grupo_id = pr.grupo_id
+           JOIN fichas f ON f.ficha_id = g.ficha_id
+           JOIN programas p ON p.programa_id = f.programa_id
+           WHERE p.codigo_programa = $1
+             AND NOT g.es_general
+             AND pr.estado_proyecto = 'Activo'
+             AND GREATEST(
+                   pr.fecha_inicio::timestamp,
+                   COALESCE((SELECT max(e.fecha_subida)
+                             FROM evidencias e
+                             JOIN carpetas c ON c.carpeta_id = e.carpeta_id
+                             JOIN fases fa ON fa.fase_id = c.fase_id
+                             WHERE fa.proyecto_id = pr.proyecto_id), pr.fecha_inicio::timestamp),
+                   COALESCE((SELECT max(o.fecha_observacion)
+                             FROM observaciones o
+                             WHERE o.proyecto_id = pr.proyecto_id), pr.fecha_inicio::timestamp)
+                 ) < now() - interval '15 days') AS proyectos_sin_actividad`,
       [CODIGO_PROGRAMA_ADSO]
     );
 
