@@ -20,7 +20,11 @@ const API_URL =
 // Guardamos el token aquí para mandarlo en cada petición autenticada
 export const getToken = () => localStorage.getItem("zenda-token");
 export const setToken = (token) => localStorage.setItem("zenda-token", token);
-export const clearToken = () => localStorage.removeItem("zenda-token");
+export const clearToken = () => {
+  localStorage.removeItem("zenda-token");
+  // HU-004: además de borrar el token local, revoca el refresco en el servidor.
+  fetch(`${API_URL}/api/auth/logout`, { method: "POST", credentials: "include" }).catch(() => {});
+};
 
 // Obtener el usuario guardado al hacer login y saber si es admin
 export const getStoredUser = () => {
@@ -36,6 +40,8 @@ export const isAdmin = () => getStoredUser()?.rol === "ADMINISTRADOR";
 export async function login(correo, password) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
+    // La cookie HttpOnly del refresco solo se guarda si la petición incluye credenciales.
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ correo, password }),
   });
@@ -43,6 +49,61 @@ export async function login(correo, password) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Error al iniciar sesión");
   return data;
+}
+
+// Verifica el correo con el token del enlace enviado al registrarse (RS-006).
+export async function verifyEmail(token) {
+  const res = await fetch(`${API_URL}/api/auth/verify-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "No se pudo verificar el correo");
+  return data;
+}
+
+// Reenvía el enlace de verificación sin revelar si la cuenta existe.
+export async function resendVerification(correo) {
+  const res = await fetch(`${API_URL}/api/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ correo }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "No se pudo reenviar la verificación");
+  return data;
+}
+
+// HU-004: renueva el token de acceso con la cookie HttpOnly de refresco.
+export async function refreshSession() {
+  const res = await fetch(`${API_URL}/api/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const error = new Error(data.message || "La sesión expiró");
+    error.status = res.status;
+    throw error;
+  }
+  if (data.token) setToken(data.token);
+  return data;
+}
+
+// HU-004: el cierre de sesión revoca el refresco en el servidor.
+export async function logout() {
+  try {
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Si no hay red, el frontend igual borra el token local.
+  }
 }
 
 // Registro crea un usuario y devuelve { user, token }
