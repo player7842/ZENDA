@@ -11,8 +11,8 @@
 --   de identidad y el esquema oficial no lo contemplaba.
 --
 -- Credenciales de seed (SOLO para desarrollo local):
---   admin@zenda.com / Admin123!        (ADMINISTRADOR)
---   *.zenda.com      / Prueba123!      (instructores, coordinadores, aprendices)
+--   admin@zenda.com / [cambiar en producción]   (ADMINISTRADOR)
+--   *.zenda.com      / [cambiar en producción]  (instructores, coordinadores, aprendices)
 --
 -- ⚠️  NO cargar este seed en entornos públicos (Render/Neon).
 --     Crear el primer administrador manualmente y no documentar
