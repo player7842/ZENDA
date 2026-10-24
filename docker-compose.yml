@@ -42,7 +42,12 @@ services:
       PGDATABASE: ${DB_NAME}
     volumes:
       - ./Database/migrations:/migrations:ro
-    entrypoint: ['psql', '-v', 'ON_ERROR_STOP=1', '-f', '/migrations/002_semana2.sql']
+    entrypoint:
+      [
+        'sh',
+        '-c',
+        'psql -v ON_ERROR_STOP=1 -f /migrations/002_semana2.sql && psql -v ON_ERROR_STOP=1 -f /migrations/003_cierre.sql',
+      ]
 
   backend:
     build:

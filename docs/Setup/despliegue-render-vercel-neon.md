@@ -183,7 +183,7 @@ casi siempre es `DATABASE_URL` mal copiada o el esquema sin cargar.
 | # | Prueba | Resultado esperado |
 |:--:|---|---|
 | 1 | Abrir la URL de Vercel | Carga el login |
-| 2 | Entrar con `admin@zenda.com` / `Admin123!` | Llega al panel de administración |
+| 2 | Entrar con el administrador definido en el seed (o creado manualmente en Neon) | Llega al panel de administración |
 | 3 | Entrar con `carlos@zenda.com` / `Prueba123!` | Llega al panel de aprendiz con su proyecto |
 | 4 | Recargar una ruta interna (por ejemplo `/aprendiz/fases`) | No devuelve 404 (fallback de la SPA) |
 | 5 | Pedir recuperación con un correo inexistente | Responde 200 con el mismo mensaje que con uno real |

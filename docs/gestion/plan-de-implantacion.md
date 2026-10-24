@@ -136,35 +136,35 @@ Los siguientes criterios deben cumplirse para dar por cerrada la implantación d
 
 | # | Criterio | Cómo se mide | Responsable |
 |---|----------|--------------|-------------|
-| C-01 | `pnpm lint` pasa en backend y frontend | `pnpm --dir backend lint` y `pnpm --dir frontend lint` exit code 0 | Hernan Robledo |
-| C-02 | `pnpm test` pasa (unitarias e integración) | 9 unitarias + 8 de integración = 17 pruebas aprobadas | Hernan Robledo |
-| C-03 | `pnpm build` del frontend sin errores | `pnpm --dir frontend build` exit code 0 | Hernan Robledo |
-| C-04 | Migración `002_semana2.sql` idempotente en CI | Se ejecuta dos veces sin error | Hernan Robledo |
-| C-05 | Migración desde v11 probada con *fixture* | `v11_migracion_assert.sql` pasa sin excepciones | Hernan Robledo |
-| C-06 | CI falla si no hay base de datos | `REQUIRE_DB=1` lanza error si PostgreSQL no está disponible | Hernan Robledo |
-| C-07 | Prettier pasa en CI | `pnpm dlx prettier --check` exit code 0 | Hernan Robledo |
-| C-08 | Docker Compose levanta en clon limpio | `docker compose up --build` construye y levanta `db`, `migrate`, `backend`, `frontend` | Hernan Robledo |
-| C-09 | PR #16 revisado y mergueado en `develop` | PR abierto con revisor asignado y merge confirmado | Hernan Robledo |
-| C-10 | No hay credenciales hardcodeadas en el repositorio | `zenda_bd.sql` sin contraseñas reales; pruebas leen de `ADMIN_EMAIL`/`ADMIN_PASSWORD` | Hernan Robledo |
-| C-11 | Plan de implantación con responsables, criterios y contingencia | Este documento aprobado por el equipo | Hernan Robledo |
+| C-01 | `pnpm lint` pasa en backend y frontend | `pnpm --dir backend lint` y `pnpm --dir frontend lint` exit code 0 | Hernan Robledo, Leyner Buitrago, Omar Gonzalez |
+| C-02 | `pnpm test` pasa (unitarias e integración) | 10 unitarias + 12 de integración = 22 pruebas aprobadas | Hernan Robledo, Leyner Buitrago, Omar Gonzalez |
+| C-03 | `pnpm build` del frontend sin errores | `pnpm --dir frontend build` exit code 0 | Nicolas Aparicio, Hernan Robledo |
+| C-04 | Migración `002_semana2.sql` idempotente en CI | Se ejecuta dos veces sin error | Hernan Robledo, Omar Gonzalez |
+| C-05 | Migración desde v11 probada con *fixture* | `v11_migracion_assert.sql` pasa sin excepciones | Hernan Robledo, Omar Gonzalez |
+| C-06 | CI falla si no hay base de datos | `REQUIRE_DB=1` lanza error si PostgreSQL no está disponible | Hernan Robledo, Leyner Buitrago |
+| C-07 | Prettier pasa en CI | `pnpm dlx prettier --check` exit code 0 | Leyner Buitrago, Omar Gonzalez |
+| C-08 | Docker Compose levanta en clon limpio | `docker compose up --build` construye y levanta `db`, `migrate`, `backend`, `frontend` | Hernan Robledo, Nicolas Aparicio |
+| C-09 | PR #16 revisado y mergueado en `develop` | PR abierto con revisor asignado y merge confirmado | Hernan Robledo, Leyner Buitrago (revisor) |
+| C-10 | No hay credenciales hardcodeadas en el repositorio | `zenda_bd.sql` sin contraseñas reales; pruebas leen de `ADMIN_EMAIL`/`ADMIN_PASSWORD` | Omar Gonzalez, Hernan Robledo |
+| C-11 | Plan de implantación con responsables, criterios y contingencia | Este documento aprobado por el equipo | Todos |
 
 ## Plan de contingencia
 
 | Riesgo | Impacto | Probabilidad | Mitigación / Contingencia | Responsable |
 |--------|---------|--------------|---------------------------|-------------|
-| El despliegue en Render falla por migración | Alto | Media | La migración corre en `startCommand`; si falla, Render no marca el servicio como saludable. Se revisa el log de Render y se ejecuta `backend/scripts/migrar.js` manualmente en un entorno de ensayo antes de reintentar. | Hernan Robledo |
+| El despliegue en Render falla por migración | Alto | Media | La migración corre en `startCommand`; si falla, Render no marca el servicio como saludable. Se revisa el log de Render y se ejecuta `backend/scripts/migrar.js` manualmente en un entorno de ensayo antes de reintentar. | Hernan Robledo, Omar Gonzalez |
 | Neon no disponible en CI | Alto | Baja | El CI usa PostgreSQL 16 local (servicio de GitHub Actions), no Neon. Neon solo se usa en producción. | Hernan Robledo |
-| Credenciales de admin expuestas en seed | Alto | Baja | Se quitaron las credenciales reales de `zenda_bd.sql`. Ahora se leen de variables de entorno `ADMIN_EMAIL`/`ADMIN_PASSWORD`. | Hernan Robledo |
+| Credenciales de admin expuestas en seed | Alto | Baja | Se quitaron las credenciales reales de `zenda_bd.sql`. Ahora se leen de variables de entorno `ADMIN_EMAIL`/`ADMIN_PASSWORD`. | Omar Gonzalez, Hernan Robledo |
 | Fallo en pruebas de integración por falta de BD | Medio | Alta | El CI requiere `REQUIRE_DB=1`; si no hay BD, el pipeline falla explícitamente en lugar de omitir pruebas. | Hernan Robledo |
 | Conflictos de historial entre `main` y `develop` | Medio | Media | No se reescribe la historia; se usan PRs hacia `develop` y se documentan los commits por bloque. | Todos |
 | Atraso en Semana 3 por falta de cierre de Semana 2 | Medio | Baja | Este plan documenta el cierre al 100 %; si queda algo pendiente, se marca como `Parcial` con justificación aprobada y se traslada a la semana siguiente. | Todos |
-| Falle el deploy en Vercel (frontend) | Medio | Baja | Vercel se conecta a `frontend/vercel.json`; si falla, se revisa `VITE_API_URL` y se hace despliegue manual desde `frontend/` con `pnpm build` y `vercel --prod`. | Nicolas Aparicio (Semana 3) |
+| Falle el deploy en Vercel (frontend) | Medio | Baja | Vercel se conecta a `frontend/vercel.json`; si falla, se revisa `VITE_API_URL` y se hace despliegue manual desde `frontend/` con `pnpm build` y `vercel --prod`. | Nicolas Aparicio, Leyner Buitrago |
 
 ## Criterio de cierre
 
 1. `pnpm lint` pasa en backend y frontend.
-2. `pnpm test` pasa (unitarias y, con BD, integración).
-3. `pnpm build` del frontend termina sin errores.
+2. `pnpm test` pasa (unitarias e integración: 10 unitarias + 12 de integración = 22 pruebas aprobadas).
+3. `pnpm build` del frontend termina sin errores (responsable: Nicolas Aparicio).
 4. `002_semana2.sql` se ejecuta dos veces sin errores en CI.
 5. HU-020 queda declarada fuera de alcance y trasladada a la Semana 4.
 6. Todos los criterios de éxito (C-01 a C-11) verificados.

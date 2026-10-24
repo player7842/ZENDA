@@ -18,6 +18,7 @@ RUN pnpm install --frozen-lockfile --prod
 # El código de la aplicación y la migración de Semana 2
 COPY backend/ ./
 COPY Database/migrations/002_semana2.sql ./Database/migrations/002_semana2.sql
+COPY Database/migrations/003_cierre.sql ./Database/migrations/003_cierre.sql
 
 ENV NODE_ENV=production
 EXPOSE 4000
