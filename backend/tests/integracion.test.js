@@ -38,6 +38,19 @@ if (!dbDisponible && process.env.REQUIRE_DB === '1') {
   );
 }
 
+// Credenciales de administración para las pruebas de integración.
+// Se leen de variables de entorno para no tener credenciales hardcodeadas.
+// En desarrollo local se pueden usar valores por defecto; en CI/Render/Neon
+// deben definirse ADMIN_EMAIL y ADMIN_PASSWORD con credenciales reales del seed.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@zenda.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123!';
+
+if (process.env.REQUIRE_DB === '1' && (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD)) {
+  throw new Error(
+    'REQUIRE_DB=1 pero faltan ADMIN_EMAIL o ADMIN_PASSWORD. Define ambas variables de entorno antes de ejecutar las pruebas de integración en CI.'
+  );
+}
+
 const api = request(app);
 const sufijo = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 let contador = 0;
@@ -89,7 +102,7 @@ describe.skipIf(!dbDisponible)('Integración Semana 2', () => {
   let evidenciaIds = [];
 
   beforeAll(async () => {
-    admin = await login('admin@zenda.com', 'Admin123!');
+    admin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
     instructor = await login('felipe@zenda.com', 'Prueba123!');
   });
 
