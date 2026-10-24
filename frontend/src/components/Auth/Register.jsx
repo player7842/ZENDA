@@ -60,6 +60,8 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // RS-006: campo trampa. Las personas no lo ven; los bots suelen rellenarlo.
+  const [sitioWeb, setSitioWeb] = useState("");
   const fuerzaPassword = calcularFuerzaPassword(formData.password);
   
   const navigate = useNavigate();
@@ -168,10 +170,13 @@ function Register() {
         acepta_privacidad: aceptaPrivacidad,
         acepta_cookies: aceptaCookies,
         acepta_tratamiento_datos: aceptaTratamientoDatos,
+        sitio_web: sitioWeb,
       });
 
-      alert("Registro exitoso. Por favor inicia sesión.");
-      navigate("/login");
+      // RS-006: la cuenta queda pendiente de verificación por correo.
+      navigate(
+        `/verificar-correo?pendiente=1&correo=${encodeURIComponent(formData.email.trim().toLowerCase())}`
+      );
     } catch (err) {
       setServerError(err.message || "Error al registrar usuario");
     } finally {
@@ -203,6 +208,24 @@ function Register() {
         <p className="auth-subtitle" style={{ textAlign: "center", fontSize: "0.9rem", opacity: 0.8, marginBottom: 24 }}>Ingresa tus datos para registrarte en el sistema</p>
 
         <form onSubmit={handleSubmit} noValidate>
+          {/* RS-006: honeypot invisible para personas. No usar display:none,
+              porque algunos bots lo detectan; se saca del área visible. */}
+          <div
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+          >
+            <label htmlFor="sitio_web">Sitio web</label>
+            <input
+              id="sitio_web"
+              name="sitio_web"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={sitioWeb}
+              onChange={(e) => setSitioWeb(e.target.value)}
+            />
+          </div>
+
           {/* Nombres y Apellidos */}
           <div className="form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div className={`form-field ${errors.nombre ? "has-error" : ""}`}>
