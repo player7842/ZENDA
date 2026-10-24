@@ -6,7 +6,9 @@
 const isAdmin = (req, res, next) => {
   // El JWT ya trae el rol, lo puso el middleware auth en req.user
   if (!req.user || req.user.rol !== 'ADMINISTRADOR') {
-    return res.status(403).json({ message: 'Acceso denegado: se requieren permisos de administrador' });
+    return res
+      .status(403)
+      .json({ message: 'Acceso denegado: se requieren permisos de administrador' });
   }
   next();
 };

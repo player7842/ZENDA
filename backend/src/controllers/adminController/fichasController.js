@@ -45,7 +45,6 @@ const leerFichas = async () => {
 // Grupo General: helper compartido en services/grupos.js
 // ==================================================================
 
-
 // ==================================================================
 // GET /api/fichas — listar todas las fichas con sus programas
 // ==================================================================
@@ -64,7 +63,7 @@ export const getFichas = async (req, res) => {
 export const getProgramas = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT programa_id, codigo_programa, nombre_programa FROM programas ORDER BY codigo_programa'
+      'SELECT programa_id, codigo_programa, nombre_programa FROM programas ORDER BY codigo_programa',
     );
     res.json(result.rows);
   } catch (error) {
@@ -86,15 +85,19 @@ export const createFicha = async (req, res) => {
     await verificarPasswordAdmin(req.user.usuario_id, password);
 
     if (!codigo_programa || !numero_ficha || !jornada) {
-      return res.status(400).json({ message: 'Faltan datos de la ficha (programa, número, jornada)' });
+      return res
+        .status(400)
+        .json({ message: 'Faltan datos de la ficha (programa, número, jornada)' });
     }
     if (!fecha_inicio || !fecha_fin || new Date(fecha_fin) <= new Date(fecha_inicio)) {
-      return res.status(400).json({ message: 'La ficha necesita fechas válidas (inicio antes del fin)' });
+      return res
+        .status(400)
+        .json({ message: 'La ficha necesita fechas válidas (inicio antes del fin)' });
     }
 
     const programa = await client.query(
       'SELECT programa_id FROM programas WHERE codigo_programa = $1',
-      [codigo_programa]
+      [codigo_programa],
     );
     if (programa.rows.length === 0) {
       return res.status(400).json({ message: 'Ese programa no existe en la base de datos' });
@@ -102,7 +105,9 @@ export const createFicha = async (req, res) => {
 
     await client.query('BEGIN');
 
-    const existe = await client.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [numero_ficha]);
+    const existe = await client.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1', [
+      numero_ficha,
+    ]);
     if (existe.rows.length > 0) {
       await client.query('ROLLBACK');
       return res.status(400).json({ message: 'Ese número de ficha ya está registrado' });
@@ -112,7 +117,7 @@ export const createFicha = async (req, res) => {
       `INSERT INTO fichas (numero_ficha, programa_id, fecha_inicio, fecha_fin, jornada)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING ficha_id`,
-      [numero_ficha, programa.rows[0].programa_id, fecha_inicio, fecha_fin, jornada]
+      [numero_ficha, programa.rows[0].programa_id, fecha_inicio, fecha_fin, jornada],
     );
 
     // Crear el grupo "General" de la ficha desde ya
@@ -144,7 +149,10 @@ export const updateFicha = async (req, res) => {
       return res.status(400).json({ message: 'Faltan datos de la ficha' });
     }
 
-    const existe = await pool.query('SELECT ficha_id FROM fichas WHERE numero_ficha = $1 AND ficha_id <> $2', [numero_ficha, id]);
+    const existe = await pool.query(
+      'SELECT ficha_id FROM fichas WHERE numero_ficha = $1 AND ficha_id <> $2',
+      [numero_ficha, id],
+    );
     if (existe.rows.length > 0) {
       return res.status(400).json({ message: 'Ese número de ficha ya lo tiene otra ficha' });
     }
@@ -154,7 +162,7 @@ export const updateFicha = async (req, res) => {
        SET numero_ficha = $1, fecha_inicio = $2, fecha_fin = $3, jornada = $4
        WHERE ficha_id = $5
        RETURNING ficha_id`,
-      [numero_ficha, fecha_inicio, fecha_fin, jornada, id]
+      [numero_ficha, fecha_inicio, fecha_fin, jornada, id],
     );
 
     if (result.rows.length === 0) {
@@ -185,10 +193,15 @@ export const deleteFicha = async (req, res) => {
     await client.query('BEGIN');
 
     await client.query('DELETE FROM instructor_ficha WHERE ficha_id = $1', [id]);
-    await client.query('DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE ficha_id = $1)', [id]);
+    await client.query(
+      'DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE ficha_id = $1)',
+      [id],
+    );
     await client.query('DELETE FROM grupos WHERE ficha_id = $1', [id]);
 
-    const result = await client.query('DELETE FROM fichas WHERE ficha_id = $1 RETURNING ficha_id', [id]);
+    const result = await client.query('DELETE FROM fichas WHERE ficha_id = $1 RETURNING ficha_id', [
+      id,
+    ]);
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Ficha no encontrada' });
@@ -223,7 +236,7 @@ export const addAprendizAFicha = async (req, res) => {
 
     const aprendiz = await client.query(
       'SELECT usuario_id, nombre, apellido FROM usuarios WHERE usuario_id = $1',
-      [usuario_id]
+      [usuario_id],
     );
     if (aprendiz.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -240,7 +253,7 @@ export const addAprendizAFicha = async (req, res) => {
          AND g.es_general
          AND ig.usuario_id = $1
          AND ig.estado_integrante = 'Activo'`,
-      [usuario_id]
+      [usuario_id],
     );
 
     const grupoId = await obtenerOCrearGrupoGeneral(client, id, req.user.usuario_id);
@@ -248,20 +261,20 @@ export const addAprendizAFicha = async (req, res) => {
     // Si ya es integrante (inactivo) de este grupo, lo reactivamos
     const yaExiste = await client.query(
       'SELECT integrante_id FROM integrantes_grupo WHERE grupo_id = $1 AND usuario_id = $2',
-      [grupoId, usuario_id]
+      [grupoId, usuario_id],
     );
     if (yaExiste.rows.length > 0) {
       await client.query(
         `UPDATE integrantes_grupo
          SET estado_integrante = 'Activo', fecha_salida = NULL
          WHERE integrante_id = $1`,
-        [yaExiste.rows[0].integrante_id]
+        [yaExiste.rows[0].integrante_id],
       );
     } else {
       await client.query(
         `INSERT INTO integrantes_grupo (grupo_id, usuario_id, fecha_ingreso, estado_integrante)
          VALUES ($1, $2, now(), 'Activo')`,
-        [grupoId, usuario_id]
+        [grupoId, usuario_id],
       );
     }
 
@@ -298,12 +311,14 @@ export const removeAprendizDeFicha = async (req, res) => {
        WHERE g.grupo_id = ig.grupo_id AND g.ficha_id = $1
          AND ig.usuario_id = $2 AND ig.estado_integrante = 'Activo'
        RETURNING ig.integrante_id`,
-      [id, usuario_id]
+      [id, usuario_id],
     );
 
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ message: 'Ese aprendiz no está en esa ficha o ya estaba inactivo' });
+      return res
+        .status(404)
+        .json({ message: 'Ese aprendiz no está en esa ficha o ya estaba inactivo' });
     }
 
     await client.query('COMMIT');

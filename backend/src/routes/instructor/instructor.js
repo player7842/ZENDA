@@ -1,7 +1,19 @@
 import express from 'express';
 import auth from '../../middleware/auth.js';
 import isInstructor from '../../middleware/isInstructor.js';
-import { getMisFichas, getAprendicesDeFicha, getGruposDeFicha, getReadmeProyecto, getCarpetasDeFase, evaluarEvidencia, aprobarCarpeta, getEvidenciasDeFicha, getObservacionesDeProyecto, crearObservacion, getResumenInstructor } from '../../controllers/instructorController/instructorController.js';
+import {
+  getMisFichas,
+  getAprendicesDeFicha,
+  getGruposDeFicha,
+  getReadmeProyecto,
+  getCarpetasDeFase,
+  evaluarEvidencia,
+  aprobarCarpeta,
+  getEvidenciasDeFicha,
+  getObservacionesDeProyecto,
+  crearObservacion,
+  getResumenInstructor,
+} from '../../controllers/instructorController/instructorController.js';
 
 const router = express.Router();
 

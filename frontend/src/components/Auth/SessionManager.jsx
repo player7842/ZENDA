@@ -7,10 +7,10 @@
     sesión, revocando el refresco en el servidor.
 */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Clock } from "lucide-react";
-import { clearToken, getToken, refreshSession } from "../../api";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Clock } from 'lucide-react';
+import { clearToken, getToken, refreshSession } from '../../api';
 
 const MINUTO = 60 * 1000;
 const AVISO_MS = 29 * MINUTO;
@@ -18,15 +18,15 @@ const CIERRE_MS = 30 * MINUTO;
 const REFRESCO_MS = 12 * MINUTO;
 
 const RUTAS_PUBLICAS = [
-  "/",
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/verificar-correo",
-  "/terminos",
-  "/privacidad",
-  "/cookies",
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verificar-correo',
+  '/terminos',
+  '/privacidad',
+  '/cookies',
 ];
 
 function SessionManager() {
@@ -44,7 +44,7 @@ function SessionManager() {
     cerrando.current = true;
     clearToken();
     setAviso(false);
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   }, [navigate]);
 
   // Cada interacción del usuario reinicia el contador de inactividad.
@@ -55,8 +55,10 @@ function SessionManager() {
       ultimaActividad.current = Date.now();
     };
 
-    const eventos = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
-    eventos.forEach((evento) => window.addEventListener(evento, marcarActividad, { passive: true }));
+    const eventos = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    eventos.forEach((evento) =>
+      window.addEventListener(evento, marcarActividad, { passive: true }),
+    );
 
     return () => {
       eventos.forEach((evento) => window.removeEventListener(evento, marcarActividad));
@@ -135,13 +137,13 @@ function SessionManager() {
       aria-modal="true"
       aria-labelledby="aviso-sesion-titulo"
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 2000,
         padding: 20,
       }}
@@ -150,30 +152,43 @@ function SessionManager() {
         className="modal-card"
         style={{
           maxWidth: 420,
-          width: "100%",
-          backgroundColor: "var(--color-bg-card, #ffffff)",
-          color: "var(--color-text-main, #1e293b)",
+          width: '100%',
+          backgroundColor: 'var(--color-bg-card, #ffffff)',
+          color: 'var(--color-text-main, #1e293b)',
           padding: 24,
           borderRadius: 14,
-          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.2)",
-          textAlign: "center",
+          boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+          textAlign: 'center',
         }}
       >
         <Clock size={34} color="#d97706" style={{ marginBottom: 10 }} />
-        <h2 id="aviso-sesion-titulo" style={{ margin: "0 0 8px", fontSize: "1.15rem" }}>
+        <h2 id="aviso-sesion-titulo" style={{ margin: '0 0 8px', fontSize: '1.15rem' }}>
           Tu sesión está por cerrarse
         </h2>
-        <p style={{ fontSize: "0.9rem", lineHeight: 1.5, opacity: 0.85, marginBottom: 20 }}>
-          Por seguridad, cerraremos tu sesión por inactividad en{" "}
-          <strong>{restante} segundo{restante === 1 ? "" : "s"}</strong>.
+        <p style={{ fontSize: '0.9rem', lineHeight: 1.5, opacity: 0.85, marginBottom: 20 }}>
+          Por seguridad, cerraremos tu sesión por inactividad en{' '}
+          <strong>
+            {restante} segundo{restante === 1 ? '' : 's'}
+          </strong>
+          .
         </p>
-        <button className="btn-primary" onClick={continuarSesion} style={{ width: "100%", marginBottom: 10 }}>
+        <button
+          className="btn-primary"
+          onClick={continuarSesion}
+          style={{ width: '100%', marginBottom: 10 }}
+        >
           Continuar sesión
         </button>
         <button
           type="button"
           onClick={cerrarSesion}
-          style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.85rem", opacity: 0.75 }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            opacity: 0.75,
+          }}
         >
           Cerrar sesión ahora
         </button>

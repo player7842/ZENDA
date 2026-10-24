@@ -22,10 +22,7 @@ import {
   puedeUnirse,
   validarCupo,
 } from '../../domain/reglas.js';
-import {
-  bloquearCarpeta,
-  recalcularCarpetaYFase,
-} from '../../services/cascada.js';
+import { bloquearCarpeta, recalcularCarpetaYFase } from '../../services/cascada.js';
 import { obtenerOCrearGrupoGeneral } from '../../services/grupos.js';
 
 const FASES_FIJAS = [
@@ -91,10 +88,9 @@ function generarCodigoProyecto() {
 async function codigoProyectoDisponible(client) {
   for (let intento = 0; intento < 8; intento += 1) {
     const codigo = generarCodigoProyecto();
-    const { rowCount } = await client.query(
-      'SELECT 1 FROM grupos WHERE codigo_grupo = $1',
-      [codigo]
-    );
+    const { rowCount } = await client.query('SELECT 1 FROM grupos WHERE codigo_grupo = $1', [
+      codigo,
+    ]);
     if (rowCount === 0) return codigo;
   }
   throw new Error('No se pudo generar un código de grupo único');
@@ -111,7 +107,7 @@ async function obtenerFichaDelAprendiz(client, usuarioId) {
        AND g.es_general
      ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
      LIMIT 1`,
-    [usuarioId]
+    [usuarioId],
   );
   return rows[0]?.ficha_id || null;
 }
@@ -126,7 +122,7 @@ async function tieneProyectoActivo(client, usuarioId) {
        AND ig.estado_integrante = 'Activo'
        AND NOT g.es_general
      LIMIT 1`,
-    [usuarioId]
+    [usuarioId],
   );
   return rows.length > 0;
 }
@@ -223,7 +219,7 @@ export async function crearProyecto(req, res) {
            (ficha_id, lider_id, nombre_grupo, codigo_grupo, cupo_maximo, estado_grupo, fecha_creacion, es_general)
          VALUES ($1, $2, $3, $4, $5, 'Activo', now(), false)
          RETURNING grupo_id`,
-        [fichaId, usuarioId, nombreGrupo, codigoGrupo, cupo.cupo]
+        [fichaId, usuarioId, nombreGrupo, codigoGrupo, cupo.cupo],
       );
       grupoId = grupoResult.rows[0].grupo_id;
     } catch (error) {
@@ -240,7 +236,7 @@ export async function crearProyecto(req, res) {
     await client.query(
       `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
        VALUES ($1, $2, 'Activo', now())`,
-      [grupoId, usuarioId]
+      [grupoId, usuarioId],
     );
 
     const proyectoResult = await client.query(
@@ -259,16 +255,16 @@ export async function crearProyecto(req, res) {
         texto(tecnologias) || null,
         texto(fecha_inicio),
         texto(fecha_fin_estimada),
-      ]
+      ],
     );
     const proyectoId = proyectoResult.rows[0].proyecto_id;
 
     const valoresFases = FASES_FIJAS.map(
-      (fase) => `(${proyectoId}, ${fase.numero}, '${fase.nombre}', 'Pendiente')`
+      (fase) => `(${proyectoId}, ${fase.numero}, '${fase.nombre}', 'Pendiente')`,
     ).join(', ');
     await client.query(
       `INSERT INTO fases (proyecto_id, numero_fase, nombre_fase, estado_fase)
-       VALUES ${valoresFases}`
+       VALUES ${valoresFases}`,
     );
 
     await client.query('COMMIT');
@@ -329,7 +325,7 @@ export async function unirseAProyecto(req, res) {
          AND estado_grupo = 'Activo'
          AND NOT es_general
        FOR UPDATE`,
-      [codigo]
+      [codigo],
     );
     if (grupoResult.rowCount === 0) {
       await client.query('ROLLBACK');
@@ -342,16 +338,14 @@ export async function unirseAProyecto(req, res) {
     if (grupo.ficha_id !== fichaId) {
       await client.query('ROLLBACK');
       transaccionAbierta = false;
-      return res
-        .status(403)
-        .json({ message: 'El grupo pertenece a otra ficha; no puedes unirte' });
+      return res.status(403).json({ message: 'El grupo pertenece a otra ficha; no puedes unirte' });
     }
 
     const conteo = await client.query(
       `SELECT count(*)::int AS total
        FROM integrantes_grupo
        WHERE grupo_id = $1 AND estado_integrante = 'Activo'`,
-      [grupo.grupo_id]
+      [grupo.grupo_id],
     );
 
     if (!puedeUnirse(grupo.cupo_maximo, conteo.rows[0].total)) {
@@ -367,7 +361,7 @@ export async function unirseAProyecto(req, res) {
        VALUES ($1, $2, 'Activo', now())
        ON CONFLICT (grupo_id, usuario_id)
        DO UPDATE SET estado_integrante = 'Activo', fecha_salida = NULL, fecha_ingreso = now()`,
-      [grupo.grupo_id, usuarioId]
+      [grupo.grupo_id, usuarioId],
     );
 
     await client.query('COMMIT');
@@ -400,7 +394,7 @@ export async function getMiProyecto(req, res) {
          AND NOT g.es_general
        ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
-      [usuarioId]
+      [usuarioId],
     );
     if (grupoResult.rowCount === 0) {
       return res.status(404).json({ message: 'No perteneces a ningún proyecto activo' });
@@ -420,7 +414,7 @@ export async function getMiProyecto(req, res) {
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'
        ORDER BY (ig.usuario_id = g.lider_id) DESC, u.nombre`,
-      [grupo.grupo_id]
+      [grupo.grupo_id],
     );
 
     // Progreso por fase con la evaluación vigente de cada evidencia.
@@ -451,7 +445,7 @@ export async function getMiProyecto(req, res) {
            WHERE f.proyecto_id = $1
            GROUP BY f.fase_id
            ORDER BY f.numero_fase`,
-          [proyecto.proyecto_id]
+          [proyecto.proyecto_id],
         )
       : { rows: [] };
 
@@ -485,7 +479,7 @@ export async function actualizarCupoProyecto(req, res) {
        FROM grupos g
        WHERE g.lider_id = $1 AND g.estado_grupo = 'Activo' AND NOT g.es_general
        FOR UPDATE`,
-      [usuarioId]
+      [usuarioId],
     );
     if (grupoResult.rowCount === 0) {
       await client.query('ROLLBACK');
@@ -498,7 +492,7 @@ export async function actualizarCupoProyecto(req, res) {
       `SELECT count(*)::int AS total
        FROM integrantes_grupo
        WHERE grupo_id = $1 AND estado_integrante = 'Activo'`,
-      [grupo.grupo_id]
+      [grupo.grupo_id],
     );
 
     if (cupo.cupo < rows[0].total) {
@@ -536,7 +530,7 @@ async function verificarIntegranteDeFase(client, usuarioId, faseId) {
      JOIN grupos g ON g.grupo_id = p.grupo_id
      JOIN integrantes_grupo ig ON ig.grupo_id = g.grupo_id
      WHERE f.fase_id = $1 AND ig.usuario_id = $2 AND ig.estado_integrante = 'Activo'`,
-    [faseId, usuarioId]
+    [faseId, usuarioId],
   );
   return rows[0] || null;
 }
@@ -577,7 +571,7 @@ export async function crearCarpeta(req, res) {
       `INSERT INTO carpetas (fase_id, nombre_carpeta, fecha_creacion)
        VALUES ($1, $2, now())
        RETURNING carpeta_id, nombre_carpeta, estado_carpeta`,
-      [faseId, nombreCarpeta]
+      [faseId, nombreCarpeta],
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -633,7 +627,7 @@ export async function subirEvidencia(req, res) {
        WHERE c.carpeta_id = $1
          AND ig.usuario_id = $2
          AND ig.estado_integrante = 'Activo'`,
-      [carpetaId, usuarioId]
+      [carpetaId, usuarioId],
     );
     if (rowCount === 0) {
       await client.query('ROLLBACK');
@@ -646,7 +640,7 @@ export async function subirEvidencia(req, res) {
          (carpeta_id, usuario_id, nombre_evidencia, tipo_evidencia, ubicacion, fecha_subida)
        VALUES ($1, $2, $3, $4, $5, clock_timestamp())
        RETURNING evidencia_id`,
-      [carpetaId, usuarioId, nombreEvidencia, tipoEvidencia, ubicacionLimpia]
+      [carpetaId, usuarioId, nombreEvidencia, tipoEvidencia, ubicacionLimpia],
     );
 
     // Una evidencia nueva sin evaluar devuelve la carpeta/fase a "En revisión".
@@ -680,7 +674,7 @@ export async function getCarpetasDeFaseAprendiz(req, res) {
        FROM carpetas
        WHERE fase_id = $1
        ORDER BY carpeta_id`,
-      [faseId]
+      [faseId],
     );
 
     // Una sola consulta para todas las evidencias de la fase (Q-04), no una
@@ -704,7 +698,7 @@ export async function getCarpetasDeFaseAprendiz(req, res) {
        LEFT JOIN usuarios inst ON inst.usuario_id = ult.instructor_id
        WHERE c.fase_id = $1
        ORDER BY ev.evidencia_id`,
-      [faseId]
+      [faseId],
     );
 
     const porCarpeta = new Map();
@@ -718,7 +712,7 @@ export async function getCarpetasDeFaseAprendiz(req, res) {
 
     const { rows: faseRows } = await pool.query(
       `SELECT fase_id, nombre_fase, estado_fase FROM fases WHERE fase_id = $1`,
-      [faseId]
+      [faseId],
     );
 
     const resultados = evidencias.map((evidencia) => evidencia.resultado);
@@ -754,7 +748,7 @@ export async function getObservacionesDeMiProyecto(req, res) {
          AND NOT g.es_general
        ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
-      [usuarioId]
+      [usuarioId],
     );
     if (grupoResult.rowCount === 0) {
       return res.status(404).json({ message: 'No perteneces a ningún proyecto activo' });
@@ -762,7 +756,7 @@ export async function getObservacionesDeMiProyecto(req, res) {
 
     const proyectoResult = await pool.query(
       `SELECT proyecto_id FROM proyectos WHERE grupo_id = $1`,
-      [grupoResult.rows[0].grupo_id]
+      [grupoResult.rows[0].grupo_id],
     );
     if (proyectoResult.rowCount === 0) {
       return res.status(404).json({ message: 'Tu grupo aún no tiene proyecto' });
@@ -777,7 +771,7 @@ export async function getObservacionesDeMiProyecto(req, res) {
        LEFT JOIN evidencias ev ON ev.evidencia_id = o.evidencia_id
        WHERE o.proyecto_id = $1
        ORDER BY o.fecha_observacion DESC`,
-      [proyectoResult.rows[0].proyecto_id]
+      [proyectoResult.rows[0].proyecto_id],
     );
     res.json(rows);
   } catch (err) {
@@ -830,7 +824,7 @@ export async function cambiarMiFicha(req, res) {
          AND g.es_general
          AND ig.usuario_id = $1
          AND ig.estado_integrante = 'Activo'`,
-      [usuarioId]
+      [usuarioId],
     );
 
     const grupoId = await obtenerOCrearGrupoGeneral(client, fichaId, usuarioId);
@@ -840,7 +834,7 @@ export async function cambiarMiFicha(req, res) {
        VALUES ($1, $2, 'Activo', now())
        ON CONFLICT (grupo_id, usuario_id)
        DO UPDATE SET estado_integrante = 'Activo', fecha_salida = NULL, fecha_ingreso = now()`,
-      [grupoId, usuarioId]
+      [grupoId, usuarioId],
     );
 
     await client.query('COMMIT');
@@ -870,7 +864,7 @@ export async function getResumenAprendiz(req, res) {
          AND NOT g.es_general
        ORDER BY ig.fecha_ingreso DESC, p.proyecto_id DESC
        LIMIT 1`,
-      [usuarioId]
+      [usuarioId],
     );
     if (proyectoResult.rowCount === 0) {
       return res.status(404).json({ message: 'No perteneces a ningún proyecto activo' });
@@ -913,7 +907,7 @@ export async function getResumenAprendiz(req, res) {
            ) ult ON true
            WHERE f.proyecto_id = $1 AND ult.resultado = 'APROBADO') AS evidencias_aprobadas
       `,
-      [proyectoId]
+      [proyectoId],
     );
 
     const r = rows[0];
@@ -951,7 +945,7 @@ export async function getFichaActual(req, res) {
          AND g.es_general
        ORDER BY ig.fecha_ingreso DESC, g.grupo_id DESC
        LIMIT 1`,
-      [usuarioId]
+      [usuarioId],
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: 'No estás inscrito en ninguna ficha' });

@@ -49,7 +49,7 @@ const firmarSesion = (usuario) =>
       tv: usuario.token_version ?? 0,
     },
     env.jwtSecret,
-    { expiresIn: env.jwtAccessExpires }
+    { expiresIn: env.jwtAccessExpires },
   );
 
 const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
@@ -91,7 +91,7 @@ const crearRefresco = async (db, usuarioId) => {
   await db.query(
     `INSERT INTO sesiones_refresh (usuario_id, token_hash, expira_en)
      VALUES ($1, $2, now() + ($3 || ' days')::interval)`,
-    [usuarioId, hashToken(token), DIAS_REFRESCO]
+    [usuarioId, hashToken(token), DIAS_REFRESCO],
   );
   return token;
 };
@@ -100,17 +100,16 @@ const crearVerificacion = async (db, usuario) => {
   const token = jwt.sign(
     { usuario_id: usuario.usuario_id, correo: usuario.correo, purpose: 'verify' },
     env.jwtSecret,
-    { expiresIn: `${HORAS_VERIFICACION}h` }
+    { expiresIn: `${HORAS_VERIFICACION}h` },
   );
 
-  await db.query(
-    `DELETE FROM verificacion_correo WHERE usuario_id = $1 AND usado_en IS NULL`,
-    [usuario.usuario_id]
-  );
+  await db.query(`DELETE FROM verificacion_correo WHERE usuario_id = $1 AND usado_en IS NULL`, [
+    usuario.usuario_id,
+  ]);
   await db.query(
     `INSERT INTO verificacion_correo (usuario_id, token_hash, expira_en)
      VALUES ($1, $2, now() + ($3 || ' hours')::interval)`,
-    [usuario.usuario_id, hashToken(token), HORAS_VERIFICACION]
+    [usuario.usuario_id, hashToken(token), HORAS_VERIFICACION],
   );
 
   return token;
@@ -157,7 +156,9 @@ export const register = async (req, res) => {
     const nombreLimpio = String(nombre || '').trim();
     const apellidoLimpio = String(apellido || '').trim();
     const documentoLimpio = String(numero_documento || '').replace(/\D/g, '');
-    const tipoDocumento = String(tipo_documento || '').trim().toUpperCase();
+    const tipoDocumento = String(tipo_documento || '')
+      .trim()
+      .toUpperCase();
 
     if (!nombreLimpio || !apellidoLimpio || !correo || !password) {
       return res.status(400).json({ message: 'Faltan datos obligatorios del usuario' });
@@ -212,7 +213,7 @@ export const register = async (req, res) => {
 
     const ficha = await pool.query(
       'SELECT ficha_id, numero_ficha FROM fichas WHERE numero_ficha = $1',
-      [numero_ficha]
+      [numero_ficha],
     );
     if (ficha.rows.length === 0) {
       return res.status(400).json({ message: 'Esa ficha no existe' });
@@ -232,7 +233,7 @@ export const register = async (req, res) => {
           correo_verificado)
        VALUES ('APRENDIZ', $1, $2, $3, $4, 'Activo', now(), now(), $5, $6, true, true, true, true, now(), false)
        RETURNING ${CAMPOS_PUBLICOS}, token_version`,
-      [nombreLimpio, apellidoLimpio, correo, hashedPassword, tipoDocumento, documentoLimpio]
+      [nombreLimpio, apellidoLimpio, correo, hashedPassword, tipoDocumento, documentoLimpio],
     );
     const user = result.rows[0];
 
@@ -241,7 +242,7 @@ export const register = async (req, res) => {
     await client.query(
       `INSERT INTO integrantes_grupo (grupo_id, usuario_id, estado_integrante, fecha_ingreso)
        VALUES ($1, $2, 'Activo', now())`,
-      [grupoId, user.usuario_id]
+      [grupoId, user.usuario_id],
     );
 
     // RS-006: el enlace de verificación se crea en la misma transacción.
@@ -292,7 +293,9 @@ export const login = async (req, res) => {
 
     // Usuario desactivado no entra, ni con la contraseña correcta
     if (user.estado !== 'Activo') {
-      return res.status(403).json({ message: 'Tu cuenta está inactiva, habla con un administrador' });
+      return res
+        .status(403)
+        .json({ message: 'Tu cuenta está inactiva, habla con un administrador' });
     }
 
     const validPassword = await bcrypt.compare(password || '', user.contrasena);
@@ -338,7 +341,7 @@ export const forgotPassword = async (req, res) => {
 
     const result = await pool.query(
       'SELECT usuario_id, correo FROM usuarios WHERE correo = $1 AND estado = $2',
-      [correo, 'Activo']
+      [correo, 'Activo'],
     );
     if (result.rows.length === 0) {
       // No se revela la ausencia del correo.
@@ -351,19 +354,19 @@ export const forgotPassword = async (req, res) => {
     const token = jwt.sign(
       { usuario_id: user.usuario_id, correo: user.correo, purpose: 'reset' },
       env.jwtSecret,
-      { expiresIn: '15m' }
+      { expiresIn: '15m' },
     );
 
     // Solo queda vigente el enlace más reciente y se guarda su hash.
     await pool.query(
       `DELETE FROM recuperacion_contrasena
        WHERE usuario_id = $1 AND usado_en IS NULL`,
-      [user.usuario_id]
+      [user.usuario_id],
     );
     await pool.query(
       `INSERT INTO recuperacion_contrasena (usuario_id, token_hash, expira_en, creado_en)
        VALUES ($1, $2, now() + interval '15 minutes', now())`,
-      [user.usuario_id, hashToken(token)]
+      [user.usuario_id, hashToken(token)],
     );
 
     try {
@@ -417,7 +420,7 @@ export const resetPassword = async (req, res) => {
          AND usado_en IS NULL
          AND expira_en > now()
        FOR UPDATE`,
-      [hashToken(token), decoded.usuario_id]
+      [hashToken(token), decoded.usuario_id],
     );
 
     if (tokenValido.rows.length === 0) {
@@ -432,7 +435,7 @@ export const resetPassword = async (req, res) => {
       `UPDATE recuperacion_contrasena
        SET usado_en = now()
        WHERE recuperacion_id = $1`,
-      [tokenValido.rows[0].recuperacion_id]
+      [tokenValido.rows[0].recuperacion_id],
     );
 
     // token_version invalida las sesiones emitidas antes del cambio (C-01).
@@ -445,7 +448,7 @@ export const resetPassword = async (req, res) => {
            correo_verificado = true,
            fecha_actualizacion = now()
        WHERE usuario_id = $2`,
-      [hashedPassword, decoded.usuario_id]
+      [hashedPassword, decoded.usuario_id],
     );
 
     // HU-004: cambiar la contraseña revoca también los refrescos vigentes.
@@ -453,7 +456,7 @@ export const resetPassword = async (req, res) => {
       `UPDATE sesiones_refresh
        SET revocado_en = now()
        WHERE usuario_id = $1 AND revocado_en IS NULL`,
-      [decoded.usuario_id]
+      [decoded.usuario_id],
     );
 
     await client.query('COMMIT');
@@ -501,7 +504,7 @@ export const verifyEmail = async (req, res) => {
          AND usado_en IS NULL
          AND expira_en > now()
        FOR UPDATE`,
-      [hashToken(token), decoded.usuario_id]
+      [hashToken(token), decoded.usuario_id],
     );
 
     if (verificacion.rows.length === 0) {
@@ -512,13 +515,13 @@ export const verifyEmail = async (req, res) => {
 
     await client.query(
       `UPDATE verificacion_correo SET usado_en = now() WHERE verificacion_id = $1`,
-      [verificacion.rows[0].verificacion_id]
+      [verificacion.rows[0].verificacion_id],
     );
     await client.query(
       `UPDATE usuarios
        SET correo_verificado = true, fecha_actualizacion = now()
        WHERE usuario_id = $1`,
-      [decoded.usuario_id]
+      [decoded.usuario_id],
     );
 
     await client.query('COMMIT');
@@ -549,7 +552,7 @@ export const resendVerification = async (req, res) => {
       `SELECT usuario_id, correo
        FROM usuarios
        WHERE correo = $1 AND estado = 'Activo' AND correo_verificado = false`,
-      [correo]
+      [correo],
     );
     if (result.rows.length === 0) {
       return res.json({ message: RESPUESTA_UNIFORME });
@@ -594,7 +597,7 @@ export const refresh = async (req, res) => {
          AND s.revocado_en IS NULL
          AND s.expira_en > now()
        FOR UPDATE OF s`,
-      [hashToken(token)]
+      [hashToken(token)],
     );
 
     if (rows.length === 0) {
@@ -612,10 +615,9 @@ export const refresh = async (req, res) => {
       return res.status(401).json({ message: 'La sesión ya no es válida' });
     }
 
-    await client.query(
-      `UPDATE sesiones_refresh SET revocado_en = now() WHERE sesion_id = $1`,
-      [usuario.sesion_id]
-    );
+    await client.query(`UPDATE sesiones_refresh SET revocado_en = now() WHERE sesion_id = $1`, [
+      usuario.sesion_id,
+    ]);
     const nuevoRefresco = await crearRefresco(client, usuario.usuario_id);
 
     await client.query('COMMIT');
@@ -641,7 +643,7 @@ export const logout = async (req, res) => {
         `UPDATE sesiones_refresh
          SET revocado_en = now()
          WHERE token_hash = $1 AND revocado_en IS NULL`,
-        [hashToken(token)]
+        [hashToken(token)],
       );
     }
 

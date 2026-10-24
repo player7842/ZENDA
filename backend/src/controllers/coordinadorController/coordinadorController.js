@@ -25,13 +25,15 @@ const resolverFichasADSO = async (db, numeros) => {
      FROM fichas f
      JOIN programas p ON p.programa_id = f.programa_id
      WHERE f.numero_ficha = ANY($1::int[]) AND p.codigo_programa = $2`,
-    [limpio.map(Number), CODIGO_PROGRAMA_ADSO]
+    [limpio.map(Number), CODIGO_PROGRAMA_ADSO],
   );
 
   const encontrados = new Set(result.rows.map((r) => String(r.numero_ficha)));
   const faltantes = limpio.filter((n) => !encontrados.has(n));
   if (faltantes.length > 0) {
-    const err = new Error(`La ficha ${faltantes.join(', ')} no existe o no pertenece a tu ámbito (ADSO)`);
+    const err = new Error(
+      `La ficha ${faltantes.join(', ')} no existe o no pertenece a tu ámbito (ADSO)`,
+    );
     err.codigo = 400;
     throw err;
   }
@@ -60,7 +62,7 @@ export const getFichasCoordinador = async (req, res) => {
        JOIN programas p ON p.programa_id = f.programa_id
        WHERE p.codigo_programa = $1
        ORDER BY f.numero_ficha`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
     res.json(result.rows);
   } catch (error) {
@@ -89,7 +91,7 @@ export const getInstructoresCoordinador = async (req, res) => {
        FROM usuarios u
        WHERE u.rol = 'INSTRUCTOR'
        ORDER BY u.usuario_id`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
     res.json(result.rows);
   } catch (error) {
@@ -114,7 +116,10 @@ export const updateFichasInstructorCoordinador = async (req, res) => {
 
     await client.query('BEGIN');
 
-    const target = await client.query('SELECT usuario_id, rol FROM usuarios WHERE usuario_id = $1', [id]);
+    const target = await client.query(
+      'SELECT usuario_id, rol FROM usuarios WHERE usuario_id = $1',
+      [id],
+    );
     if (target.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -181,7 +186,7 @@ export const getDashboardCoordinador = async (req, res) => {
                              FROM observaciones o
                              WHERE o.proyecto_id = pr.proyecto_id), pr.fecha_inicio::timestamp)
                  ) < now() - interval '15 days') AS proyectos_sin_actividad`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
 
     const proyectosPorEstado = await pool.query(
@@ -192,7 +197,7 @@ export const getDashboardCoordinador = async (req, res) => {
        JOIN programas p ON p.programa_id = f.programa_id
        WHERE p.codigo_programa = $1
        GROUP BY pr.estado_proyecto`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
 
     res.json({
@@ -224,7 +229,7 @@ export const getGruposCoordinador = async (req, res) => {
        LEFT JOIN usuarios lu ON lu.usuario_id = g.lider_id
        WHERE prg.codigo_programa = $1 AND NOT g.es_general
        ORDER BY f.numero_ficha, g.nombre_grupo`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
     res.json(result.rows);
   } catch (error) {
@@ -251,7 +256,7 @@ export const getProyectosCoordinador = async (req, res) => {
        JOIN programas prg ON prg.programa_id = f.programa_id
        WHERE prg.codigo_programa = $1
        ORDER BY p.proyecto_id DESC`,
-      [CODIGO_PROGRAMA_ADSO]
+      [CODIGO_PROGRAMA_ADSO],
     );
     res.json(result.rows);
   } catch (error) {
@@ -277,7 +282,7 @@ export const getSeguimientoProyecto = async (req, res) => {
        JOIN fichas f ON f.ficha_id = g.ficha_id
        JOIN programas prg ON prg.programa_id = f.programa_id
        WHERE p.proyecto_id = $1 AND prg.codigo_programa = $2`,
-      [id, CODIGO_PROGRAMA_ADSO]
+      [id, CODIGO_PROGRAMA_ADSO],
     );
     if (proyectoResult.rows.length === 0) {
       return res.status(404).json({ message: 'Proyecto no encontrado en tu ámbito (ADSO)' });
@@ -292,20 +297,20 @@ export const getSeguimientoProyecto = async (req, res) => {
        JOIN grupos g ON g.grupo_id = ig.grupo_id
        WHERE ig.grupo_id = $1 AND ig.estado_integrante = 'Activo'
        ORDER BY (ig.usuario_id = g.lider_id) DESC, u.nombre`,
-      [proyecto.grupo_id]
+      [proyecto.grupo_id],
     );
 
     const fases = await pool.query(
       `SELECT fase_id, numero_fase, nombre_fase, estado_fase
        FROM fases WHERE proyecto_id = $1 ORDER BY numero_fase`,
-      [id]
+      [id],
     );
 
     for (const fase of fases.rows) {
       const carpetas = await pool.query(
         `SELECT carpeta_id, nombre_carpeta, estado_carpeta
          FROM carpetas WHERE fase_id = $1 ORDER BY carpeta_id`,
-        [fase.fase_id]
+        [fase.fase_id],
       );
       for (const carpeta of carpetas.rows) {
         const evidencias = await pool.query(
@@ -323,7 +328,7 @@ export const getSeguimientoProyecto = async (req, res) => {
            ) ult ON true
            WHERE e.carpeta_id = $1
            ORDER BY e.evidencia_id`,
-          [carpeta.carpeta_id]
+          [carpeta.carpeta_id],
         );
         carpeta.evidencias = evidencias.rows;
       }
@@ -335,10 +340,15 @@ export const getSeguimientoProyecto = async (req, res) => {
        FROM observaciones o
        JOIN usuarios u ON u.usuario_id = o.instructor_id
        WHERE o.proyecto_id = $1 ORDER BY o.fecha_observacion DESC`,
-      [id]
+      [id],
     );
 
-    res.json({ proyecto, integrantes: integrantes.rows, fases: fases.rows, observaciones: observaciones.rows });
+    res.json({
+      proyecto,
+      integrantes: integrantes.rows,
+      fases: fases.rows,
+      observaciones: observaciones.rows,
+    });
   } catch (error) {
     console.error('Error al obtener seguimiento (coordinador):', error);
     res.status(500).json({ message: 'Error al obtener el seguimiento del proyecto' });
@@ -353,7 +363,7 @@ export const getPerfilCoordinador = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT usuario_id, nombre, apellido, correo, tipo_documento, numero_documento, estado, fecha_creacion
        FROM usuarios WHERE usuario_id = $1`,
-      [req.user.usuario_id]
+      [req.user.usuario_id],
     );
     if (rows.length === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
     res.json(rows[0]);

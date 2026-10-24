@@ -1,28 +1,28 @@
 // Formulario de recuperación de contraseña con consumo real de la API de ZENDA.
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
-import { solicitarRecuperacion } from "../../api";
-import "../../styles/ForgotPassword.css";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
+import { solicitarRecuperacion } from '../../api';
+import '../../styles/ForgotPassword.css';
 
 function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
   const [isSent, setIsSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useTheme();
 
   const validateForm = () => {
     if (!email.trim()) {
-      setError("El correo electrónico es requerido");
+      setError('El correo electrónico es requerido');
       return false;
     }
-    if (!email.includes("@")) {
-      setError("Ingresa un correo electrónico válido");
+    if (!email.includes('@')) {
+      setError('Ingresa un correo electrónico válido');
       return false;
     }
-    setError("");
+    setError('');
     return true;
   };
 
@@ -37,7 +37,7 @@ function ForgotPassword() {
       await solicitarRecuperacion(email);
       setIsSent(true);
     } catch (err) {
-      setError(err?.message || "No se pudo enviar el correo de recuperación");
+      setError(err?.message || 'No se pudo enviar el correo de recuperación');
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +50,7 @@ function ForgotPassword() {
         <div className="auth-card forgot-card">
           <div className="auth-logo">
             <img
-              src={
-                theme === "dark"
-                  ? "/logos/logo-dark.png"
-                  : "/logos/logo-light.png"
-              }
+              src={theme === 'dark' ? '/logos/logo-dark.png' : '/logos/logo-light.png'}
               alt="ZENDA"
             />
           </div>
@@ -75,8 +71,7 @@ function ForgotPassword() {
 
           <h1 className="auth-title">Correo enviado</h1>
           <p className="forgot-sent-text">
-            Revisa tu bandeja de entrada y sigue las instrucciones para
-            restablecer tu contraseña.
+            Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
           </p>
 
           <Link to="/login" className="btn-primary">
@@ -92,11 +87,7 @@ function ForgotPassword() {
       <div className="auth-card forgot-card">
         <div className="auth-logo">
           <img
-            src={
-              theme === "dark"
-                ? "/logos/logo-dark.png"
-                : "/logos/logo-light.png"
-            }
+            src={theme === 'dark' ? '/logos/logo-dark.png' : '/logos/logo-light.png'}
             alt="ZENDA"
           />
         </div>
@@ -107,7 +98,7 @@ function ForgotPassword() {
         </p>
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className={`form-field ${error ? "has-error" : ""}`}>
+          <div className={`form-field ${error ? 'has-error' : ''}`}>
             <label htmlFor="email">Correo electrónico</label>
             <div className="input-wrapper">
               <svg
@@ -128,7 +119,7 @@ function ForgotPassword() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (error) setError("");
+                  if (error) setError('');
                 }}
                 placeholder="usuario@dominio.com"
                 autoFocus
@@ -138,7 +129,7 @@ function ForgotPassword() {
           </div>
 
           <button type="submit" className="btn-primary" disabled={isLoading}>
-            {isLoading ? "Enviando..." : "Enviar enlace"}
+            {isLoading ? 'Enviando...' : 'Enviar enlace'}
           </button>
         </form>
 

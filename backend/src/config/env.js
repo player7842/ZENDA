@@ -22,11 +22,9 @@ const OBLIGATORIAS = ['JWT_SECRET'];
 
 const faltantes = OBLIGATORIAS.filter((clave) => !process.env[clave]?.trim());
 if (faltantes.length > 0) {
+  console.error(`[config] Faltan variables de entorno obligatorias: ${faltantes.join(', ')}.`);
   console.error(
-    `[config] Faltan variables de entorno obligatorias: ${faltantes.join(', ')}.`
-  );
-  console.error(
-    '[config] Copia backend/.env.example a backend/.env y define un JWT_SECRET largo y aleatorio.'
+    '[config] Copia backend/.env.example a backend/.env y define un JWT_SECRET largo y aleatorio.',
   );
   process.exit(1);
 }

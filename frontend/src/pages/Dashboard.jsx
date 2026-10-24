@@ -4,21 +4,21 @@
   Aquí solo saludamos y damos la opción de cerrar sesión.
 */
 
-import { useNavigate } from "react-router-dom";
-import { clearToken } from "../api";
-import { useTheme } from "../context/ThemeContext";
-import "../styles/Dashboard.css";
+import { useNavigate } from 'react-router-dom';
+import { clearToken } from '../api';
+import { useTheme } from '../context/ThemeContext';
+import '../styles/Dashboard.css';
 
 function Dashboard() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("zenda-user") || null);
+  const user = JSON.parse(localStorage.getItem('zenda-user') || null);
   const { theme } = useTheme();
-  const logo = theme === "dark" ? "/logos/logo-dark.png" : "/logos/logo-light.png";
+  const logo = theme === 'dark' ? '/logos/logo-dark.png' : '/logos/logo-light.png';
 
   const handleLogout = () => {
     clearToken();
-    localStorage.removeItem("zenda-user");
-    navigate("/login");
+    localStorage.removeItem('zenda-user');
+    navigate('/login');
   };
 
   return (
@@ -38,8 +38,8 @@ function Dashboard() {
       <main className="dashboard-content">
         <h2>Panel de aprendiz</h2>
         <p>
-          Tu cuenta no tiene permisos de administración. Si crees que esto es un error,
-          contacta a un administrador para que cambie tu rol.
+          Tu cuenta no tiene permisos de administración. Si crees que esto es un error, contacta a
+          un administrador para que cambie tu rol.
         </p>
       </main>
     </div>

@@ -4,8 +4,13 @@
 
 import { Router } from 'express';
 import {
-  getFichas, getProgramas, createFicha, updateFicha, deleteFicha,
-  addAprendizAFicha, removeAprendizDeFicha
+  getFichas,
+  getProgramas,
+  createFicha,
+  updateFicha,
+  deleteFicha,
+  addAprendizAFicha,
+  removeAprendizDeFicha,
 } from '../../controllers/adminController/fichasController.js';
 import auth from '../../middleware/auth.js';
 import isAdmin from '../../middleware/isAdmin.js';
@@ -13,13 +18,13 @@ import { getFichasPublicas } from '../../controllers/adminController/fichasContr
 
 const router = Router();
 
-router.get('/programas', auth, isAdmin, getProgramas);                  // programas para el formulario
-router.get('/', auth, isAdmin, getFichas);                             // listar fichas (con conteos)
-router.post('/', auth, isAdmin, createFicha);                          // crear ficha (con password)
-router.put('/:id/aprendiz', auth, isAdmin, addAprendizAFicha);         // vincular aprendiz a la ficha
+router.get('/programas', auth, isAdmin, getProgramas); // programas para el formulario
+router.get('/', auth, isAdmin, getFichas); // listar fichas (con conteos)
+router.post('/', auth, isAdmin, createFicha); // crear ficha (con password)
+router.put('/:id/aprendiz', auth, isAdmin, addAprendizAFicha); // vincular aprendiz a la ficha
 router.delete('/:id/aprendiz/:usuario_id', auth, isAdmin, removeAprendizDeFicha); // desvincular aprendiz
-router.put('/:id', auth, isAdmin, updateFicha);                        // editar ficha
-router.delete('/:id', auth, isAdmin, deleteFicha);                     // eliminar ficha
+router.put('/:id', auth, isAdmin, updateFicha); // editar ficha
+router.delete('/:id', auth, isAdmin, deleteFicha); // eliminar ficha
 router.get('/publicas', getFichasPublicas); // pública, sin auth — para el registro
 
 export default router;

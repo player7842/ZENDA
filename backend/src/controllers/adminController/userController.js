@@ -46,7 +46,7 @@ const resolverFichas = async (db, numeros) => {
 
   const result = await db.query(
     'SELECT ficha_id, numero_ficha FROM fichas WHERE numero_ficha = ANY($1::int[])',
-    [limpio.map(Number)]
+    [limpio.map(Number)],
   );
 
   const encontrados = new Set(result.rows.map((r) => String(r.numero_ficha)));
@@ -106,8 +106,15 @@ export const createUser = async (req, res) => {
   const client = await pool.connect();
   try {
     const {
-      nombre, apellido, correo, tipo_documento, numero_documento,
-      rol, fichas, userPassword, password
+      nombre,
+      apellido,
+      correo,
+      tipo_documento,
+      numero_documento,
+      rol,
+      fichas,
+      userPassword,
+      password,
     } = req.body;
 
     const emailFinal = (correo || '').trim().toLowerCase();
@@ -123,10 +130,14 @@ export const createUser = async (req, res) => {
     await verificarPasswordAdmin(req.user.usuario_id, password);
 
     if (!userPassword || userPassword.length < 8) {
-      return res.status(400).json({ message: 'La contraseña del nuevo usuario debe tener mínimo 8 caracteres' });
+      return res
+        .status(400)
+        .json({ message: 'La contraseña del nuevo usuario debe tener mínimo 8 caracteres' });
     }
 
-    const existing = await pool.query('SELECT usuario_id FROM usuarios WHERE correo = $1', [emailFinal]);
+    const existing = await pool.query('SELECT usuario_id FROM usuarios WHERE correo = $1', [
+      emailFinal,
+    ]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ message: 'El correo electrónico ya se encuentra registrado' });
     }
@@ -144,7 +155,15 @@ export const createUser = async (req, res) => {
          (rol, nombre, apellido, correo, contrasena, estado, fecha_creacion, fecha_actualizacion, tipo_documento, numero_documento)
        VALUES ($1, $2, $3, $4, $5, 'Activo', now(), now(), $6, $7)
        RETURNING usuario_id, nombre, apellido, correo, rol, estado, tipo_documento, numero_documento`,
-      [rolFinal, nombre, apellido, emailFinal, hashedPassword, tipo_documento || 'CC', numero_documento]
+      [
+        rolFinal,
+        nombre,
+        apellido,
+        emailFinal,
+        hashedPassword,
+        tipo_documento || 'CC',
+        numero_documento,
+      ],
     );
 
     const user = result.rows[0];
@@ -154,7 +173,9 @@ export const createUser = async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.status(201).json({ message: 'Usuario creado exitosamente', user: { ...user, fichas: fichaIds } });
+    res
+      .status(201)
+      .json({ message: 'Usuario creado exitosamente', user: { ...user, fichas: fichaIds } });
   } catch (error) {
     await client.query('ROLLBACK');
     if (error.codigo) return res.status(error.codigo).json({ message: error.message });
@@ -209,7 +230,17 @@ export const updateUser = async (req, res) => {
   const client = await pool.connect();
   try {
     const { id } = req.params;
-    const { nombre, apellido, correo, tipo_documento, numero_documento, rol, fichas, estado, password } = req.body;
+    const {
+      nombre,
+      apellido,
+      correo,
+      tipo_documento,
+      numero_documento,
+      rol,
+      fichas,
+      estado,
+      password,
+    } = req.body;
 
     await verificarPasswordAdmin(req.user.usuario_id, password);
 
@@ -230,7 +261,16 @@ export const updateUser = async (req, res) => {
            rol = $6, estado = $7, fecha_actualizacion = now()
        WHERE usuario_id = $8
        RETURNING usuario_id, nombre, apellido, correo, rol, estado, tipo_documento, numero_documento`,
-      [nombre, apellido, correo, tipo_documento, numero_documento, rolFinal, estado || 'Activo', id]
+      [
+        nombre,
+        apellido,
+        correo,
+        tipo_documento,
+        numero_documento,
+        rolFinal,
+        estado || 'Activo',
+        id,
+      ],
     );
 
     if (result.rows.length === 0) {
@@ -274,7 +314,10 @@ export const updateInstructorFichas = async (req, res) => {
 
     await client.query('BEGIN');
 
-    const target = await client.query('SELECT usuario_id, rol FROM usuarios WHERE usuario_id = $1', [id]);
+    const target = await client.query(
+      'SELECT usuario_id, rol FROM usuarios WHERE usuario_id = $1',
+      [id],
+    );
     if (target.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -288,12 +331,15 @@ export const updateInstructorFichas = async (req, res) => {
 
     const updated = await client.query(
       'SELECT usuario_id, nombre, apellido, correo, rol FROM usuarios WHERE usuario_id = $1',
-      [id]
+      [id],
     );
 
     await client.query('COMMIT');
 
-    res.json({ message: 'Fichas vinculadas actualizadas', user: { ...updated.rows[0], fichas: fichaIds } });
+    res.json({
+      message: 'Fichas vinculadas actualizadas',
+      user: { ...updated.rows[0], fichas: fichaIds },
+    });
   } catch (error) {
     await client.query('ROLLBACK');
     if (error.codigo) return res.status(error.codigo).json({ message: error.message });
@@ -323,7 +369,10 @@ export const deleteUser = async (req, res) => {
     // 1) Integrantes donde el usuario es miembro
     await client.query('DELETE FROM integrantes_grupo WHERE usuario_id = $1', [id]);
     // 2) Si era lider de algún grupo, limpiamos ese grupo entero (y sus anuncios)
-    await client.query('DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE lider_id = $1)', [id]);
+    await client.query(
+      'DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE lider_id = $1)',
+      [id],
+    );
     await client.query('DELETE FROM grupos WHERE lider_id = $1', [id]);
     // 3) Vínculos de instructor: al eliminar la CUENTA sí se borran (la FK
     //    lo exige). Al reasignar fichas se conserva el historial.
@@ -334,7 +383,10 @@ export const deleteUser = async (req, res) => {
     await client.query('DELETE FROM evaluaciones WHERE instructor_id = $1', [id]);
     await client.query('DELETE FROM evidencias WHERE usuario_id = $1', [id]);
     // 5) Registro del usuario en la tabla principal
-    const result = await client.query('DELETE FROM usuarios WHERE usuario_id = $1 RETURNING usuario_id', [id]);
+    const result = await client.query(
+      'DELETE FROM usuarios WHERE usuario_id = $1 RETURNING usuario_id',
+      [id],
+    );
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Usuario no encontrado' });
@@ -381,7 +433,7 @@ export const updateUserRol = async (req, res) => {
 
     const result = await client.query(
       'UPDATE usuarios SET rol = $1, fecha_actualizacion = now() WHERE usuario_id = $2 RETURNING usuario_id, nombre, apellido, correo, rol',
-      [rol, id]
+      [rol, id],
     );
 
     if (result.rows.length === 0) {
