@@ -62,6 +62,28 @@ export function puedeUnirse(cupoMaximo, totalIntegrantes) {
 }
 
 /**
+ * RF-028: la fecha límite de una tarea no puede ser anterior a la de inicio.
+ * Las dos fechas son opcionales; si falta una, no hay nada que comparar.
+ * @returns {string|null} Mensaje de error o null si son válidas.
+ */
+export function validarFechasTarea(fechaInicio, fechaLimite) {
+  if (!fechaInicio || !fechaLimite) return null;
+
+  const inicio = new Date(fechaInicio);
+  const limite = new Date(fechaLimite);
+
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(limite.getTime())) {
+    return 'Las fechas de la tarea no son válidas';
+  }
+
+  if (limite < inicio) {
+    return 'La fecha límite no puede ser anterior a la fecha de inicio';
+  }
+
+  return null;
+}
+
+/**
  * Normaliza el resultado de una evaluación.
  * @returns {'APROBADO'|'REPROBADO'|null}
  */

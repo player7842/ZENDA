@@ -4,13 +4,14 @@
     Pendiente -> En proceso -> Finalizada -> Confirmada
                                           -> Incompleta -> En proceso (reintento)
   Reglas:
-    - Solo el Scrum Master (líder del grupo) crea y asigna tareas.
+    - Solo el líder del grupo crea y asigna tareas.
     - El responsable asignado mueve: Pendiente->En proceso->Finalizada.
     - Solo el líder confirma o marca incompleta una tarea Finalizada.
     - Las tareas viven a nivel de PROYECTO (no de fase), según decisión del equipo.
 */
 
 import pool from '../../config/db.js';
+import { validarFechasTarea } from '../../domain/reglas.js';
 
 const PRIORIDADES_VALIDAS = ['Alta', 'Media', 'Baja'];
 
@@ -48,6 +49,11 @@ export async function crearTarea(req, res) {
         }
         if (prioridad && !PRIORIDADES_VALIDAS.includes(prioridad)) {
             return res.status(400).json({ message: 'Prioridad inválida' });
+        }
+
+        const errorFechas = validarFechasTarea(fecha_inicio, fecha_limite);
+        if (errorFechas) {
+            return res.status(400).json({ message: errorFechas });
         }
 
         const proyecto = await obtenerProyectoDelUsuario(usuarioId);
@@ -145,7 +151,7 @@ export async function cambiarEstadoTarea(req, res) {
             return res.status(400).json({ message: `No se puede pasar de "${tarea.estado}" a "${nuevoEstado}"` });
         }
         if (permitido === 'lider' && !esLider) {
-            return res.status(403).json({ message: 'Solo el Scrum Master puede confirmar o rechazar esta tarea' });
+            return res.status(403).json({ message: 'Solo el líder del grupo puede confirmar o rechazar esta tarea' });
         }
         if (permitido === 'responsable' && !esResponsable) {
             return res.status(403).json({ message: 'Solo el responsable puede mover esta tarea' });
