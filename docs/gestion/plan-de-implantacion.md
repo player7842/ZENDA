@@ -83,10 +83,7 @@ Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_a
 
 ## Pruebas
 
-- **Unitarias:** `backend/tests/reglas.test.js` (9 pruebas de reglas puras).
-- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, RN-018 (evidencia mixta), HU-019, HU-026, HU-011 y C-01 (8 escenarios). Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan con `REQUIRE_DB=1`.
-- **CI:** carga `Database/zenda_bd.sql`, aplica `002_semana2.sql` dos veces, migra desde el *fixture* v11, ejecuta lint, pruebas y build del frontend.
-- **Ejecución local verificada (23-oct-2026):** PostgreSQL 16, base cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **17 pruebas aprobadas** (9 unitarias + 8 de integración). También se probó la migración sobre el *fixture* v11 con datos (`V11_MIGRATION_OK`) y se verificó un único General por ficha.
+
 - **Docker verificado:** `docker compose up --build` construye `zenda-backend` y `zenda-frontend`, y levanta `db`, `migrate`, `backend` y `frontend`. `GET /api/health` responde 200, el frontend 200 y el login de administrador y aprendiz 200.
 
 ## Verificación
@@ -124,7 +121,7 @@ pnpm build
 
 | Semana | Responsable | Alcance |
 |--------|-------------|---------|
-| Semana 1 y 2 | Hernan Robledo | Cierre completo de Semanas 1 y 2: backend, frontend, base de datos, migraciones, pruebas, CI y despliegue local con Docker. |
+| Semana 1 y 2 | Hernan Robledo, Leyner Buitrago, Omar Gonzalez, Nicolas Aparicio | Cierre completo de Semanas 1 y 2 (reparto T7: todos explican el sistema). Hernan Robledo: backend, CI y pruebas. Leyner Buitrago: Prettier/formato, seguridad y revisión de pruebas. Omar Gonzalez: base de datos, migraciones y seed. Nicolas Aparicio: frontend, build y despliegue con Docker/Vercel. |
 | Semana 3 | Nicolas Aparicio | Funcionalidades pendientes del roadmap (a definir en el backlog de Semana 3). |
 | Semana 4 | Leyner Buitrago | HU-020 (archivos reales de evidencia), S3/MinIO como deuda declarada, y demás HU de la Semana 4. |
 | Semana 5 | Omar Gonzalez | Calidad, cobertura de pruebas ≥60 %, colección Postman, cierre de hallazgos abiertos y preparación del congelamiento de código. |
@@ -145,7 +142,7 @@ Los siguientes criterios deben cumplirse para dar por cerrada la implantación d
 | C-07 | Prettier pasa en CI | `pnpm dlx prettier --check` exit code 0 | Leyner Buitrago, Omar Gonzalez |
 | C-08 | Docker Compose levanta en clon limpio | `docker compose up --build` construye y levanta `db`, `migrate`, `backend`, `frontend` | Hernan Robledo, Nicolas Aparicio |
 | C-09 | PR #16 revisado y mergueado en `develop` | PR abierto con revisor asignado y merge confirmado | Hernan Robledo, Leyner Buitrago (revisor) |
-| C-10 | No hay credenciales hardcodeadas en el repositorio | `zenda_bd.sql` sin contraseñas reales; pruebas leen de `ADMIN_EMAIL`/`ADMIN_PASSWORD` | Omar Gonzalez, Hernan Robledo |
+| C-10 | Solo credenciales de demostración, documentadas | `zenda_bd.sql`, `ci.yml`, `integracion.test.js` y guías de Setup solo contienen credenciales de demostración (`admin@zenda.com` / `Admin123!`, `Prueba123!`), marcadas explícitamente como no para producción; no hay credenciales reales ni secretos de producción en el repositorio | Omar Gonzalez, Hernan Robledo |
 | C-11 | Plan de implantación con responsables, criterios y contingencia | Este documento aprobado por el equipo | Todos |
 
 ## Plan de contingencia

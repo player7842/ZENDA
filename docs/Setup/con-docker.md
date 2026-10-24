@@ -20,12 +20,24 @@
 | **Alternativa** | [Instalación sin Docker](sin-docker.md) |
 | **Fecha** | 23-oct-2026 |
 
-> **Estado de verificación:** **verificado**. `docker compose up --build -d`
+> **Estado de verificación:** **humo interno (equipo ZENDA)**. `docker compose up --build -d`
 > construye `zenda-backend` y `zenda-frontend`, y levanta `db`, `migrate`,
 > `backend` y `frontend`. `GET /api/health` responde 200, el frontend responde
 > 200 y el login de administrador y aprendiz responde 200. La migración se
 > aplicó dos veces sin errores y el *fixture* v11 terminó con
 > `V11_MIGRATION_OK`.
+>
+> > **Aclaración de la rúbrica:** esta verificación la realizó el propio equipo.
+> > La rúbrica exige que la verificación la repita una persona externa sobre un
+> > clon limpio; este documento no la sustituye.
+>
+> > **Correo sin SMTP:** `EMAIL_USER` y `EMAIL_PASS` son opcionales para arrancar,
+> > pero sin ellas —o con el plan gratuito de Render, que bloquea los puertos
+> > 25, 465 y 587— la aplicación no envía el correo de verificación ni de
+> > recuperación. Una cuenta nueva se registra pero **no puede verificar su
+> > correo ni iniciar sesión** (queda bloqueada hasta verificarlo). Solo los
+> > usuarios del *seed* pueden entrar. Configura SMTP real antes de probar
+> > el flujo de verificación (RS-006).
 
 ---
 

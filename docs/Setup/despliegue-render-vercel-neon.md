@@ -136,10 +136,14 @@ curl -X POST https://<servicio>.onrender.com/api/auth/login \
 Debe responder `200` con un `token`. Si responde `500`, revisar los logs:
 casi siempre es `DATABASE_URL` mal copiada o el esquema sin cargar.
 
-> **Seguridad:** `Database/zenda_bd.sql` incluye usuarios de demostración con
-> contraseñas conocidas (`admin@zenda.com` / `Admin123!`, entre otros). En un
-> entorno público hay que cambiarlas o crear un administrador propio y
-> desactivar las cuentas de prueba antes de compartir la URL.
+### 3.4 Cambiar la contraseña del administrador (obligatorio antes de publicar)
+
+`Database/zenda_bd.sql` trae el administrador de demostración
+`admin@zenda.com` / `Admin123!`. **Este paso es obligatorio:** antes de
+compartir la URL pública, entra con el admin del seed, cambia su contraseña
+por una fuerte y única, y crea tu propio administrador o desactiva las
+cuentas de prueba (`admin@zenda.com`, `felipe@zenda.com`, etc.) para que
+ninguna credencial conocida quede expuesta en un entorno público.
 
 ---
 
