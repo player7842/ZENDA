@@ -173,7 +173,7 @@ Fichas de prueba: `2724285`, `2724310`, `2724290` y `2724315`. El proyecto de ej
 |---|---|---|
 | `backend/` | `pnpm dev` | Servidor con recarga automática (`nodemon`). |
 | `backend/` | `pnpm start` | Servidor sin recarga (como en producción). |
-| `backend/` | `pnpm test` | 9 pruebas unitarias + 7 de integración (16). Las de integración se omiten si no hay base. |
+| `backend/` | `pnpm test` | 9 pruebas unitarias + 8 de integración (17). Las de integración se omiten si no hay base. |
 | `backend/` | `pnpm lint` | Analiza el código con ESLint. |
 | `frontend/` | `pnpm dev` | Servidor de desarrollo de Vite. |
 | `frontend/` | `pnpm build` | Compila a `frontend/dist`. |

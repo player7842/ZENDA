@@ -11,7 +11,7 @@
 > |---|---|
 > | **C-01** (token de reset intercambiable) | Resuelto: `purpose: 'reset'`, hash SHA-256 de un solo uso y `token_version`. |
 > | **C-02** (plan sin `helmet` ni rate-limit) | Resuelto: `helmet`, `express-rate-limit`, `trust proxy` y `/api/health` existen y están documentados. |
-> | **C-03** (sin pruebas de integración) | Resuelto: 7 escenarios con Supertest contra PostgreSQL 16 y CI que los ejecuta con `REQUIRE_DB=1`. |
+> | **C-03** (sin pruebas de integración) | Resuelto: 8 escenarios con Supertest contra PostgreSQL 16 y CI que los ejecuta con `REQUIRE_DB=1`. |
 > | **C-04** (migración destructiva) | Resuelto: migración idempotente, probada dos veces y sobre una base v11 con datos (`V11_MIGRATION_OK`). |
 > | **C-05** (General por nombre) | Resuelto: `grupos.es_general`, índice único parcial y conservación de grupos legados llamados “General”. |
 > | **C-06** (carreras y bloqueos) | Resuelto: bloqueos en cascada, RN-007, cupo y evaluaciones con `clock_timestamp()`. |

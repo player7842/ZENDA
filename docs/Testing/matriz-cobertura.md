@@ -14,8 +14,8 @@
 | --- | --- |
 | Requisitos funcionales | 42 |
 | Casos funcionales | 160 |
-| Casos de requisitos **Implementados** | 90 |
-| Casos de requisitos **Parciales** | 38 |
+| Casos de requisitos **Implementados** | 94 |
+| Casos de requisitos **Parciales** | 34 |
 | Casos de requisitos **Planificados** | 32 |
 | Cobertura de requisitos | 100 % (todos tienen al menos un caso) |
 
@@ -45,7 +45,7 @@ Además de estos casos hay pruebas de [integración](pruebas-de-integracion.md),
 | [RF-016](../Requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) | Consulta de mi proyecto | Grupos y proyectos | Alta | Implementado | 4 | CP-016.1 a CP-016.4 | API, E2E |
 | [RF-017](../Requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | Cambio de ficha del aprendiz | Grupos y proyectos | Media | Implementado | 3 | CP-017.1 a CP-017.3 | API, E2E |
 | [RF-018](../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) | Reasignación de liderazgo | Grupos y proyectos | Media | Planificado | 3 | CP-018.1 a CP-018.3 | API, E2E |
-| [RF-019](../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) | Carpetas de una fase | Fases y evidencias | Alta | Parcial | 4 | CP-019.1 a CP-019.4 | API, E2E |
+| [RF-019](../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) | Carpetas de una fase | Fases y evidencias | Alta | Implementado | 4 | CP-019.1 a CP-019.4 | API, E2E |
 | [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md) | Subida de evidencias | Fases y evidencias | Alta | Parcial | 5 | CP-020.1 a CP-020.5 | API |
 | [RF-021](../Requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | Consulta de evidencias y fases | Fases y evidencias | Alta | Implementado | 4 | CP-021.1 a CP-021.4 | API, E2E |
 | [RF-022](../Requisitos/RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | Versiones y eliminación de evidencias | Fases y evidencias | Media | Planificado | 5 | CP-022.1 a CP-022.5 | API |
@@ -70,7 +70,7 @@ Además de estos casos hay pruebas de [integración](pruebas-de-integracion.md),
 | [RF-041](../Requisitos/RFs/RF-041_mensajes_guiados.md) | Mensajes guiados | Interfaz y legal | Baja | Planificado | 3 | CP-041.1 a CP-041.3 | E2E |
 | [RF-042](../Requisitos/RFs/RF-042_pagina_de_inicio_publica.md) | Página de inicio pública | Interfaz y legal | Media | Implementado | 4 | CP-042.1 a CP-042.4 | E2E |
 
-¹ **RF-024:** la funcionalidad está implementada (HU-024), pero sus 3 casos siguen contados como planificados hasta que se automaticen por separado. Por eso el resumen da 90/38/32 y no 93/35/32.
+¹ **RF-024:** la funcionalidad está implementada (HU-024), pero sus 3 casos siguen contados como planificados hasta que se automaticen por separado. Por eso el resumen da 94/34/32 y no 97/31/32.
 
 ---
 

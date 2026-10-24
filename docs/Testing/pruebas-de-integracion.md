@@ -13,7 +13,7 @@
 | Campo | Valor |
 | --- | --- |
 | **Escenarios documentados** | 13 |
-| **Escenarios automatizados en Semana 2** | 7 (`backend/tests/integracion.test.js`) |
+| **Escenarios automatizados en Semana 2** | 8 (`backend/tests/integracion.test.js`) |
 | **Pruebas de autorización** | 30 (documentadas; se amplían en Semana 3) |
 | **Herramienta** | Vitest + Supertest contra PostgreSQL real ([entorno](plan-de-pruebas.md#4-entornos-y-datos)) |
 | **Plan** | [Plan de pruebas](plan-de-pruebas.md) |
@@ -25,7 +25,7 @@
 
 `backend/tests/integracion.test.js` usa Vitest + Supertest contra PostgreSQL real. Se omite si no hay base de datos o si falta el esquema actual, y en CI se ejecuta después de cargar `zenda_bd.sql` y aplicar dos veces la migración.
 
-**Resultado local (23-oct-2026):** 7/7 escenarios aprobados sobre PostgreSQL 16, después de cargar `Database/zenda_bd.sql` y ejecutar `Database/migrations/002_semana2.sql` dos veces. Las 9 pruebas unitarias también pasaron (**16/16 en total**).
+**Resultado local (23-oct-2026):** 8/8 escenarios aprobados sobre PostgreSQL 16, después de cargar `Database/zenda_bd.sql` y ejecutar `Database/migrations/002_semana2.sql` dos veces. Las 9 pruebas unitarias también pasaron (**17/17 en total**).
 
 | Bloque | Qué comprueba |
 |---|---|
@@ -33,6 +33,7 @@
 | HU-014/HU-015 | Código `PRY-*`, cupo 1, rechazo por cupo lleno, edición de cupo por el líder y rechazo de un aprendiz de otra ficha. |
 | HU-023/024/025 | Cascada, aprobación en bloque, historial de evaluaciones (4 filas), reprobación, re-aprobación y progreso 100 %. |
 | RN-018 | Una carpeta con evidencia mixta queda `En revisión`, no `Aprobada`. |
+| HU-019 | Nombre vacío y nombre de más de 150 caracteres responden `400`; fase inexistente `404`; fase ajena `403`; un integrante que no es líder crea la carpeta (`201`). |
 | HU-026 | Observación asociada a `evidencia_id`, con nombre de evidencia en la consulta. |
 | HU-011 | Creación de instructor, reasignación de fichas y conservación de una fila inactiva. |
 | C-01 | Token de sesión rechazado en reset, token de reset de un solo uso, invalidación de sesión y login con la clave nueva. |

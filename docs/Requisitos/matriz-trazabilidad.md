@@ -12,8 +12,8 @@
 
 | Estado | Cantidad |
 | --- | --- |
-| Implementado | 24 |
-| Parcial | 10 |
+| Implementado | 25 |
+| Parcial | 9 |
 | Planificado | 8 |
 | **Total** | **42** |
 
@@ -23,7 +23,7 @@
 | **Parcial** | Funciona en parte o requiere cambios aprobados (ver sección "Cambios frente a la versión v11" de cada archivo). |
 | **Planificado** | Aprobado, aún no construido. |
 
-> **Actualización (23-oct-2026):** las 8 HU cerradas en la Semana 2 (HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025 y HU-026) y HU-028 pasan a **Implementado**. HU-020 sigue **Parcial**: en Semana 2 solo se admiten enlaces; los archivos reales son de la Semana 4.
+> **Actualización (23-oct-2026):** las 8 HU cerradas en la Semana 2 (HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025 y HU-026), HU-028 y HU-019 pasan a **Implementado**. HU-020 sigue **Parcial**: en Semana 2 solo se admiten enlaces; los archivos reales son de la Semana 4.
 
 ---
 
@@ -49,7 +49,7 @@
 | [HU-016](HUs/HU-016_consulta_de_mi_proyecto.md) | [RF-016](RFs/RF-016_consulta_de_mi_proyecto.md) | Grupos y proyectos | Aprendiz | Alta | Implementado | RN-007, RN-008, RN-011 |
 | [HU-017](HUs/HU-017_cambio_de_ficha_del_aprendiz.md) | [RF-017](RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | Grupos y proyectos | Aprendiz | Media | Implementado | RN-006, RN-029 |
 | [HU-018](HUs/HU-018_reasignacion_de_liderazgo.md) | [RF-018](RFs/RF-018_reasignacion_de_liderazgo.md) | Grupos y proyectos | Administrador | Media | Planificado | RN-008, RN-028, RN-030 |
-| [HU-019](HUs/HU-019_carpetas_de_una_fase.md) | [RF-019](RFs/RF-019_carpetas_de_una_fase.md) | Fases y evidencias | Aprendiz | Alta | Parcial | RN-012, RN-015 |
+| [HU-019](HUs/HU-019_carpetas_de_una_fase.md) | [RF-019](RFs/RF-019_carpetas_de_una_fase.md) | Fases y evidencias | Aprendiz | Alta | Implementado | RN-012, RN-015 |
 | [HU-020](HUs/HU-020_subida_de_evidencias.md) | [RF-020](RFs/RF-020_subida_de_evidencias.md) | Fases y evidencias | Aprendiz | Alta | Parcial | RN-012, RN-013, RN-015 |
 | [HU-021](HUs/HU-021_consulta_de_evidencias_y_fases.md) | [RF-021](RFs/RF-021_consulta_de_evidencias_y_fases.md) | Fases y evidencias | Aprendiz | Alta | Implementado | RN-012, RN-016 |
 | [HU-022](HUs/HU-022_versiones_y_eliminacion_de_evidencias.md) | [RF-022](RFs/RF-022_versiones_y_eliminacion_de_evidencias.md) | Fases y evidencias | Aprendiz | Media | Planificado | RN-012, RN-014, RN-015, RN-018 |

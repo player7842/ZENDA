@@ -18,7 +18,7 @@
 | **Casos escritos** | 160 funcionales + escenarios de integración, unitarios y no funcionales |
 | **Fecha** | Octubre 2026 |
 
-> **Estado de partida:** el repositorio de v11 **no tenía pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). En Semana 2 se agregaron Vitest + Supertest: **9 pruebas unitarias y 7 de integración (16/16)**, ejecutadas contra PostgreSQL 16 el 23-oct-2026. En CI se ejecutan con `REQUIRE_DB=1`. El resto de los 160 casos sigue documentado para las semanas 3–6.
+> **Estado de partida:** el repositorio de v11 **no tenía pruebas automatizadas** (ni scripts `test` ni dependencias de pruebas). En Semana 2 se agregaron Vitest + Supertest: **9 pruebas unitarias y 8 de integración (17/17)**, ejecutadas contra PostgreSQL 16 el 23-oct-2026. En CI se ejecutan con `REQUIRE_DB=1`. El resto de los 160 casos sigue documentado para las semanas 3–6.
 
 ---
 

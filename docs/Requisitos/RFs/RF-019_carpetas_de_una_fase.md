@@ -16,7 +16,7 @@
 | **Nombre** | Carpetas de una fase |
 | **Módulo** | Fases y evidencias |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Historia asociada** | HU-019 |
 | **Fecha** | Octubre 2026 |
 

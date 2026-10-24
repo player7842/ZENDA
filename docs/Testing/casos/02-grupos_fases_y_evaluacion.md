@@ -87,7 +87,7 @@
 
 ### RF-019 — Carpetas de una fase
 
-**Historia:** [HU-019](../../Requisitos/HUs/HU-019_carpetas_de_una_fase.md) · **Requisito:** [RF-019](../../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) · **Estado del requisito:** Parcial
+**Historia:** [HU-019](../../Requisitos/HUs/HU-019_carpetas_de_una_fase.md) · **Requisito:** [RF-019](../../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) · **Estado del requisito:** Implementado
 
 | ID | Escenario | Precondición (dado que) | Acción (cuando) | Resultado esperado (entonces) | Tipo | Nivel | Prioridad | Aplica a v11 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

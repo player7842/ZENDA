@@ -482,7 +482,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion_asser
 
 Resultado esperado: `V11_MIGRATION_OK`, exactamente un General por ficha y
 ninguna evidencia, grupo o proyecto perdido. La suite de integración
-(`backend/tests/integracion.test.js`) se ejecuta después y debe dar **7/7**.
+(`backend/tests/integracion.test.js`) se ejecuta después y debe dar **8/8**.
 
 ---
 

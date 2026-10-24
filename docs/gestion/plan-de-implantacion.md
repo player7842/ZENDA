@@ -84,9 +84,9 @@ Cerrar las semanas 1 y 2 del roadmap, aplicar la auditoría crítica de `ZENDA_a
 ## Pruebas
 
 - **Unitarias:** `backend/tests/reglas.test.js` (9 pruebas de reglas puras).
-- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, RN-018 (evidencia mixta), HU-026, HU-011 y C-01 (7 escenarios). Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan con `REQUIRE_DB=1`.
+- **Integración:** `backend/tests/integracion.test.js` con Vitest + Supertest y PostgreSQL real. Cubre HU-001, HU-014/015, HU-023/024/025, RN-018 (evidencia mixta), HU-019, HU-026, HU-011 y C-01 (8 escenarios). Si no hay base de datos o falta el esquema, se omiten; en CI se ejecutan con `REQUIRE_DB=1`.
 - **CI:** carga `Database/zenda_bd.sql`, aplica `002_semana2.sql` dos veces, migra desde el *fixture* v11, ejecuta lint, pruebas y build del frontend.
-- **Ejecución local verificada (23-oct-2026):** PostgreSQL 16, base cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **16 pruebas aprobadas** (9 unitarias + 7 de integración). También se probó la migración sobre el *fixture* v11 con datos (`V11_MIGRATION_OK`) y se verificó un único General por ficha.
+- **Ejecución local verificada (23-oct-2026):** PostgreSQL 16, base cargada desde `Database/zenda_bd.sql`, migración aplicada **dos veces** sin errores y `pnpm test` con **17 pruebas aprobadas** (9 unitarias + 8 de integración). También se probó la migración sobre el *fixture* v11 con datos (`V11_MIGRATION_OK`) y se verificó un único General por ficha.
 - **Docker verificado:** `docker compose up --build` construye `zenda-backend` y `zenda-frontend`, y levanta `db`, `migrate`, `backend` y `frontend`. `GET /api/health` responde 200, el frontend 200 y el login de administrador y aprendiz 200.
 
 ## Verificación

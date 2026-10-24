@@ -16,7 +16,7 @@
 | **Título** | Carpetas de una fase |
 | **Módulo** | Fases y evidencias |
 | **Prioridad** | Alta |
-| **Estado** | Parcial |
+| **Estado** | Implementado |
 | **Rol** | Aprendiz |
 | **RF asociado** | RF-019 |
 | **Reglas de negocio** | RN-012, RN-015 |

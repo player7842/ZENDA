@@ -255,7 +255,7 @@ pnpm dev                 # http://localhost:5173
 ### Pruebas
 
 ```bash
-pnpm --dir backend test          # 9 unitarias + 7 de integración (16)
+pnpm --dir backend test          # 9 unitarias + 8 de integración (17)
 pnpm --dir backend lint
 pnpm --dir frontend build
 ```
@@ -325,7 +325,7 @@ Toda la documentación vive en [`docs/`](docs/) y está escrita en Markdown para
 | [`docs/Setup/`](docs/Setup/) | Instalación con y sin Docker, variables de entorno y despliegue en Render + Vercel + Neon | 🟢 Verificado |
 | [`docs/Conceptos/`](docs/Conceptos/) | Seguridad (OWASP), autenticación JWT, patrones, contenedores y accesibilidad | 🟢 Disponible |
 | [`docs/Colaboracion/`](docs/Colaboracion/) | Flujo de Git, convenciones y revisión de código | 🟢 Disponible |
-| [`docs/Testing/`](docs/Testing/) | Plan, casos, pruebas unitarias, de integración y no funcionales, hallazgos y cobertura | 🟢 16/16 automatizadas |
+| [`docs/Testing/`](docs/Testing/) | Plan, casos, pruebas unitarias, de integración y no funcionales, hallazgos y cobertura | 🟢 17/17 automatizadas |
 | [`docs/gestion/`](docs/gestion/) | Backlog priorizado, plan de implantación, cronograma y riesgos | 🟡 En elaboración |
 
 El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md`](SEMANA-1-2-IMPLEMENTACION-DEFINITIVO.md). La auditoría que lo originó se conserva en [`ZENDA_auditoria_semanas_1_y_2.md`](ZENDA_auditoria_semanas_1_y_2.md).
@@ -374,7 +374,7 @@ El documento de cierre de las Semanas 1–2 es [`SEMANA-1-2-IMPLEMENTACION-DEFIN
 | **Fases y evaluación** | Estado de carpeta y fase derivado de la evaluación vigente; aprobación de carpeta en bloque; evaluación siempre `INSERT`. |
 | **Instructores** | Historial en `instructor_ficha` con una única asignación vigente por índice parcial. |
 | **Seguridad** | `helmet`, rate-limit, CORS por lista blanca, `JWT_SECRET` obligatorio, reset de un solo uso y validación de URLs. |
-| **Calidad** | 9 pruebas unitarias + 7 de integración = **16/16**, lint, build y CI de GitHub Actions con PostgreSQL 16. |
+| **Calidad** | 9 pruebas unitarias + 8 de integración = **17/17**, lint, build y CI de GitHub Actions con PostgreSQL 16. |
 | **Interfaz** | Medidor de contraseña, aceptaciones legales, anti-pegado, cupo editable, progreso por fase, aprobación en bloque y observaciones por evidencia. |
 
 ### 🔄 Aprobado para las Semanas 3–6

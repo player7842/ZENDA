@@ -13,7 +13,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - **Semana 2:**
   - Reglas puras en `backend/src/domain/reglas.js`.
   - Servicios `cascada.js`, `asignaciones.js` y `grupos.js`.
-  - 9 pruebas unitarias y 7 de integración con Supertest (16 en total).
+  - 9 pruebas unitarias y 8 de integración con Supertest (17 en total).
   - Migración incremental e idempotente `Database/migrations/002_semana2.sql`.
   - Servicio `migrate` en Compose y `startCommand` con migración en Render (el plan free no admite `preDeployCommand`).
   - *Fixtures* `Database/fixtures/v11_migracion.sql` y `v11_migracion_assert.sql` para probar el upgrade desde v11.
@@ -36,7 +36,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 - Duración real de sesión documentada como 24 h (`JWT_SESSION_EXPIRES`); 15 min + refresh queda para HU-004.
 - `backend/.env.example`, `.env.example` y `docs/Setup/variables-de-entorno.md` alineados con `DB_SSL_REJECT_UNAUTHORIZED`, `JWT_SESSION_EXPIRES` y `CODIGO_PROGRAMA_COORDINADOR`.
 - **HU-020** (archivos reales) queda fuera de las Semanas 1–2 y se traslada a la Semana 4. En Semana 2 solo se admiten enlaces `http/https`.
-- **HU-001, HU-011, HU-014, HU-015, HU-023, HU-024, HU-025, HU-026 y HU-028** pasan a “Implementado” en el backlog y en la matriz de trazabilidad (24 implementadas, 10 parciales, 8 planificadas).
+- **HU-001, HU-011, HU-014, HU-015, HU-019, HU-023, HU-024, HU-025, HU-026 y HU-028** pasan a “Implementado” en el backlog y en la matriz de trazabilidad (25 implementadas, 9 parciales, 8 planificadas).
+- **HU-019:** `crearCarpeta` distingue fase inexistente (`404`) de fase ajena (`403`), valida el nombre con el mensaje de RF-019 y el límite de 150 caracteres; la UI muestra el error en vez de ignorarlo.
 
 ### Corregido
 
@@ -66,8 +67,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - `pnpm --dir backend lint` y `pnpm --dir frontend build`.
 - 9 pruebas unitarias de reglas puras (`backend/tests/reglas.test.js`).
-- 7 pruebas de integración con Supertest (`backend/tests/integracion.test.js`). Se omiten sin PostgreSQL; en CI se ejecutan con `REQUIRE_DB=1`.
-- **Total: 16/16.**
+- 8 pruebas de integración con Supertest (`backend/tests/integracion.test.js`). Se omiten sin PostgreSQL; en CI se ejecutan con `REQUIRE_DB=1`.
+- **Total: 17/17.**
 - Migración probada sobre una base v11 con datos: se aplica dos veces seguidas sin errores y las *assertions* confirman que no se pierden evidencias, grupos ni proyectos (`V11_MIGRATION_OK`).
 - `docker compose up --build` verificado: `db`, `migrate`, `backend` y `frontend` arrancan; `GET /api/health` responde 200, el frontend responde 200 y el login de administrador y aprendiz responde 200.
 

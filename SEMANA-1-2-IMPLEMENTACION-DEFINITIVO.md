@@ -37,7 +37,7 @@ Se aplicaron los siete hallazgos críticos de la auditoría, se completaron las 
 | Verificación | Resultado |
 |---|---|
 | Pruebas unitarias | **9/9 aprobadas** |
-| Pruebas de integración | **7/7 aprobadas** contra PostgreSQL 16 |
+| Pruebas de integración | **8/8 aprobadas** contra PostgreSQL 16 |
 | Migración `002_semana2.sql` | Aplicada **dos veces** sin errores; también sobre una base v11 con datos (`V11_MIGRATION_OK`) |
 | Lint backend | Pasa |
 | Lint frontend | Pasa; solo advertencias preexistentes en archivos no tocados |
@@ -360,23 +360,24 @@ docker compose config --quiet
 | Prueba | Resultado |
 |---|---|
 | `tests/reglas.test.js` | 9 aprobadas |
-| `tests/integracion.test.js` | 7 aprobadas |
-| Total | **16/16** |
+| `tests/integracion.test.js` | 8 aprobadas |
+| Total | **17/17** |
 | Migración dos veces | Sin errores |
 | General por ficha tras migrar | Exactamente 1 |
 | Lint backend | Sin errores |
 | Lint frontend | Sin errores; advertencias preexistentes |
 | Build frontend | Correcto |
 
-### 10.3 Cobertura de los 7 escenarios de integración
+### 10.3 Cobertura de los 8 escenarios de integración
 
 1. HU-001: registro con correo institucional, documento y cuatro aceptaciones.
 2. HU-014/HU-015: cupo, unión por código y validación de la ficha del aprendiz.
 3. HU-023/HU-024/HU-025: cascada, aprobación en bloque, historial y progreso.
 4. RN-018: una carpeta con evidencia mixta queda **En revisión**, no Aprobada (regresión de la cascada).
-5. HU-026: observación asociada a una evidencia del proyecto.
-6. HU-011: reasignación de fichas conservando el historial del instructor.
-7. C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso.
+5. HU-019: nombre obligatorio, límite de 150 caracteres, fase inexistente (`404`), fase ajena (`403`) y creación por un integrante que no es líder.
+6. HU-026: observación asociada a una evidencia del proyecto.
+7. HU-011: reasignación de fichas conservando el historial del instructor.
+8. C-01: el token de sesión no sirve para reset y el token de reset es de un solo uso.
 
 > Las pruebas de integración se omiten automáticamente si no hay PostgreSQL o si el esquema no está cargado. En CI se ejecutan siempre porque el workflow prepara la base y define `REQUIRE_DB=1` para que un fallo de conexión no pase desapercibido.
 
@@ -567,7 +568,7 @@ git log --oneline origin/develop -3
 ### Verificación ejecutada
 
 - [x] 9 pruebas unitarias aprobadas.
-- [x] 7 pruebas de integración aprobadas con PostgreSQL 16.
+- [x] 8 pruebas de integración aprobadas con PostgreSQL 16.
 - [x] Migración aplicada dos veces sin errores.
 - [x] Migración probada sobre una base v11 con datos (`V11_MIGRATION_OK`).
 - [x] Script de migración de Render ejecutado.
