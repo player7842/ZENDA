@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowRight,
     CheckCircle2,
@@ -606,6 +606,9 @@ function Home() {
                         <a href="#inicio">Inicio</a>
                         <a href="#como-funciona">Cómo funciona</a>
                         <a href="#funcionalidades">Funcionalidades</a>
+                        <Link to="/terminos">Términos</Link>
+                        <Link to="/privacidad">Privacidad</Link>
+                        <Link to="/cookies">Cookies</Link>
 
                     </div>
 
@@ -613,7 +616,7 @@ function Home() {
 
                 <div className="container footer-bottom">
 
-                    © 2026 ZENDA - Proyecto formativo SENA
+                    © {new Date().getFullYear()} ZENDA - Proyecto formativo SENA
 
                 </div>
 
