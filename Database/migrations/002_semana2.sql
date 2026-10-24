@@ -80,35 +80,74 @@ UPDATE "grupos" SET "cupo_maximo" = 6 WHERE "cupo_maximo" IS NULL;
 ALTER TABLE "grupos" ALTER COLUMN "cupo_maximo" SET DEFAULT 6;
 ALTER TABLE "grupos" ALTER COLUMN "cupo_maximo" SET NOT NULL;
 
--- Normaliza los Generales heredados. Si hubiera duplicados por la carrera de
--- registro, se conserva el de menor grupo_id y los demás pasan a ser grupos
--- de trabajo importados (sin perder integrantes ni proyectos).
-WITH ranking AS (
-  SELECT "grupo_id",
-         "ficha_id",
-         ROW_NUMBER() OVER (PARTITION BY "ficha_id" ORDER BY "grupo_id") AS orden
-  FROM "grupos"
-  WHERE lower("nombre_grupo") = 'general'
+-- Promueve como General solo los grupos llamados "General" que NO tengan
+-- proyecto. Un grupo de trabajo legado llamado "General" conserva su nombre,
+-- código, integrantes y proyecto: no se convierte en el General de la ficha
+-- ni se renombra (C-05).
+WITH candidatos AS (
+  SELECT g."grupo_id",
+         g."ficha_id",
+         ROW_NUMBER() OVER (PARTITION BY g."ficha_id" ORDER BY g."grupo_id") AS orden
+  FROM "grupos" g
+  WHERE lower(g."nombre_grupo") = 'general'
+    AND NOT EXISTS (
+      SELECT 1 FROM "proyectos" p WHERE p."grupo_id" = g."grupo_id"
+    )
 )
-UPDATE "grupos" g
-SET "nombre_grupo" = 'Grupo importado ' || g."grupo_id",
-    "codigo_grupo" = 'MIG-' || g."grupo_id",
-    "es_general" = false
-FROM ranking r
-WHERE g."grupo_id" = r."grupo_id" AND r.orden > 1;
-
 UPDATE "grupos" g
 SET "nombre_grupo" = 'General',
     "codigo_grupo" = 'GEN-' || f."numero_ficha",
     "cupo_maximo" = 50,
     "es_general" = true
-FROM "fichas" f
-WHERE g."ficha_id" = f."ficha_id"
-  AND lower(g."nombre_grupo") = 'general';
+FROM candidatos c
+JOIN "fichas" f ON f."ficha_id" = c."ficha_id"
+WHERE g."grupo_id" = c."grupo_id"
+  AND c.orden = 1;
 
 CREATE UNIQUE INDEX IF NOT EXISTS "uq_grupo_general_por_ficha"
   ON "grupos" ("ficha_id")
   WHERE "es_general";
+
+-- Crea el General que falte cuando la ficha ya tiene algún integrante o
+-- grupo del que tomar un líder. Si la ficha está vacía, el primer registro
+-- la creará con el aprendiz como líder (obtenerOCrearGrupoGeneral).
+INSERT INTO "grupos"
+  ("ficha_id", "lider_id", "nombre_grupo", "codigo_grupo",
+   "cupo_maximo", "estado_grupo", "fecha_creacion", "es_general")
+SELECT f."ficha_id",
+       lider."lider_id",
+       'General',
+       'GEN-' || f."numero_ficha",
+       50,
+       'Activo',
+       now(),
+       true
+FROM "fichas" f
+JOIN LATERAL (
+  SELECT COALESCE(
+    (
+      SELECT ig."usuario_id"
+      FROM "integrantes_grupo" ig
+      JOIN "grupos" g ON g."grupo_id" = ig."grupo_id"
+      WHERE g."ficha_id" = f."ficha_id"
+        AND ig."estado_integrante" = 'Activo'
+      ORDER BY ig."integrante_id"
+      LIMIT 1
+    ),
+    (
+      SELECT g."lider_id"
+      FROM "grupos" g
+      WHERE g."ficha_id" = f."ficha_id"
+      ORDER BY g."grupo_id"
+      LIMIT 1
+    )
+  ) AS "lider_id"
+) lider ON lider."lider_id" IS NOT NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM "grupos" g
+  WHERE g."ficha_id" = f."ficha_id" AND g."es_general"
+)
+ON CONFLICT ("ficha_id") WHERE "es_general" DO NOTHING;
 
 DO $$
 BEGIN
@@ -122,10 +161,11 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conname = 'chk_grupos_general_nombre'
   ) THEN
+    -- Un grupo de trabajo legado puede llamarse "General"; solo se exige el
+    -- nombre exacto cuando la fila es el General de la ficha.
     ALTER TABLE "grupos"
       ADD CONSTRAINT "chk_grupos_general_nombre" CHECK (
-        ("es_general" AND "nombre_grupo" = 'General')
-        OR (NOT "es_general" AND lower("nombre_grupo") <> 'general')
+        NOT "es_general" OR "nombre_grupo" = 'General'
       );
   END IF;
 END $$;
@@ -162,10 +202,24 @@ UPDATE "evidencias"
 SET "tipo_evidencia" = 'Enlace'
 WHERE "tipo_evidencia" NOT IN ('Documento', 'Imagen', 'Video', 'Enlace');
 
-UPDATE "evidencias"
-SET "ubicacion" = 'https://zenda.invalid/evidencia/' || "evidencia_id"
-WHERE "ubicacion" !~* '^https?://[^[:space:]]+$'
-   OR length("ubicacion") > 500;
+-- Las ubicaciones heredadas inválidas NO se reescriben: se conservan para no
+-- perder evidencia histórica y la restricción se añade como NOT VALID. Las
+-- filas nuevas y las que se actualicen sí quedan validadas.
+DO $$
+DECLARE
+  v_invalidas int;
+BEGIN
+  SELECT count(*) INTO v_invalidas
+  FROM "evidencias"
+  WHERE "ubicacion" !~* '^https?://[^[:space:]]+$'
+     OR length("ubicacion") > 500;
+
+  IF v_invalidas > 0 THEN
+    RAISE NOTICE
+      'Migración 002: % evidencia(s) conservan ubicaciones heredadas inválidas; chk_evidencias_ubicacion queda NOT VALID.',
+      v_invalidas;
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------
 -- 6. Funciones SQL de cascada (RN-018)
@@ -283,7 +337,8 @@ BEGIN
   ) THEN
     ALTER TABLE "evidencias"
       ADD CONSTRAINT "chk_evidencias_ubicacion"
-      CHECK ("ubicacion" ~* '^https?://[^[:space:]]+$' AND length("ubicacion") <= 500);
+      CHECK ("ubicacion" ~* '^https?://[^[:space:]]+$' AND length("ubicacion") <= 500)
+      NOT VALID;
   END IF;
 
   IF NOT EXISTS (

@@ -119,9 +119,10 @@ CREATE TABLE "grupos" (
   "es_general" boolean NOT NULL DEFAULT false,
   "fecha_creacion" timestamp NOT NULL DEFAULT now(),
   CONSTRAINT "chk_grupos_cupo" CHECK ("cupo_maximo" BETWEEN 1 AND 50),
+  -- Un grupo de trabajo puede llamarse "General"; solo el General de la
+  -- ficha (es_general = true) debe usar exactamente ese nombre.
   CONSTRAINT "chk_grupos_general_nombre" CHECK (
-    ("es_general" AND "nombre_grupo" = 'General')
-    OR (NOT "es_general" AND lower("nombre_grupo") <> 'general')
+    NOT "es_general" OR "nombre_grupo" = 'General'
   )
 );
 

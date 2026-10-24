@@ -75,6 +75,17 @@ jobs:
           psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
           psql -h localhost -U zenda_user -d zenda -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
 
+      - name: Probar migración desde esquema v11
+        env:
+          PGPASSWORD: zenda_ci
+        run: |
+          psql -h localhost -U zenda_user -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS zenda_v11;'
+          psql -h localhost -U zenda_user -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE zenda_v11;'
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion.sql
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/migrations/002_semana2.sql
+          psql -h localhost -U zenda_user -d zenda_v11 -v ON_ERROR_STOP=1 -f Database/fixtures/v11_migracion_assert.sql
+
       - name: Pruebas
         working-directory: backend
         run: pnpm test
