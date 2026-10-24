@@ -206,6 +206,14 @@ function Login() {
             </div>
           )}
 
+          {serverError.toLowerCase().includes("verificar") && email && (
+            <p style={{ textAlign: "center", marginBottom: 12, fontSize: "0.85rem" }}>
+              <Link to={`/verificar-correo?pendiente=1&correo=${encodeURIComponent(email.trim().toLowerCase())}`}>
+                Reenviar el enlace de verificación
+              </Link>
+            </p>
+          )}
+
           <button type="submit" className="btn-primary" disabled={isLoading} style={{ width: "100%" }}>
             {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>
@@ -213,6 +221,10 @@ function Login() {
 
         <p className="auth-footer" style={{ textAlign: "center", marginTop: 16 }}>
           ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+        </p>
+
+        <p style={{ textAlign: "center", marginTop: 8 }}>
+          <Link to="/" className="back-home-link">Volver al inicio</Link>
         </p>
       </div>
     </div>
