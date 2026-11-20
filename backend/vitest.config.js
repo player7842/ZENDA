@@ -8,6 +8,14 @@ export default defineConfig({
     include: ['tests/**/*.test.js'],
     coverage: {
       reporter: ['text', 'html'],
+      include: ['src/**/*.js'],
+      exclude: [
+        'tests/**',
+        '**/*.test.js',
+        '**/fixtures/**',
+        'coverage/**',
+        '**/node_modules/**',
+      ],
     },
     setupFiles: [],
   },
