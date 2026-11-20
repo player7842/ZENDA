@@ -14,6 +14,7 @@
 import pool from '../../config/db.js';
 import verificarPasswordAdmin from '../../utils/confirmarAdmin.js';
 import { obtenerOCrearGrupoGeneral } from '../../services/grupos.js';
+import { fichaTieneHistorial, obtenerDependenciasFicha } from '../../services/integridad.js';
 
 // ==================================================================
 // Helper: leerFichas(db)
@@ -192,11 +193,16 @@ export const deleteFicha = async (req, res) => {
 
     await client.query('BEGIN');
 
-    await client.query('DELETE FROM instructor_ficha WHERE ficha_id = $1', [id]);
-    await client.query(
-      'DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE ficha_id = $1)',
-      [id],
-    );
+    const dependencias = await obtenerDependenciasFicha(client, id);
+    if (fichaTieneHistorial(dependencias)) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        message: 'No se puede eliminar la ficha porque tiene historial asociado.',
+        codigo: 'FICHA_CON_HISTORIAL',
+        dependencias,
+      });
+    }
+
     await client.query('DELETE FROM grupos WHERE ficha_id = $1', [id]);
 
     const result = await client.query('DELETE FROM fichas WHERE ficha_id = $1 RETURNING ficha_id', [

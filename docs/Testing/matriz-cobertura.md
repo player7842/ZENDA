@@ -44,7 +44,7 @@ Además de estos casos hay pruebas de [integración](pruebas-de-integracion.md),
 | [RF-015](../Requisitos/RFs/RF-015_unirse_a_un_proyecto.md) | Unirse a un proyecto | Grupos y proyectos | Alta | Implementado | 4 | CP-015.1 a CP-015.4 | E2E |
 | [RF-016](../Requisitos/RFs/RF-016_consulta_de_mi_proyecto.md) | Consulta de mi proyecto | Grupos y proyectos | Alta | Implementado | 4 | CP-016.1 a CP-016.4 | API, E2E |
 | [RF-017](../Requisitos/RFs/RF-017_cambio_de_ficha_del_aprendiz.md) | Cambio de ficha del aprendiz | Grupos y proyectos | Media | Implementado | 3 | CP-017.1 a CP-017.3 | API, E2E |
-| [RF-018](../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) | Reasignación de liderazgo | Grupos y proyectos | Media | Planificado | 3 | CP-018.1 a CP-018.3 | API, E2E |
+| [RF-018](../Requisitos/RFs/RF-018_reasignacion_de_liderazgo.md) | Reasignación de liderazgo | Grupos y proyectos | Media | Implementado | 3 | CP-018.1 a CP-018.3 | API, E2E |
 | [RF-019](../Requisitos/RFs/RF-019_carpetas_de_una_fase.md) | Carpetas de una fase | Fases y evidencias | Alta | Implementado | 4 | CP-019.1 a CP-019.4 | API, E2E |
 | [RF-020](../Requisitos/RFs/RF-020_subida_de_evidencias.md) | Subida de evidencias | Fases y evidencias | Alta | Parcial | 5 | CP-020.1 a CP-020.5 | API |
 | [RF-021](../Requisitos/RFs/RF-021_consulta_de_evidencias_y_fases.md) | Consulta de evidencias y fases | Fases y evidencias | Alta | Implementado | 4 | CP-021.1 a CP-021.4 | API, E2E |

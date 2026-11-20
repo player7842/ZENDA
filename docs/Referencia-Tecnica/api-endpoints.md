@@ -18,7 +18,7 @@
 | **Estilo** | REST sobre HTTP, cuerpos JSON |
 | **URL base** | `http://localhost:4000` en desarrollo (el frontend usa `VITE_API_URL`) |
 | **Prefijo** | Las rutas de negocio empiezan por `/api`; la salud también existe en `/health` |
-| **Endpoints existentes** | **55** = 53 rutas de negocio + `/health` + `/api/health` |
+| **Endpoints existentes** | **59** = 57 rutas de negocio + `/health` + `/api/health` |
 | **Rutas declaradas en routers** | 53 |
 | **Fuente** | [`backend/src/app.js`](../../backend/src/app.js) y [`backend/src/routes/`](../../backend/src/routes/) |
 | **Fecha** | 23-oct-2026 |
@@ -55,10 +55,11 @@
 | Módulo | Prefijo | Rutas | Requisitos |
 |---|---|:---:|---|
 | Salud | `/health`, `/api/health` | 2 | — |
-| Autenticación | `/api/auth` | 4 | RF-001 a RF-003 |
+| Autenticación | `/api/auth` | 8 | RF-001 a RF-004 |
 | Usuarios | `/api/users` | 7 | RF-006, RF-007, RF-011 |
+| Grupos | `/api/grupos` | 1 | RF-018 |
 | Fichas | `/api/fichas` | 8 | RF-001, RF-009, RF-010, RF-012 |
-| Aprendiz | `/api/aprendiz/proyectos` | 15 | RF-014 a RF-032 |
+| Aprendiz | `/api/aprendiz/proyectos` | 14 | RF-014 a RF-032 |
 | Instructor | `/api/instructor` | 11 | RF-021, RF-023, RF-024, RF-026, RF-032, RF-033 |
 | Coordinador | `/api/coordinador` | 8 | RF-011, RF-032, RF-033 |
 | **Total** | | **55** | |
@@ -142,6 +143,15 @@ Content-Type: application/json
 > muestran como vigentes.
 
 ---
+
+### Reasignación de liderazgo — `/api/grupos` (JWT · ADMINISTRADOR)
+
+| Método | Ruta | Cuerpo | Respuesta | RF | Estado |
+| --- | --- | --- | --- | --- | --- |
+| PUT 🔑 | `/:id/lider` | `nuevo_lider_id`, `password` | Grupo con el nuevo líder | RF-018 | ✅ |
+
+El candidato debe ser un aprendiz activo del mismo grupo. La reasignación no
+elimina ni modifica proyectos, tareas, evidencias o evaluaciones.
 
 ## 6. Fichas — `/api/fichas`
 

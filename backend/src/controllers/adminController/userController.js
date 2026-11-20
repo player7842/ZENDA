@@ -28,6 +28,7 @@ import {
   cerrarAsignacionesInstructor,
   sincronizarFichasInstructor,
 } from '../../services/asignaciones.js';
+import { obtenerDependenciasUsuario, usuarioTieneHistorial } from '../../services/integridad.js';
 
 // Roles permitidos (ENUM en mayúsculas, igual que la BD). Si agregan un rol
 // nuevo, tienen que agregarlo aquí también o el backend lo rechazará.
@@ -366,23 +367,18 @@ export const deleteUser = async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 1) Integrantes donde el usuario es miembro
-    await client.query('DELETE FROM integrantes_grupo WHERE usuario_id = $1', [id]);
-    // 2) Si era lider de algún grupo, limpiamos ese grupo entero (y sus anuncios)
-    await client.query(
-      'DELETE FROM integrantes_grupo WHERE grupo_id IN (SELECT grupo_id FROM grupos WHERE lider_id = $1)',
-      [id],
-    );
-    await client.query('DELETE FROM grupos WHERE lider_id = $1', [id]);
-    // 3) Vínculos de instructor: al eliminar la CUENTA sí se borran (la FK
-    //    lo exige). Al reasignar fichas se conserva el historial.
-    await client.query('DELETE FROM instructor_ficha WHERE instructor_id = $1', [id]);
-    // 4) Referencias en el resto de tablas del esquema
-    await client.query('DELETE FROM tareas WHERE responsable_id = $1', [id]);
-    await client.query('DELETE FROM observaciones WHERE instructor_id = $1', [id]);
-    await client.query('DELETE FROM evaluaciones WHERE instructor_id = $1', [id]);
-    await client.query('DELETE FROM evidencias WHERE usuario_id = $1', [id]);
-    // 5) Registro del usuario en la tabla principal
+    const dependencias = await obtenerDependenciasUsuario(client, id);
+    if (usuarioTieneHistorial(dependencias)) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        message:
+          'No se puede eliminar el usuario porque tiene historial asociado. Desactívalo o reasigna su liderazgo primero.',
+        codigo: 'USUARIO_CON_HISTORIAL',
+        dependencias,
+      });
+    }
+
+    // La eliminación física queda reservada para cuentas sin dependencias.
     const result = await client.query(
       'DELETE FROM usuarios WHERE usuario_id = $1 RETURNING usuario_id',
       [id],

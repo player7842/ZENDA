@@ -16,6 +16,7 @@ import fichasRoutes from './routes/admin/fichas.js';
 import instructorRoutes from './routes/instructor/instructor.js';
 import aprendizProyectoRoutes from './routes/aprendiz/proyecto.js';
 import coordinadorRoutes from './routes/coordinador/coordinador.js';
+import gruposRoutes from './routes/admin/grupos.js';
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use('/api/fichas', fichasRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/aprendiz/proyectos', aprendizProyectoRoutes);
 app.use('/api/coordinador', coordinadorRoutes);
+app.use('/api/grupos', gruposRoutes);
 
 // Endpoints de salud (usados por Render, Docker Compose y monitores de uptime)
 const healthHandler = (req, res) => {
