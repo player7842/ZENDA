@@ -8,7 +8,12 @@ export const reasignarLider = async (req, res) => {
     const grupoId = Number(req.params.id);
     const nuevoLiderId = Number(req.body.nuevo_lider_id);
 
-    if (!Number.isInteger(grupoId) || grupoId <= 0 || !Number.isInteger(nuevoLiderId) || nuevoLiderId <= 0) {
+    if (
+      !Number.isInteger(grupoId) ||
+      grupoId <= 0 ||
+      !Number.isInteger(nuevoLiderId) ||
+      nuevoLiderId <= 0
+    ) {
       return res.status(400).json({ message: 'El grupo y el nuevo líder deben ser válidos' });
     }
 
@@ -28,7 +33,9 @@ export const reasignarLider = async (req, res) => {
     if (grupo.rows[0].es_general) {
       await client.query('ROLLBACK');
       transaccionAbierta = false;
-      return res.status(400).json({ message: 'No se puede reasignar el liderazgo del grupo General' });
+      return res
+        .status(400)
+        .json({ message: 'No se puede reasignar el liderazgo del grupo General' });
     }
 
     const integrante = await client.query(
@@ -42,13 +49,22 @@ export const reasignarLider = async (req, res) => {
     if (integrante.rowCount === 0) {
       await client.query('ROLLBACK');
       transaccionAbierta = false;
-      return res.status(400).json({ message: 'El nuevo líder debe ser un aprendiz activo del grupo' });
+      return res
+        .status(400)
+        .json({ message: 'El nuevo líder debe ser un aprendiz activo del grupo' });
     }
 
-    await client.query('UPDATE grupos SET lider_id = $1 WHERE grupo_id = $2', [nuevoLiderId, grupoId]);
+    await client.query('UPDATE grupos SET lider_id = $1 WHERE grupo_id = $2', [
+      nuevoLiderId,
+      grupoId,
+    ]);
     await client.query('COMMIT');
     transaccionAbierta = false;
-    return res.json({ message: 'Liderazgo reasignado correctamente', grupo_id: grupoId, lider_id: nuevoLiderId });
+    return res.json({
+      message: 'Liderazgo reasignado correctamente',
+      grupo_id: grupoId,
+      lider_id: nuevoLiderId,
+    });
   } catch (error) {
     if (transaccionAbierta) await client.query('ROLLBACK');
     if (error.codigo) return res.status(error.codigo).json({ message: error.message });
