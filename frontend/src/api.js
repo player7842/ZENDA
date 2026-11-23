@@ -848,39 +848,6 @@ export async function importUsersBulk(usersList, password) {
   return res.json();
 }
 
-// ============================================
-// COPIAS DE SEGURIDAD Y DIAGNÓSTICO (BACKUP & MAINTENANCE)
-// ============================================
-
-export async function downloadBackup(password) {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/api/admin/backup`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ password }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Error al generar la copia de seguridad');
-  }
-  return res.json();
-}
-
-export async function getSystemDiagnostics() {
-  const token = getToken();
-  const res = await fetch(`${API_URL}/api/admin/diagnostico`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Error al obtener diagnóstico del sistema');
-  }
-  return res.json();
-}
-
 // Petición para solicitar correo de restablecimiento de contraseña
 export async function solicitarRecuperacion(correo) {
   const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
